@@ -1,0 +1,315 @@
+/* Interface de caisse : dense, contrastee, lisible de loin et au clavier.
+   Une seule fenetre, quatre ecrans, aucune dependance externe. */
+
+:root {
+  --fond: #0f1b2a;
+  --fond-panneau: #17253a;
+  --fond-champ: #0b1522;
+  --bord: #26374f;
+  --texte: #e8eef7;
+  --texte-doux: #93a5bd;
+  --accent: #12a594;
+  --accent-clair: #17c3b2;
+  --alerte: #e5484d;
+  --avertissement: #f5a524;
+  --rayon: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--fond);
+  color: var(--texte);
+  font: 14px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+input, select, textarea { -webkit-user-select: text; user-select: text; }
+
+.montant { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* --- Ecrans ------------------------------------------------------------- */
+
+.ecran { display: none; height: 100vh; }
+.ecran.actif { display: flex; }
+
+#ecran-accueil, #ecran-connexion { align-items: center; justify-content: center; }
+
+.carte-accueil {
+  width: 380px;
+  padding: 32px;
+  background: var(--fond-panneau);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.carte-accueil h1 { margin: 0 0 4px; font-size: 22px; }
+.carte-accueil p.sous-titre { margin: 0 0 24px; color: var(--texte-doux); }
+
+/* --- Formulaires -------------------------------------------------------- */
+
+label { display: block; margin-bottom: 14px; color: var(--texte-doux); font-size: 13px; }
+
+label > input, label > select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px 11px;
+  background: var(--fond-champ);
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+  color: var(--texte);
+}
+
+label > input:focus, label > select:focus, .recherche input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.bouton {
+  padding: 9px 16px;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #04211d;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bouton:hover { background: var(--accent-clair); }
+.bouton:disabled { opacity: 0.45; cursor: not-allowed; }
+.bouton.pleine-largeur { width: 100%; }
+.bouton.discret { background: transparent; border-color: var(--bord); color: var(--texte); font-weight: 500; }
+.bouton.discret:hover { border-color: var(--accent); background: rgba(18, 165, 148, 0.12); }
+.bouton.danger { background: var(--alerte); color: #fff; }
+.bouton.grand { padding: 16px; font-size: 17px; }
+
+.message { margin: 0 0 14px; padding: 10px 12px; border-radius: 6px; font-size: 13px; display: none; }
+.message.visible { display: block; }
+.message.erreur { background: rgba(229, 72, 77, 0.15); border: 1px solid var(--alerte); color: #ffb4b6; }
+.message.succes { background: rgba(18, 165, 148, 0.15); border: 1px solid var(--accent); color: #8fe3d8; }
+
+/* --- Application -------------------------------------------------------- */
+
+#ecran-application { flex-direction: row; }
+
+.barre-laterale {
+  width: 208px;
+  flex: 0 0 208px;
+  display: flex;
+  flex-direction: column;
+  background: var(--fond-panneau);
+  border-right: 1px solid var(--bord);
+}
+
+.marque { padding: 18px 20px; font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
+.marque small { display: block; font-size: 12px; font-weight: 400; color: var(--texte-doux); }
+
+.navigation { flex: 1; padding: 8px; }
+
+.navigation button {
+  display: block;
+  width: 100%;
+  padding: 11px 14px;
+  margin-bottom: 3px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--texte-doux);
+  text-align: left;
+  cursor: pointer;
+}
+
+.navigation button:hover { background: rgba(255, 255, 255, 0.05); color: var(--texte); }
+.navigation button.actif { background: var(--accent); color: #04211d; font-weight: 600; }
+.navigation button[hidden] { display: none; }
+
+.pied-laterale { padding: 14px 16px; border-top: 1px solid var(--bord); font-size: 13px; }
+.pied-laterale .nom { font-weight: 600; }
+.pied-laterale .role { color: var(--texte-doux); font-size: 12px; text-transform: capitalize; }
+.pied-laterale button { margin-top: 10px; width: 100%; }
+
+.zone { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.entete-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--bord);
+}
+
+.entete-zone h2 { margin: 0; font-size: 17px; }
+
+.vue { display: none; flex: 1; min-height: 0; }
+.vue.actif { display: flex; }
+
+/* --- Vente -------------------------------------------------------------- */
+
+#vue-vente { flex-direction: row; }
+
+.colonne-catalogue {
+  width: 44%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--bord);
+  min-width: 0;
+}
+
+.recherche { padding: 14px 16px; border-bottom: 1px solid var(--bord); }
+
+.recherche input {
+  width: 100%;
+  padding: 11px 13px;
+  background: var(--fond-champ);
+  border: 1px solid var(--bord);
+  border-radius: 6px;
+}
+
+.resultats { flex: 1; overflow-y: auto; padding: 8px; }
+
+.article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  background: var(--fond-panneau);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.article:hover, .article.survole { border-color: var(--accent); }
+.article .designation { font-weight: 600; }
+.article .reference { color: var(--texte-doux); font-size: 12px; }
+.article .prix { font-weight: 700; }
+.article .stock { color: var(--texte-doux); font-size: 12px; text-align: right; }
+.article.epuise { opacity: 0.5; cursor: not-allowed; }
+.article .stock.bas { color: var(--avertissement); }
+
+.colonne-panier { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.lignes-panier { flex: 1; overflow-y: auto; padding: 8px 12px; }
+
+.vide { padding: 40px 20px; text-align: center; color: var(--texte-doux); }
+
+.ligne-panier {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--bord);
+}
+
+.ligne-panier .designation { font-weight: 600; }
+.ligne-panier .detail { color: var(--texte-doux); font-size: 12px; }
+.ligne-panier .quantite { display: flex; align-items: center; gap: 6px; }
+
+.ligne-panier .quantite button {
+  width: 26px; height: 26px;
+  background: var(--fond-panneau);
+  border: 1px solid var(--bord);
+  border-radius: 5px;
+  color: var(--texte);
+  cursor: pointer;
+}
+
+.ligne-panier .quantite span { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; }
+.ligne-panier .total { font-weight: 700; min-width: 84px; text-align: right; }
+.ligne-panier .retirer { background: transparent; border: 0; color: var(--texte-doux); cursor: pointer; font-size: 16px; }
+.ligne-panier .retirer:hover { color: var(--alerte); }
+
+.totaux { padding: 14px 16px; border-top: 1px solid var(--bord); background: var(--fond-panneau); }
+.totaux .ligne { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--texte-doux); }
+.totaux .ligne.total { margin: 10px 0 14px; color: var(--texte); font-size: 26px; font-weight: 700; }
+
+.modes { display: flex; gap: 8px; margin-bottom: 12px; }
+.modes button { flex: 1; padding: 10px; background: var(--fond-champ); border: 1px solid var(--bord); border-radius: 6px; color: var(--texte-doux); cursor: pointer; }
+.modes button.actif { border-color: var(--accent); background: rgba(18, 165, 148, 0.15); color: var(--texte); }
+
+.encaissement { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+.encaissement label { flex: 1; margin: 0; }
+.encaissement .rendu { flex: 1; padding-bottom: 9px; }
+.encaissement .rendu span { display: block; font-size: 19px; font-weight: 700; }
+
+/* --- Tableaux ----------------------------------------------------------- */
+
+.tableau-zone { flex: 1; overflow: auto; padding: 0 20px 20px; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--bord); }
+th { position: sticky; top: 0; background: var(--fond); color: var(--texte-doux); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; z-index: 1; }
+td.nombre, th.nombre { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+tr.annulee { opacity: 0.5; text-decoration: line-through; }
+tr.stock-bas td.nombre { color: var(--avertissement); font-weight: 700; }
+
+/* --- Panneaux et boite modale ------------------------------------------- */
+
+.deux-colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 20px; overflow-y: auto; flex: 1; }
+.panneau { padding: 18px; background: var(--fond-panneau); border: 1px solid var(--bord); border-radius: var(--rayon); }
+.panneau h3 { margin: 0 0 14px; font-size: 15px; }
+.panneau + .panneau { margin-top: 20px; }
+
+.voile {
+  position: fixed; inset: 0;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(4, 10, 18, 0.72);
+  z-index: 10;
+}
+
+.voile.visible { display: flex; }
+
+.boite {
+  width: 420px; max-height: 88vh; overflow-y: auto;
+  padding: 22px;
+  background: var(--fond-panneau);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+}
+
+.boite h3 { margin: 0 0 14px; }
+.boite .actions { display: flex; gap: 8px; margin-top: 18px; }
+.boite .actions .bouton { flex: 1; }
+
+pre.ticket {
+  margin: 0 0 4px;
+  padding: 14px;
+  background: #fdfdf7;
+  border-radius: 6px;
+  color: #1a1a1a;
+  font: 12px/1.4 "Courier New", monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Ces deux regles remplacent des attributs style= : la politique de securite
+   du contenu interdit le style en ligne, et c'est tres bien ainsi. */
+.champ-compact {
+  width: 64px;
+  padding: 3px 6px;
+  background: var(--fond-champ);
+  border: 1px solid var(--bord);
+  border-radius: 5px;
+}
+
+.espace-haut { margin-top: 14px; }
+
+.espace-gauche { margin-left: 6px; }
+td .bouton { padding: 4px 10px; font-size: 12px; }
+
+.ligne-cloture { display: flex; justify-content: space-between; padding: 5px 0; color: var(--texte-doux); }
+.ligne-cloture.forte { color: var(--texte); font-weight: 700; font-size: 16px; border-top: 1px solid var(--bord); margin-top: 4px; padding-top: 8px; }
+.etiquette-en-ligne { display: flex; align-items: center; gap: 8px; margin: 0; }
+.etiquette-en-ligne input { margin: 0; padding: 6px 9px; background: var(--fond-champ); border: 1px solid var(--bord); border-radius: 6px; }
+
+.boite .actions .bouton { white-space: nowrap; }
