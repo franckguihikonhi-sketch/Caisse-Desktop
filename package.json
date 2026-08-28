@@ -1,0 +1,21 @@
+{
+  "name": "caisse-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Logiciel de caisse de boutique, hors ligne, pour poste de vente.",
+  "main": "src/principal/principal.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "verifier": "electron scripts/verifier-demarrage.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0"
+  }
+}

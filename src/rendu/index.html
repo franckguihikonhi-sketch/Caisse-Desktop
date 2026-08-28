@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
+  <title>Caisse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Premiere ouverture : la caisse n'a pas encore d'administrateur. -->
+<section id="ecran-accueil" class="ecran">
+  <form class="carte-accueil" id="formulaire-administrateur">
+    <h1>Premiere ouverture</h1>
+    <p class="sous-titre">Creez le compte administrateur de cette caisse.</p>
+    <p class="message erreur" id="erreur-administrateur"></p>
+    <label>Nom complet<input type="text" name="nom" required autocomplete="off"></label>
+    <label>Identifiant<input type="text" name="identifiant" required autocomplete="off"></label>
+    <label>Mot de passe (6 caracteres minimum)
+      <input type="password" name="motDePasse" required minlength="6" autocomplete="new-password">
+    </label>
+    <label>Confirmation<input type="password" name="confirmation" required autocomplete="new-password"></label>
+    <button type="submit" class="bouton pleine-largeur">Creer le compte</button>
+  </form>
+</section>
+
+<!-- Connexion -->
+<section id="ecran-connexion" class="ecran">
+  <form class="carte-accueil" id="formulaire-connexion">
+    <h1 id="titre-connexion">Caisse</h1>
+    <p class="sous-titre">Identifiez-vous pour ouvrir la caisse.</p>
+    <p class="message erreur" id="erreur-connexion"></p>
+    <label>Identifiant<input type="text" name="identifiant" required autocomplete="username"></label>
+    <label>Mot de passe<input type="password" name="motDePasse" required autocomplete="current-password"></label>
+    <button type="submit" class="bouton pleine-largeur">Ouvrir la caisse</button>
+  </form>
+</section>
+
+<!-- Application -->
+<section id="ecran-application" class="ecran">
+  <aside class="barre-laterale">
+    <div class="marque">Caisse<small id="nom-boutique"></small></div>
+    <nav class="navigation">
+      <button data-vue="vente" class="actif">Vente</button>
+      <button data-vue="articles">Articles</button>
+      <button data-vue="journal">Journal</button>
+      <button data-vue="reglages" data-admin>Reglages</button>
+    </nav>
+    <div class="pied-laterale">
+      <div class="nom" id="nom-utilisateur"></div>
+      <div class="role" id="role-utilisateur"></div>
+      <button class="bouton discret" id="bouton-deconnexion">Fermer la session</button>
+    </div>
+  </aside>
+
+  <div class="zone">
+    <header class="entete-zone">
+      <h2 id="titre-vue">Vente</h2>
+      <div id="actions-vue"></div>
+    </header>
+
+    <!-- Vente -->
+    <div id="vue-vente" class="vue actif">
+      <div class="colonne-catalogue">
+        <div class="recherche">
+          <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="resultats" id="resultats-articles"></div>
+      </div>
+
+      <div class="colonne-panier">
+        <div class="annonce" id="annonce" role="status" aria-live="polite"></div>
+        <div class="lignes-panier" id="lignes-panier"></div>
+        <div class="totaux">
+          <div class="ligne"><span>Sous-total</span><span class="montant" id="total-brut">0 F</span></div>
+          <div class="ligne">
+            <span>Remise globale</span>
+            <span><input type="number" id="remise-globale" class="champ-compact" min="0" max="100" step="1" value="0"> %</span>
+          </div>
+          <div class="ligne"><span>Dont TVA</span><span class="montant" id="total-tva">0 F</span></div>
+          <div class="ligne total"><span>Total</span><span class="montant" id="total-ttc">0 F</span></div>
+
+          <div class="modes" id="modes-paiement">
+            <button data-mode="especes" class="actif">Especes</button>
+            <button data-mode="mobile">Mobile money</button>
+            <button data-mode="carte">Carte</button>
+          </div>
+
+          <div class="encaissement" id="zone-especes">
+            <label>Montant recu<input type="number" id="montant-recu" min="0" step="5" placeholder="0"></label>
+            <div class="rendu">Monnaie a rendre<span class="montant" id="monnaie-rendue">0 F</span></div>
+          </div>
+
+          <button class="bouton grand pleine-largeur" id="bouton-encaisser" disabled>Encaisser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Articles -->
+    <div id="vue-articles" class="vue">
+      <div class="tableau-zone">
+        <table>
+          <thead>
+            <tr>
+              <th class="choix"></th>
+              <th>Reference</th><th>Code-barres</th><th>Designation</th>
+              <th class="nombre">Prix</th><th class="nombre">TVA</th>
+              <th class="nombre">Stock</th><th class="nombre">Seuil</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="corps-articles"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Journal -->
+    <div id="vue-journal" class="vue">
+      <div class="deux-colonnes">
+        <div>
+          <div class="panneau">
+            <h3>Ventes de la journee</h3>
+            <table>
+              <thead>
+                <tr><th>Numero</th><th>Heure</th><th>Caissier</th><th class="nombre">Total</th><th></th></tr>
+              </thead>
+              <tbody id="corps-journal"></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="panneau" id="panneau-cloture"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reglages -->
+    <div id="vue-reglages" class="vue">
+      <div class="deux-colonnes">
+        <div>
+          <form class="panneau" id="formulaire-boutique">
+            <h3>Identite de la boutique</h3>
+            <p class="message succes" id="message-boutique"></p>
+            <label>Nom<input type="text" name="boutique.nom" required></label>
+            <label>Adresse<input type="text" name="boutique.adresse"></label>
+            <label>Telephone<input type="text" name="boutique.telephone"></label>
+            <label>Numero de compte contribuable<input type="text" name="boutique.numeroContribuable"></label>
+            <label>Taux de TVA par defaut (%)
+              <input type="number" name="tva.taux_par_defaut" min="0" step="0.5" required>
+            </label>
+            <button type="submit" class="bouton">Enregistrer</button>
+          </form>
+        </div>
+        <div>
+          <div class="panneau">
+            <h3>Comptes</h3>
+            <table>
+              <thead><tr><th>Nom</th><th>Identifiant</th><th>Role</th><th></th></tr></thead>
+              <tbody id="corps-utilisateurs"></tbody>
+            </table>
+            <button class="bouton discret espace-haut" id="bouton-nouvel-utilisateur">
+              Ajouter un compte
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="voile" id="voile"><div class="boite" id="boite"></div></div>
+
+<script src="commun.js"></script>
+<script src="douchette.js"></script>
+<script src="vente.js"></script>
+<script src="articles.js"></script>
+<script src="journal.js"></script>
+<script src="reglages.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
