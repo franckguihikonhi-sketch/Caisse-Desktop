@@ -6,6 +6,8 @@ const panier = require('../metier/panier');
 const monnaie = require('../metier/monnaie');
 const ticket = require('../metier/ticket');
 const codeBarres = require('../metier/code-barres');
+const codeBarresImage = require('../metier/code-barres-image');
+const etiquettes = require('../metier/etiquettes');
 
 /**
  * Seul pont entre la page et l'application. Le rendu ne recoit ni require, ni
@@ -54,6 +56,11 @@ contextBridge.exposeInMainWorld('caisse', {
     imprimer: appeler('ticket:imprimer'),
     pdf: appeler('ticket:pdf'),
   },
+  etiquettes: {
+    formats: () => etiquettes.FORMATS,
+    imprimer: appeler('etiquettes:imprimer'),
+    pdf: appeler('etiquettes:pdf'),
+  },
   calcul: {
     panier: (lignes, options) => panier.calculer(lignes, options),
     formater: (montant) => monnaie.formater(montant),
@@ -61,5 +68,7 @@ contextBridge.exposeInMainWorld('caisse', {
     arrondirEspeces: (montant) => monnaie.arrondirEspeces(montant),
     ticket: (donnees) => ticket.construireTicket(donnees),
     verifierCodeBarres: (code) => codeBarres.verifier(code),
+    codeBarresEnSvg: (code, options) => codeBarresImage.enSvg(code, options),
+    codeBarresDessinable: (code) => codeBarresImage.estDessinable(code),
   },
 });

@@ -12,7 +12,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | Ecran | Ce qu'on y fait |
 | --- | --- |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, rendre la monnaie, imprimer le ticket |
-| **Articles** | Tenir le catalogue : reference, code-barres, designation, prix TTC, taux de TVA, stock, seuil d'alerte |
+| **Articles** | Tenir le catalogue : reference, code-barres, designation, prix TTC, taux de TVA, stock, seuil d'alerte ; imprimer les etiquettes |
 | **Journal** | Les ventes de la journee, le ticket de chacune, l'annulation d'une vente (le stock revient) |
 | **Cloture** | Le total du jour, ventile par mode de paiement et par taux de TVA |
 | **Reglages** | Identite de la boutique (elle figure sur le ticket) et comptes utilisateurs |
@@ -40,7 +40,7 @@ compte n'existe pas.
 ## Verifier
 
 ```sh
-npm test        # 46 tests : monnaie, panier, ticket, codes-barres, migrations, base
+npm test        # 66 tests : monnaie, panier, ticket, codes-barres, etiquettes, migrations, base
 npm run verifier # lance l'application, se connecte, encaisse une vente, capture l'ecran
 ```
 
@@ -53,14 +53,17 @@ l'application pour de vrai sur une base jetable et verifie qu'elle se lance,
 que le pont vers le rendu existe, que la connexion aboutit, qu'une lecture de
 douchette remplit le panier la ou une frappe humaine lente ne le fait pas, que
 le total et la monnaie s'affichent juste, que l'encaissement ecrit la vente et
-decompte le stock. Il ecrit `verification-caisse.png` et `verification-ticket.png`.
+decompte le stock, et qu'une planche d'etiquettes sort bien en PDF.
+
+Il ecrit `verification-caisse.png`, `verification-ticket.png` et
+`verification-etiquettes.png`.
 
 ## Comment c'est bati
 
 ```
 src/
   metier/     calcul pur, sans Electron ni base : monnaie, panier, ticket,
-              codes-barres, dates
+              codes-barres et leur trace, planches d'etiquettes, dates
   donnees/    schema SQLite, migrations et acces : articles, ventes, utilisateurs
   principal/  processus principal Electron : fenetre, canaux, impression, pont
   rendu/      l'interface, une page et quatre ecrans
@@ -121,6 +124,36 @@ longueur normalisee et sont acceptes tels quels — personne ne peut en verifier
 la cle.
 
 Le code-barres reste facultatif : tout ce qu'une boutique vend n'en porte pas.
+
+## Les etiquettes
+
+Choisissez des articles dans le catalogue, et la caisse en imprime les
+etiquettes : nom de la boutique, designation, code-barres et prix. Trois
+formats, ceux qu'on trouve en papeterie, avec leurs marges reelles — une
+etiquette se decolle d'une planche, et si la grille ne tombe pas juste, tout
+est decale.
+
+| Format | Grille |
+| --- | --- |
+| A4, 65 etiquettes | 38,1 x 21,2 mm, 5 colonnes sur 13 lignes |
+| A4, 24 etiquettes | 63,5 x 33,9 mm, 3 colonnes sur 8 lignes |
+| Rouleau | 40 x 30 mm, une par page |
+
+**Les barres sont dessinees ici**, sans bibliotheque : l'application est hors
+ligne et sa politique de securite du contenu interdit tout script exterieur.
+Un chiffre occupe sept modules, encadres par des marques de garde ; en EAN-13,
+le premier chiffre n'est pas dessine, il se lit dans l'alternance de parite des
+six suivants — c'est ce qui fait tenir treize chiffres dans la place de douze.
+
+Le code ne garde que la table L. La table R en est le complement, la table G le
+miroir de R : deux tables recopiees de moins, donc deux occasions de faute en
+moins. Un test compare les tables derivees a celles de la norme, un autre relit
+les barres avec un decodeur ecrit separement et verifie qu'il retrouve le code
+de depart sur des codes reellement imprimes sur des produits.
+
+Seuls les EAN-13, EAN-8 et UPC-A ont un trace normalise. Un article sans
+code-barres, ou porteur d'un code interne, ne peut pas etre etiquete : il est
+ecarte de la planche et signale, plutot que d'imprimer une etiquette illisible.
 
 ## Le ticket
 

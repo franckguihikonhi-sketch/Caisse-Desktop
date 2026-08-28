@@ -47,7 +47,7 @@ function creerFenetre() {
   fenetre.on('closed', () => { fenetre = null; });
 }
 
-function canauxTicket() {
+function canauxImpression() {
   const repondre = (nom, traitement) => {
     ipcMain.handle(nom, async (_evenement, argument) => {
       try {
@@ -63,6 +63,18 @@ function canauxTicket() {
     const vente = ventes.lire(bd, id);
     if (!vente) throw new Error('Vente introuvable.');
     return impression.imprimer(vente, boutique(bd));
+  });
+
+  repondre('etiquettes:imprimer', async (demande) =>
+    impression.imprimerEtiquettes({ ...demande, boutique: boutique(bd) }));
+
+  repondre('etiquettes:pdf', async (demande) => {
+    const dossier = path.join(app.getPath('documents'), 'Caisse', 'etiquettes');
+    const resultat = await impression.exporterEtiquettesPdf(
+      { ...demande, boutique: boutique(bd) }, dossier
+    );
+    shell.showItemInFolder(resultat.chemin);
+    return resultat;
   });
 
   repondre('ticket:pdf', async ({ id }) => {
@@ -88,7 +100,7 @@ app.whenReady().then(() => {
   }
 
   enregistrerCanaux(bd, session);
-  canauxTicket();
+  canauxImpression();
   creerFenetre();
 
   app.on('activate', () => {

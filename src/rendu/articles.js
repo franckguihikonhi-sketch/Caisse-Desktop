@@ -6,21 +6,47 @@
 
 const Articles = {
   liste: [],
+  // Articles coches pour l'impression d'etiquettes, par identifiant.
+  selection: new Set(),
 
   async activer() {
     const actions = $('#actions-vue');
     vider(actions);
+
+    this.boutonEtiquettes = creer('button', {
+      classe: 'bouton discret',
+      sur: { click: () => this.imprimerEtiquettes() },
+    });
+    actions.append(this.boutonEtiquettes);
+
     if (App.utilisateur.role === 'administrateur') {
       actions.append(creer('button', {
-        classe: 'bouton', texte: 'Nouvel article',
+        classe: 'bouton espace-gauche', texte: 'Nouvel article',
         sur: { click: () => this.editer(null) },
       }));
     }
     await this.charger();
   },
 
+  rafraichirBouton() {
+    const nombre = this.selection.size;
+    this.boutonEtiquettes.textContent = nombre === 0
+      ? 'Imprimer des etiquettes'
+      : 'Imprimer les etiquettes (' + nombre + ')';
+    this.boutonEtiquettes.disabled = nombre === 0;
+  },
+
+  basculer(article, coche) {
+    if (coche) this.selection.add(article.id);
+    else this.selection.delete(article.id);
+    this.rafraichirBouton();
+  },
+
   async charger() {
     this.liste = await appeler(window.caisse.articles.lister());
+    // Un article retire du catalogue ne doit pas rester coche.
+    const presents = new Set(this.liste.map((a) => a.id));
+    for (const id of [...this.selection]) if (!presents.has(id)) this.selection.delete(id);
     this.afficher();
   },
 
@@ -30,7 +56,7 @@ const Articles = {
 
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '8' } }),
+        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '9' } }),
       ]));
       return;
     }
@@ -39,7 +65,27 @@ const Articles = {
 
     for (const article of this.liste) {
       const bas = article.seuilAlerte > 0 && article.stock <= article.seuilAlerte;
+      const dessinable = article.codeBarres
+        ? window.caisse.calcul.codeBarresDessinable(article.codeBarres)
+        : false;
+
+      const case_ = creer('input', {
+        attributs: {
+          type: 'checkbox',
+          title: dessinable
+            ? 'Choisir pour l impression d etiquettes'
+            : "Cet article n'a pas de code-barres dessinable",
+        },
+        sur: { change: (e) => this.basculer(article, e.target.checked) },
+      });
+      case_.checked = this.selection.has(article.id);
+      if (!dessinable) {
+        case_.disabled = true;
+        this.selection.delete(article.id);
+      }
+
       const cellules = [
+        creer('td', { classe: 'choix' }, [case_]),
         creer('td', { texte: article.reference }),
         creer('td', { classe: 'code-barres', texte: article.codeBarres ?? '-' }),
         creer('td', { texte: article.designation }),
@@ -66,6 +112,7 @@ const Articles = {
 
       corps.append(creer('tr', { classe: bas ? 'stock-bas' : '' }, cellules));
     }
+    this.rafraichirBouton();
   },
 
   /**
@@ -144,6 +191,97 @@ const Articles = {
 
     if (donnees) await this.charger();
     return donnees;
+  },
+
+  /**
+   * Boite d'impression des etiquettes. L'apercu est dessine par la meme
+   * fonction que la planche : ce qui est montre est ce qui sortira.
+   */
+  async imprimerEtiquettes() {
+    const choisis = this.liste.filter((a) => this.selection.has(a.id));
+    if (choisis.length === 0) return;
+
+    const formats = window.caisse.etiquettes.formats();
+
+    await ouvrirBoite((fermer) => {
+      const format = creer('select', {}, Object.entries(formats).map(([cle, reglage]) =>
+        creer('option', { texte: reglage.intitule, attributs: { value: cle } })));
+
+      const nombre = creer('input', {
+        attributs: { type: 'number', min: '1', max: '200', step: '1', value: '1' },
+      });
+
+      const avecPrix = creer('input', { attributs: { type: 'checkbox' } });
+      avecPrix.checked = true;
+
+      const apercu = creer('div', { classe: 'apercu-etiquette' });
+      const message = creer('p', { classe: 'message' });
+
+      const redessiner = () => {
+        vider(apercu);
+        const svg = window.caisse.calcul.codeBarresEnSvg(choisis[0].codeBarres, { hauteurBarres: 40 });
+        // DOMParser plutot qu'innerHTML : rien d'injectable, et la politique
+        // de securite du contenu reste stricte.
+        const dessin = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+        apercu.append(
+          creer('div', { classe: 'apercu-designation', texte: choisis[0].designation }),
+          dessin
+        );
+        if (avecPrix.checked) {
+          apercu.append(creer('div', {
+            classe: 'apercu-prix', texte: formater(choisis[0].prixUnitaire),
+          }));
+        }
+      };
+
+      avecPrix.addEventListener('change', redessiner);
+
+      const demande = () => ({
+        articles: choisis.map((a) => ({
+          designation: a.designation,
+          prixUnitaire: a.prixUnitaire,
+          codeBarres: a.codeBarres,
+          quantite: Number(nombre.value) || 1,
+        })),
+        format: format.value,
+        avecPrix: avecPrix.checked,
+      });
+
+      const lancer = async (action, bouton) => {
+        bouton.disabled = true;
+        afficherMessage(message, '');
+        try {
+          const resultat = await appeler(window.caisse.etiquettes[action](demande()));
+          fermer(resultat);
+        } catch (erreur) {
+          afficherMessage(message, erreur.message);
+          bouton.disabled = false;
+        }
+      };
+
+      const imprimer = creer('button', { classe: 'bouton', texte: 'Imprimer' });
+      imprimer.addEventListener('click', () => lancer('imprimer', imprimer));
+      const pdf = creer('button', { classe: 'bouton discret', texte: 'PDF' });
+      pdf.addEventListener('click', () => lancer('pdf', pdf));
+
+      const boite = creer('div', {}, [
+        creer('h3', { texte: 'Etiquettes pour ' + choisis.length + ' article(s)' }),
+        message,
+        apercu,
+        creer('label', { texte: 'Format de planche' }, [format]),
+        creer('label', { texte: 'Exemplaires par article' }, [nombre]),
+        creer('label', { classe: 'case' }, [avecPrix, creer('span', { texte: 'Imprimer le prix' })]),
+        creer('div', { classe: 'actions' }, [
+          creer('button', {
+            classe: 'bouton discret', texte: 'Annuler', sur: { click: () => fermer(null) },
+          }),
+          pdf, imprimer,
+        ]),
+      ]);
+
+      redessiner();
+      return boite;
+    });
   },
 
   async retirer(article) {

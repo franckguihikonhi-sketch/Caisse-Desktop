@@ -27,6 +27,7 @@ const { ouvrir } = require('../src/donnees/base');
 const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const { enregistrerCanaux } = require('../src/principal/canaux');
+const impression = require('../src/principal/impression');
 
 const problemes = [];
 const etapes = [];
@@ -215,6 +216,71 @@ async function verifier() {
   if (stock !== 118) problemes.push('stock a ' + stock + ' au lieu de 118 apres la vente');
   else noter('stock decompte', '120 -> 118');
 
+  // --- Etiquettes ----------------------------------------------------------
+  // On ferme le ticket, puis on ouvre la boite d'etiquettes depuis le
+  // catalogue, comme le ferait la personne qui recoit une livraison.
+  await executer('document.querySelector("#voile .actions .bouton:last-child").click()');
+  await patienter(300);
+  await executer('document.querySelector(".navigation button[data-vue=articles]").click()');
+  await patienter(600);
+
+  const cochables = await executer(
+    'document.querySelectorAll("#corps-articles td.choix input:not(:disabled)").length'
+  );
+  if (cochables !== 1) {
+    problemes.push(
+      cochables + ' article(s) cochable(s) au lieu de 1 : seul celui a code-barres doit l etre'
+    );
+  } else {
+    noter('seul l article a code-barres est cochable');
+  }
+
+  await executer(`
+    const case_ = document.querySelector('#corps-articles td.choix input:not(:disabled)');
+    case_.checked = true;
+    case_.dispatchEvent(new Event('change'));
+    document.querySelector('#actions-vue .bouton').click();
+  `);
+  await patienter(600);
+
+  const apercu = await executer('document.querySelectorAll("#boite .apercu-etiquette svg rect").length');
+  if (apercu < 10) {
+    problemes.push("l apercu de l etiquette ne dessine pas de code-barres (" + apercu + ' rectangles)');
+  } else {
+    noter('apercu de l etiquette dessine', apercu + ' barres');
+  }
+  await capturer(fenetre, 'verification-etiquettes.png');
+  await executer('document.querySelector("#boite .actions .bouton").click()');
+  await patienter(300);
+
+  // La planche elle-meme : on produit le PDF et on verifie qu'il en est un.
+  const dossierEtiquettes = path.join(dossier, 'etiquettes');
+  const planche = await impression.exporterEtiquettesPdf({
+    articles: [
+      { designation: 'Pate a tartiner 400 g', prixUnitaire: 3500, codeBarres: '3017620422003', quantite: 12 },
+      { designation: 'Savon de Marseille', prixUnitaire: 325, codeBarres: null, quantite: 4 },
+    ],
+    boutique: { nom: 'Ma boutique' },
+    format: 'a4-65',
+    avecPrix: true,
+  }, dossierEtiquettes);
+
+  const pdf = fs.readFileSync(planche.chemin);
+  if (pdf.subarray(0, 5).toString() !== '%PDF-' || pdf.length < 5000) {
+    problemes.push('la planche d etiquettes ne produit pas un PDF exploitable');
+  } else {
+    noter(
+      'planche d etiquettes produite',
+      planche.nombreEtiquettes + ' etiquettes, ' + planche.nombrePages + ' page(s), ' +
+        Math.round(pdf.length / 1024) + ' Ko'
+    );
+  }
+  if (planche.ecartes.length !== 1 || planche.ecartes[0].motif !== 'pas de code-barres') {
+    problemes.push('l article sans code-barres aurait du etre ecarte et signale');
+  } else {
+    noter('article sans code-barres ecarte', planche.ecartes[0].designation);
+  }
+
   fenetre.destroy();
   bd.close();
   return ticket;
@@ -235,7 +301,7 @@ app.whenReady().then(async () => {
     console.log('\nPROBLEMES :\n' + problemes.map((p) => '  - ' + p).join('\n') + '\n');
     app.exit(1);
   } else {
-    console.log('\nDemarrage verifie : la caisse se lance, encaisse et imprime.\n');
+    console.log('\nDemarrage verifie : la caisse se lance, encaisse, imprime et etiquette.\n');
     app.exit(0);
   }
 });

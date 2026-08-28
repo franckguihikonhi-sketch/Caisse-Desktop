@@ -338,3 +338,26 @@ td .bouton { padding: 4px 10px; font-size: 12px; }
 .verdict.bon { color: var(--accent-clair); }
 .verdict.mauvais { color: #ffb4b6; }
 td.code-barres { font-variant-numeric: tabular-nums; color: var(--texte-doux); }
+
+/* Choix des articles a etiqueter, et apercu de l'etiquette. */
+th.choix, td.choix { width: 34px; text-align: center; }
+td.choix input { cursor: pointer; }
+td.choix input:disabled { cursor: not-allowed; opacity: 0.35; }
+
+.apercu-etiquette {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 12px;
+  background: #fdfdf7;
+  border-radius: 6px;
+  color: #1a1a1a;
+}
+
+.apercu-etiquette svg { width: 100%; max-width: 260px; height: auto; }
+.apercu-designation { font-weight: 700; font-size: 13px; }
+.apercu-prix { font-weight: 700; font-size: 15px; }
+label.case { display: flex; align-items: center; gap: 8px; }
+label.case input { width: auto; margin: 0; }
