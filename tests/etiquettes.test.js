@@ -7,7 +7,11 @@ const { FORMATS, construirePage, preparer } = require('../src/metier/etiquettes'
 const NUTELLA = { designation: 'Pate a tartiner', prixUnitaire: 3500, codeBarres: '3017620422003' };
 const COCA = { designation: 'Coca-Cola 33 cl', prixUnitaire: 500, codeBarres: '5449000000996' };
 const SANS_CODE = { designation: 'Savon', prixUnitaire: 325, codeBarres: null };
-const INTERNE = { designation: 'Vrac', prixUnitaire: 100, codeBarres: '12345' };
+const LIBRE = { designation: 'Vrac', prixUnitaire: 100, codeBarres: '12345' };
+const USAGE_INTERNE = {
+  designation: 'Beignets du matin', prixUnitaire: 100,
+  codeBarres: require('../src/metier/code-barres').construireCodeInterne(42),
+};
 
 test('chaque format tient dans sa page', () => {
   for (const [nom, f] of Object.entries(FORMATS)) {
@@ -33,12 +37,19 @@ test('chaque article donne autant d etiquettes qu on en demande', () => {
 
 test('ce qui ne se dessine pas est ecarte, avec son motif', () => {
   const { etiquettes, ecartes } = preparer([
-    { ...NUTELLA, quantite: 1 }, { ...SANS_CODE, quantite: 4 }, { ...INTERNE, quantite: 2 },
+    { ...NUTELLA, quantite: 1 }, { ...SANS_CODE, quantite: 4 }, { ...LIBRE, quantite: 2 },
   ]);
   assert.equal(etiquettes.length, 1);
   assert.deepEqual(ecartes.map((e) => e.motif), [
-    'pas de code-barres', 'code interne, sans trace normalise',
+    'pas de code-barres', 'code libre, sans trace normalise',
   ]);
+});
+
+test('un code d usage interne s imprime comme les autres', () => {
+  const page = construirePage({ articles: [{ ...USAGE_INTERNE, quantite: 2 }] });
+  assert.equal(page.nombreEtiquettes, 2);
+  assert.equal(page.ecartes.length, 0);
+  assert.equal(page.html.match(/<svg class="code-barres"/g).length, 2);
 });
 
 test('un nombre d exemplaires aberrant est refuse', () => {

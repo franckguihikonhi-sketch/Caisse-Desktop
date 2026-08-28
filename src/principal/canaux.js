@@ -70,6 +70,7 @@ function enregistrerCanaux(bd, session) {
   repondre('articles:creer', (article) => articles.creer(bd, article), admin);
   repondre('articles:modifier', ({ id, article }) => articles.modifier(bd, id, article), admin);
   repondre('articles:retirer', ({ id }) => articles.retirer(bd, id), admin);
+  repondre('articles:attribuerCodeInterne', () => articles.attribuerCodeInterne(bd), admin);
   repondre('articles:sousLeSeuil', () => articles.sousLeSeuil(bd));
 
   // --- Ventes ----------------------------------------------------------------

@@ -50,10 +50,11 @@ function encoder(code) {
 
   // Un UPC-A est un EAN-13 dont le premier chiffre est zero : memes barres.
   const type = verdict.type;
-  if (type === 'interne') {
+  if (type === 'libre') {
     throw new RangeError(
-      'Un code interne de ' + verdict.code.length + ' chiffres ne se dessine pas : ' +
-        'seuls les EAN-13, EAN-8 et UPC-A ont un trace normalise.'
+      'Un code libre de ' + verdict.code.length + ' chiffres ne se dessine pas : ' +
+        'seuls les EAN-13, EAN-8 et UPC-A ont un trace normalise. Attribuez a cet ' +
+        'article un code interne, qui est un EAN-13 en bonne et due forme.'
     );
   }
 
@@ -151,7 +152,7 @@ function enSvg(code, { hauteurBarres = 60, avecChiffres = true } = {}) {
 /** Dit si un code peut etre dessine, sans lever d'erreur. */
 function estDessinable(code) {
   const verdict = verifier(normaliser(code));
-  return verdict.valide && verdict.type !== 'interne';
+  return verdict.valide && verdict.type !== 'libre';
 }
 
 module.exports = { encoder, enSvg, estDessinable, L, G, R, ALTERNANCES };

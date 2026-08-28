@@ -127,6 +127,9 @@ const Articles = {
         return { entree, bloc: creer('label', { texte: etiquette }, [entree]) };
       };
 
+      // Declare avant les champs : le bouton d'attribution y ecrit ses erreurs.
+      const erreur = creer('p', { classe: 'message erreur' });
+
       const reference = champ('reference', 'Reference', { type: 'text', required: 'required', value: article?.reference ?? valeursParDefaut.reference ?? '' });
       const code = champ('codeBarres', 'Code-barres (facultatif)', {
         type: 'text', inputmode: 'numeric', autocomplete: 'off',
@@ -136,22 +139,54 @@ const Articles = {
       const verdictCode = creer('div', { classe: 'verdict' });
 
       // Retour immediat : une cle fausse se voit a la saisie, pas a l'envoi.
-      code.entree.addEventListener('input', () => {
+      const juger = () => {
         const saisie = code.entree.value.trim();
         if (saisie === '') return (verdictCode.textContent = '');
+
         const verdict = window.caisse.calcul.verifierCodeBarres(saisie);
-        verdictCode.textContent = verdict.valide
-          ? 'Code ' + verdict.type + ' valide.'
-          : verdict.motif;
-        verdictCode.className = 'verdict ' + (verdict.valide ? 'bon' : 'mauvais');
+        if (!verdict.valide) {
+          verdictCode.textContent = verdict.motif;
+          verdictCode.className = 'verdict mauvais';
+          return;
+        }
+        if (window.caisse.calcul.codeBarresUsageInterne(saisie)) {
+          verdictCode.textContent = "Code EAN-13 valide, reserve a l'usage interne du magasin.";
+        } else if (verdict.type === 'libre') {
+          verdictCode.textContent =
+            'Code libre : accepte pour la douchette, mais il ne peut pas etre imprime ' +
+            'en etiquette. Attribuez plutot un code interne.';
+        } else {
+          verdictCode.textContent = 'Code ' + verdict.type + ' valide.';
+        }
+        verdictCode.className = 'verdict bon';
+      };
+      code.entree.addEventListener('input', juger);
+
+      // Pour ce que la boutique etiquette elle-meme : un EAN-13 a prefixe
+      // reserve, qui ne rencontrera jamais le code d'un fabricant.
+      const attribuer = creer('button', {
+        classe: 'bouton discret menu-code', texte: 'Attribuer un code interne',
+        attributs: { type: 'button' },
+        sur: {
+          click: async (evenement) => {
+            evenement.target.disabled = true;
+            try {
+              const attribue = await appeler(window.caisse.articles.attribuerCodeInterne());
+              code.entree.value = attribue.code;
+              juger();
+            } catch (probleme) {
+              afficherMessage(erreur, probleme.message);
+            } finally {
+              evenement.target.disabled = false;
+            }
+          },
+        },
       });
       const designation = champ('designation', 'Designation', { type: 'text', required: 'required', value: article?.designation ?? '' });
       const prix = champ('prixUnitaire', 'Prix de vente TTC (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
       const stock = champ('stock', 'Stock', { type: 'number', step: '1', required: 'required', value: article?.stock ?? '0' });
       const seuil = champ('seuilAlerte', "Seuil d'alerte (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
-
-      const erreur = creer('p', { classe: 'message erreur' });
 
       const enregistrer = async () => {
         try {
@@ -176,7 +211,7 @@ const Articles = {
       const formulaire = creer('form', { sur: { submit: (e) => { e.preventDefault(); enregistrer(); } } }, [
         creer('h3', { texte: article ? 'Modifier ' + article.designation : 'Nouvel article' }),
         erreur,
-        reference.bloc, code.bloc, verdictCode, designation.bloc,
+        reference.bloc, code.bloc, attribuer, verdictCode, designation.bloc,
         prix.bloc, taux.bloc, stock.bloc, seuil.bloc,
         creer('div', { classe: 'actions' }, [
           creer('button', {

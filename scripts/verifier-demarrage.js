@@ -253,12 +253,45 @@ async function verifier() {
   await executer('document.querySelector("#boite .actions .bouton").click()');
   await patienter(300);
 
+  // Le parcours de la boutique qui etiquette elle-meme : ouvrir une fiche
+  // vierge, demander un code interne, verifier qu'il est imprimable.
+  // Le point-virgule et le null final sont indispensables : executeJavaScript
+  // attend la promesse qu'on lui rend, et celle d'une boite modale ne se
+  // resout qu'a sa fermeture — la verification resterait suspendue.
+  await executer('Articles.editer(null); null;');
+  await patienter(400);
+  await executer('document.querySelector("#boite .menu-code").click()');
+  await patienter(500);
+
+  const codeAttribue = await executer(
+    'document.querySelector("#boite input[name=codeBarres]").value'
+  );
+  const verdictAffiche = await executer('document.querySelector("#boite .verdict").textContent');
+
+  if (!/^2\d{12}$/.test(codeAttribue)) {
+    problemes.push('code interne attribue inattendu : « ' + codeAttribue + ' »');
+  } else if (!verdictAffiche.includes('usage interne')) {
+    problemes.push('le code attribue n est pas annonce comme reserve : « ' + verdictAffiche + ' »');
+  } else {
+    noter('code interne attribue depuis la fiche', codeAttribue);
+  }
+
+  const dessinable = await executer(
+    'window.caisse.calcul.codeBarresDessinable(' + JSON.stringify(codeAttribue) + ')'
+  );
+  if (!dessinable) problemes.push('le code interne attribue ne se dessine pas');
+  else noter('le code interne attribue est imprimable');
+
+  await executer('document.querySelector("#boite .actions .bouton").click()');
+  await patienter(300);
+
   // La planche elle-meme : on produit le PDF et on verifie qu'il en est un.
   const dossierEtiquettes = path.join(dossier, 'etiquettes');
   const planche = await impression.exporterEtiquettesPdf({
     articles: [
       { designation: 'Pate a tartiner 400 g', prixUnitaire: 3500, codeBarres: '3017620422003', quantite: 12 },
       { designation: 'Savon de Marseille', prixUnitaire: 325, codeBarres: null, quantite: 4 },
+      { designation: 'Beignets du matin', prixUnitaire: 100, codeBarres: codeAttribue, quantite: 6 },
     ],
     boutique: { nom: 'Ma boutique' },
     format: 'a4-65',
@@ -271,7 +304,8 @@ async function verifier() {
   } else {
     noter(
       'planche d etiquettes produite',
-      planche.nombreEtiquettes + ' etiquettes, ' + planche.nombrePages + ' page(s), ' +
+      planche.nombreEtiquettes + ' etiquettes dont 6 a code interne, ' +
+        planche.nombrePages + ' page(s), ' +
         Math.round(pdf.length / 1024) + ' Ko'
     );
   }

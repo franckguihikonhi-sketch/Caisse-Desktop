@@ -12,6 +12,8 @@ const PARAMETRES_PAR_DEFAUT = {
   'boutique.telephone': '',
   'boutique.numeroContribuable': '',
   'tva.taux_par_defaut': '18',
+  // Numero d'ordre du prochain code-barres d'usage interne a attribuer.
+  'codeBarres.prochain_interne': '1',
 };
 
 /**

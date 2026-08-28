@@ -72,6 +72,62 @@ test('deux articles ne peuvent pas porter le meme code-barres', () => {
   }), /deja porte par un autre article/);
 });
 
+test('les codes d usage interne s attribuent a la suite', () => {
+  const base = ouvrir(':memory:');
+  const premier = articles.attribuerCodeInterne(base);
+  const second = articles.attribuerCodeInterne(base);
+
+  assert.equal(premier.numero, 1);
+  assert.equal(second.numero, 2);
+  assert.notEqual(premier.code, second.code);
+  for (const attribue of [premier, second]) {
+    assert.ok(attribue.code.startsWith('2'));
+    assert.equal(attribue.code.length, 13);
+  }
+});
+
+test('un numero deja porte par un article est saute', () => {
+  const base = ouvrir(':memory:');
+  const codeBarres = require('../src/metier/code-barres');
+
+  // Catalogue repris d'ailleurs : le numero 3 est deja pris.
+  articles.creer(base, {
+    reference: 'repris', designation: 'Beignets', prixUnitaire: 100,
+    codeBarres: codeBarres.construireCodeInterne(3),
+  });
+
+  assert.equal(articles.attribuerCodeInterne(base).numero, 1);
+  assert.equal(articles.attribuerCodeInterne(base).numero, 2);
+  assert.equal(articles.attribuerCodeInterne(base).numero, 4, 'le 3 aurait du etre saute');
+});
+
+test('un code attribue s enregistre sans heurter la contrainte d unicite', () => {
+  const base = ouvrir(':memory:');
+  for (let i = 1; i <= 5; i += 1) {
+    const { code } = articles.attribuerCodeInterne(base);
+    articles.creer(base, {
+      reference: 'art-' + i, designation: 'Article ' + i, prixUnitaire: 100, codeBarres: code,
+    });
+  }
+  assert.equal(articles.lister(base).length, 5);
+  assert.equal(new Set(articles.lister(base).map((a) => a.codeBarres)).size, 5);
+});
+
+test('le compteur survit a la fermeture de la caisse', () => {
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'caisse-compteur-'));
+  const chemin = path.join(dossier, 'caisse.db');
+
+  const premiere = ouvrir(chemin);
+  articles.attribuerCodeInterne(premiere);
+  articles.attribuerCodeInterne(premiere);
+  premiere.close();
+
+  const seconde = ouvrir(chemin);
+  assert.equal(articles.attribuerCodeInterne(seconde).numero, 3);
+  seconde.close();
+  fs.rmSync(dossier, { recursive: true, force: true });
+});
+
 test('plusieurs articles peuvent n en porter aucun', () => {
   const base = ouvrir(':memory:');
   articles.creer(base, { reference: 'a', designation: 'Sans code 1', prixUnitaire: 100 });

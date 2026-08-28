@@ -8,11 +8,18 @@
  * ou la douchette est en panne et ou l'on saisit le code a la main : un chiffre
  * inverse ne tombe presque jamais juste.
  *
- * Une boutique emploie aussi des codes internes, pour ce qu'elle etiquette
- * elle-meme. Ceux-la n'ont pas de longueur normalisee et personne ne peut en
- * verifier la cle. La regle retenue : on refuse un code de 8, 12 ou 13
- * chiffres dont la cle est fausse, puisqu'il se donne pour un code du commerce
- * et n'en est pas un ; on accepte les autres longueurs comme codes internes.
+ * Une boutique rencontre aussi des codes libres : des suites de chiffres sans
+ * longueur normalisee, relevees a la main ou heritees d'un ancien logiciel.
+ * Personne ne peut en verifier la cle. La regle retenue : on refuse un code de
+ * 8, 12 ou 13 chiffres dont la cle est fausse, puisqu'il se donne pour un code
+ * du commerce et n'en est pas un ; on accepte les autres longueurs telles
+ * quelles, comme codes libres.
+ *
+ * Pour ce que la boutique etiquette elle-meme, il ne faut surtout pas d'un
+ * code libre : il ne se dessine pas. La norme reserve a l'usage interne des
+ * magasins les EAN-13 commençant par 2. Un code attribue ainsi est un EAN-13
+ * complet, cle comprise — donc imprimable et lisible par n'importe quelle
+ * douchette, sans jamais entrer en conflit avec le code d'un fabricant.
  */
 
 const LONGUEURS_NORMALISEES = { 8: 'EAN-8', 12: 'UPC-A', 13: 'EAN-13' };
@@ -43,10 +50,10 @@ function estNormalise(code) {
   return Boolean(LONGUEURS_NORMALISEES[c.length]);
 }
 
-/** Le type d'un code du commerce, ou 'interne' pour les autres longueurs. */
+/** Le type d'un code du commerce, ou 'libre' pour les autres longueurs. */
 function typeDe(code) {
   const c = normaliser(code);
-  return LONGUEURS_NORMALISEES[c.length] ?? 'interne';
+  return LONGUEURS_NORMALISEES[c.length] ?? 'libre';
 }
 
 /**
@@ -71,7 +78,7 @@ function verifier(code) {
   }
 
   const type = typeDe(c);
-  if (type !== 'interne') {
+  if (type !== 'libre') {
     const attendu = chiffreDeControle(c.slice(0, -1));
     if (Number(c.at(-1)) !== attendu) {
       return {
@@ -86,6 +93,34 @@ function verifier(code) {
   return { valide: true, code: c, type };
 }
 
+// La norme reserve aux magasins les EAN-13 commençant par ce chiffre.
+const PREFIXE_USAGE_INTERNE = '2';
+const LONGUEUR_EAN13 = 13;
+
+/**
+ * Fabrique le code d'usage interne portant ce numero d'ordre : le prefixe
+ * reserve, le numero cale a droite, et la cle qui va avec.
+ */
+function construireCodeInterne(numero) {
+  if (!Number.isInteger(numero) || numero < 1) {
+    throw new RangeError("Le numero d'ordre doit etre un entier positif.");
+  }
+  const placesLibres = LONGUEUR_EAN13 - 1 - PREFIXE_USAGE_INTERNE.length;
+  const corps = PREFIXE_USAGE_INTERNE + String(numero).padStart(placesLibres, '0');
+  if (corps.length > LONGUEUR_EAN13 - 1) {
+    throw new RangeError("Numero d'ordre trop grand pour un code interne.");
+  }
+  return completer(corps);
+}
+
+/** Dit si ce code est un EAN-13 reserve a l'usage interne du magasin. */
+function estUsageInterne(code) {
+  const c = normaliser(code);
+  return c.length === LONGUEUR_EAN13 &&
+    c.startsWith(PREFIXE_USAGE_INTERNE) &&
+    verifier(c).valide;
+}
+
 /** Complete un corps de code pour en faire un code valide. Sert aux tests et aux essais. */
 function completer(corps) {
   const c = normaliser(corps);
@@ -94,5 +129,6 @@ function completer(corps) {
 
 module.exports = {
   normaliser, chiffreDeControle, verifier, typeDe, estNormalise, completer,
-  LONGUEURS_NORMALISEES, LONGUEUR_MAXIMALE,
+  construireCodeInterne, estUsageInterne,
+  LONGUEURS_NORMALISEES, LONGUEUR_MAXIMALE, PREFIXE_USAGE_INTERNE,
 };

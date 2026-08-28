@@ -1,6 +1,7 @@
 'use strict';
 
 const codeBarres = require('../metier/code-barres');
+const { lireParametres, ecrireParametres } = require('./base');
 
 function normaliser(article) {
   const reference = String(article.reference ?? '').trim().toUpperCase();
@@ -103,6 +104,32 @@ function lireParReference(base, reference) {
   );
 }
 
+/**
+ * Attribue le prochain code-barres d'usage interne libre.
+ *
+ * Le compteur est range dans les parametres, mais on ne s'y fie pas seul : un
+ * catalogue repris d'ailleurs, ou un code saisi a la main, peut deja porter le
+ * numero suivant. On avance donc jusqu'a en trouver un que personne n'utilise,
+ * et l'on avance le compteur dans la meme transaction, pour que deux postes ne
+ * puissent pas se voir attribuer le meme.
+ */
+function attribuerCodeInterne(base) {
+  return base.transaction(() => {
+    const occupe = base.prepare('SELECT 1 FROM articles WHERE code_barres = ?');
+    let numero = Number(lireParametres(base)['codeBarres.prochain_interne'] ?? 1);
+    if (!Number.isInteger(numero) || numero < 1) numero = 1;
+
+    let code = codeBarres.construireCodeInterne(numero);
+    while (occupe.get(code)) {
+      numero += 1;
+      code = codeBarres.construireCodeInterne(numero);
+    }
+
+    ecrireParametres(base, { 'codeBarres.prochain_interne': numero + 1 });
+    return { code, numero };
+  })();
+}
+
 /** L'article qui porte ce code-barres, ou null. C'est ce que lit la douchette. */
 function lireParCodeBarres(base, code) {
   const c = codeBarres.normaliser(code);
@@ -139,5 +166,5 @@ function sousLeSeuil(base) {
 
 module.exports = {
   creer, modifier, retirer, lireParId, lireParReference, lireParCodeBarres,
-  chercher, lister, sousLeSeuil,
+  chercher, lister, sousLeSeuil, attribuerCodeInterne,
 };

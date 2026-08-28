@@ -67,7 +67,7 @@ function preparer(articles) {
       continue;
     }
     if (!estDessinable(article.codeBarres)) {
-      ecartes.push({ article, motif: 'code interne, sans trace normalise' });
+      ecartes.push({ article, motif: 'code libre, sans trace normalise' });
       continue;
     }
     for (let i = 0; i < nombre; i += 1) etiquettes.push(article);

@@ -55,10 +55,42 @@ test('les espaces et tirets des etiquettes sont ignores', () => {
   assert.equal(cb.verifier('3-017620-422003').code, NUTELLA);
 });
 
-test('un code interne passe, faute de cle a verifier', () => {
+test('un code libre passe, faute de cle a verifier', () => {
   const verdict = cb.verifier('12345');
   assert.equal(verdict.valide, true);
-  assert.equal(verdict.type, 'interne');
+  assert.equal(verdict.type, 'libre');
+});
+
+test('un code d usage interne est un EAN-13 complet, donc imprimable', () => {
+  for (const numero of [1, 7, 42, 1000, 99999]) {
+    const code = cb.construireCodeInterne(numero);
+    const verdict = cb.verifier(code);
+    assert.equal(verdict.valide, true, code);
+    assert.equal(verdict.type, 'EAN-13', code);
+    assert.equal(code.length, 13);
+    assert.ok(code.startsWith('2'), code + ' devrait porter le prefixe reserve');
+    assert.equal(cb.estUsageInterne(code), true);
+  }
+});
+
+test('deux numeros d ordre donnent deux codes differents', () => {
+  const codes = new Set();
+  for (let n = 1; n <= 500; n += 1) codes.add(cb.construireCodeInterne(n));
+  assert.equal(codes.size, 500);
+});
+
+test('le code d un fabricant n est pas un code d usage interne', () => {
+  assert.equal(cb.estUsageInterne('3017620422003'), false);
+  assert.equal(cb.estUsageInterne('5449000000996'), false);
+  // Un preteur de prefixe 2 dont la cle est fausse n'en est pas un non plus.
+  assert.equal(cb.estUsageInterne('2000000000016'), false);
+  assert.equal(cb.estUsageInterne('12345'), false);
+});
+
+test('un numero d ordre aberrant est refuse', () => {
+  assert.throws(() => cb.construireCodeInterne(0), /entier positif/);
+  assert.throws(() => cb.construireCodeInterne(-1), /entier positif/);
+  assert.throws(() => cb.construireCodeInterne(1.5), /entier positif/);
 });
 
 test('ce qui n est pas un code-barres est refuse', () => {

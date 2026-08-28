@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('caisse', {
     creer: appeler('articles:creer'),
     modifier: appeler('articles:modifier'),
     retirer: appeler('articles:retirer'),
+    attribuerCodeInterne: appeler('articles:attribuerCodeInterne'),
     sousLeSeuil: appeler('articles:sousLeSeuil'),
   },
   ventes: {
@@ -70,5 +71,6 @@ contextBridge.exposeInMainWorld('caisse', {
     verifierCodeBarres: (code) => codeBarres.verifier(code),
     codeBarresEnSvg: (code, options) => codeBarresImage.enSvg(code, options),
     codeBarresDessinable: (code) => codeBarresImage.estDessinable(code),
+    codeBarresUsageInterne: (code) => codeBarres.estUsageInterne(code),
   },
 });

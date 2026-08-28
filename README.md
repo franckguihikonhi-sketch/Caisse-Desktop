@@ -40,7 +40,7 @@ compte n'existe pas.
 ## Verifier
 
 ```sh
-npm test        # 66 tests : monnaie, panier, ticket, codes-barres, etiquettes, migrations, base
+npm test        # 75 tests : monnaie, panier, ticket, codes-barres, etiquettes, migrations, base
 npm run verifier # lance l'application, se connecte, encaisse une vente, capture l'ecran
 ```
 
@@ -119,9 +119,9 @@ main. Elle attrape toute inversion de deux chiffres voisins, a une exception
 pres, qui tient au calcul : quand les deux chiffres different exactement de 5,
 la somme ponderee ne bouge pas et la cle ne voit rien. Un test le verifie
 plutot que de l'affirmer.
-Les codes internes, ceux que la boutique etiquette elle-meme, n'ont pas de
-longueur normalisee et sont acceptes tels quels — personne ne peut en verifier
-la cle.
+Les codes libres, sans longueur normalisee, sont acceptes tels quels — personne
+ne peut en verifier la cle. Pour ce que la boutique etiquette elle-meme, mieux
+vaut un code d'usage interne : voir plus bas.
 
 Le code-barres reste facultatif : tout ce qu'une boutique vend n'en porte pas.
 
@@ -151,9 +151,25 @@ moins. Un test compare les tables derivees a celles de la norme, un autre relit
 les barres avec un decodeur ecrit separement et verifie qu'il retrouve le code
 de depart sur des codes reellement imprimes sur des produits.
 
-Seuls les EAN-13, EAN-8 et UPC-A ont un trace normalise. Un article sans
-code-barres, ou porteur d'un code interne, ne peut pas etre etiquete : il est
-ecarte de la planche et signale, plutot que d'imprimer une etiquette illisible.
+### Ce que la boutique etiquette elle-meme
+
+Les beignets du matin, le riz vendu au kilo, la marchandise sans emballage : il
+n'existe pour eux aucun code de fabricant. La norme reserve a ce cas les EAN-13
+commençant par **2**, dits d'usage interne. Le bouton *Attribuer un code
+interne*, dans la fiche d'un article, en pose un : la caisse tient un compteur
+et saute les numeros deja pris, y compris ceux d'un catalogue repris d'ailleurs.
+
+Un code ainsi attribue est un EAN-13 complet, cle comprise. Il s'imprime comme
+les autres et se lit avec n'importe quelle douchette, sans jamais rencontrer le
+code d'un fabricant.
+
+### Codes libres
+
+Une suite de chiffres sans longueur normalisee — relevee a la main, heritee
+d'un ancien logiciel — est acceptee pour la douchette, mais **ne se dessine
+pas** : aucune norme ne dit comment la tracer. Un tel article est ecarte de la
+planche et signale, plutot que d'imprimer une etiquette illisible. La fiche
+propose alors d'attribuer un code interne.
 
 ## Le ticket
 
