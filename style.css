@@ -1,0 +1,32 @@
+.body
+{
+    background: url('photo-1471864190281-a93a3070b6de.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+
+.container
+{ 
+   background:rgba(13, 40, 65,0.5);
+   margin-top:5rem;
+   padding: 4rem;
+   box-shadow: 3px 3px gray, -1em 0 .4em rgba(128, 128, 128, 0.562);   
+}
+.btn
+{
+    width: 150px;
+    height: 50px;
+    position: relative;
+     border-radius: 50px !important;
+      background:teal !important;
+
+}
+
+input ,select{
+    border-left:0 !important;
+    border-right:0 !important;
+    border-top:0 !important;
+border-radius: 0 !important;
+
+}

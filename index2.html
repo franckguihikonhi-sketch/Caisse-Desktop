@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="./bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="css/photon.css">
+<script src="bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="js/menu.js"></script>
+<title>first test</title>
+<html>
+    <style>
+        form
+        {
+            text-align: center;
+            border-radius: 10px;
+        }
+    input{border-left:0;
+        border-right:0;
+        border-top:0;
+        border-bottom-color: blue;
+    border-radius: 0;
+    margin-top:4rem;
+    padding: 10px;
+    }
+    input :active
+    {
+        border-bottom-color: greenyellow;
+    }
+    button 
+    {
+width:170px;
+padding: 3rem;
+margin-top:2rem;
+    }
+    </style>
+    <body>
+    <form class="form-group">
+      <span class="input-group-abdon">
+          <i class="input group-text"><i class="fa fa-user text-primary"></i></i>
+      </span>  <input type="text" class="" placeholder="nom">
+       <br>
+       <br>
+       <span class="input-group-abdon">
+            <i class="input group-text"><i class="fa fa-lock text-primary"></i></i>
+        </span> 
+        <input type="password" class="" placeholder="mot de passe">
+        <br>
+        <br>
+        <button type="submit" class="btn btn-primary btn-lg">connexion</button> 
+    </form>
+
+<script>
+const ipc = require('electron').ipcRenderer;
+const remote = require('electron').remote;
+
+// L’objet dialog n’est normalement pas accessible depuis les scripts de rendu.
+remote.dialog.showErrorBox('Erreur !', 'L\'application a rencontré une erreur. Votre ordinateur va s\'auto-détruire dans 10 secondes.')
+document.getElementById('ipc').addEventListener('click', () => {
+remote.dialog.showMessageBox(
+    {
+        type:'info',
+        title:'note d \'information',
+        message:'ceci est une note d\'information',
+        buttons:['d\'accord']
+
+    });
+});
+
+</script> 
+    </body>
+</html>
