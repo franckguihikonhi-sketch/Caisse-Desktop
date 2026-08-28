@@ -64,13 +64,14 @@
     <div id="vue-vente" class="vue actif">
       <div class="colonne-catalogue">
         <div class="recherche">
-          <input type="search" id="champ-recherche" placeholder="Rechercher un article (reference ou nom)"
+          <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
                  autocomplete="off" spellcheck="false">
         </div>
         <div class="resultats" id="resultats-articles"></div>
       </div>
 
       <div class="colonne-panier">
+        <div class="annonce" id="annonce" role="status" aria-live="polite"></div>
         <div class="lignes-panier" id="lignes-panier"></div>
         <div class="totaux">
           <div class="ligne"><span>Sous-total</span><span class="montant" id="total-brut">0 F</span></div>
@@ -103,7 +104,7 @@
         <table>
           <thead>
             <tr>
-              <th>Reference</th><th>Designation</th>
+              <th>Reference</th><th>Code-barres</th><th>Designation</th>
               <th class="nombre">Prix</th><th class="nombre">TVA</th>
               <th class="nombre">Stock</th><th class="nombre">Seuil</th><th></th>
             </tr>
@@ -170,6 +171,7 @@
 <div class="voile" id="voile"><div class="boite" id="boite"></div></div>
 
 <script src="commun.js"></script>
+<script src="douchette.js"></script>
 <script src="vente.js"></script>
 <script src="articles.js"></script>
 <script src="journal.js"></script>

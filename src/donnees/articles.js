@@ -1,5 +1,7 @@
 'use strict';
 
+const codeBarres = require('../metier/code-barres');
+
 function normaliser(article) {
   const reference = String(article.reference ?? '').trim().toUpperCase();
   const designation = String(article.designation ?? '').trim();
@@ -19,7 +21,15 @@ function normaliser(article) {
   const seuil = Number(article.seuilAlerte ?? 0);
   if (!Number.isInteger(seuil) || seuil < 0) throw new RangeError("Seuil d'alerte invalide.");
 
-  return { reference, designation, prix, taux, stock, seuil };
+  // Le code-barres est facultatif : tout ce qu'une boutique vend n'en porte pas.
+  let code = null;
+  if (codeBarres.normaliser(article.codeBarres) !== '') {
+    const verdict = codeBarres.verifier(article.codeBarres);
+    if (!verdict.valide) throw new RangeError(verdict.motif);
+    code = verdict.code;
+  }
+
+  return { reference, designation, prix, taux, stock, seuil, code };
 }
 
 function enLigne(l) {
@@ -31,6 +41,7 @@ function enLigne(l) {
     tauxTva: l.taux_tva,
     stock: l.stock,
     seuilAlerte: l.seuil_alerte,
+    codeBarres: l.code_barres,
     actif: Boolean(l.actif),
   };
 }
@@ -40,27 +51,38 @@ function creer(base, article) {
   try {
     const r = base
       .prepare(
-        'INSERT INTO articles (reference, designation, prix_unitaire, taux_tva, stock, seuil_alerte) ' +
-          'VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO articles (reference, designation, prix_unitaire, taux_tva, ' +
+          'stock, seuil_alerte, code_barres) VALUES (?, ?, ?, ?, ?, ?, ?)'
       )
-      .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil);
+      .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil, a.code);
     return lireParId(base, r.lastInsertRowid);
   } catch (erreur) {
-    if (String(erreur.message).includes('UNIQUE')) {
-      throw new RangeError('La reference ' + a.reference + ' existe deja.');
-    }
-    throw erreur;
+    throw traduireCollision(erreur, a);
   }
+}
+
+/** Rend l'erreur d'unicite lisible : le message doit dire ce qui est en double. */
+function traduireCollision(erreur, article) {
+  const message = String(erreur.message);
+  if (!message.includes('UNIQUE')) return erreur;
+  if (message.includes('code_barres')) {
+    return new RangeError('Le code-barres ' + article.code + ' est deja porte par un autre article.');
+  }
+  return new RangeError('La reference ' + article.reference + ' existe deja.');
 }
 
 function modifier(base, id, article) {
   const a = normaliser(article);
-  base
-    .prepare(
-      'UPDATE articles SET reference = ?, designation = ?, prix_unitaire = ?, ' +
-        'taux_tva = ?, stock = ?, seuil_alerte = ? WHERE id = ?'
-    )
-    .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil, id);
+  try {
+    base
+      .prepare(
+        'UPDATE articles SET reference = ?, designation = ?, prix_unitaire = ?, ' +
+          'taux_tva = ?, stock = ?, seuil_alerte = ?, code_barres = ? WHERE id = ?'
+      )
+      .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil, a.code, id);
+  } catch (erreur) {
+    throw traduireCollision(erreur, a);
+  }
   return lireParId(base, id);
 }
 
@@ -81,16 +103,25 @@ function lireParReference(base, reference) {
   );
 }
 
-/** Recherche par reference ou par designation, pour la barre de recherche de la caisse. */
+/** L'article qui porte ce code-barres, ou null. C'est ce que lit la douchette. */
+function lireParCodeBarres(base, code) {
+  const c = codeBarres.normaliser(code);
+  if (c === '') return null;
+  return enLigne(
+    base.prepare('SELECT * FROM articles WHERE code_barres = ? AND actif = 1').get(c)
+  );
+}
+
+/** Recherche par reference, designation ou code-barres, pour la barre de la caisse. */
 function chercher(base, texte, { inclureInactifs = false, limite = 50 } = {}) {
   const motif = '%' + String(texte ?? '').trim() + '%';
   const filtre = inclureInactifs ? '' : ' AND actif = 1';
   return base
     .prepare(
-      'SELECT * FROM articles WHERE (reference LIKE ? OR designation LIKE ?)' +
-        filtre + ' ORDER BY designation LIMIT ?'
+      'SELECT * FROM articles WHERE (reference LIKE ? OR designation LIKE ? ' +
+        'OR code_barres LIKE ?)' + filtre + ' ORDER BY designation LIMIT ?'
     )
-    .all(motif, motif, limite)
+    .all(motif, motif, motif, limite)
     .map(enLigne);
 }
 
@@ -107,5 +138,6 @@ function sousLeSeuil(base) {
 }
 
 module.exports = {
-  creer, modifier, retirer, lireParId, lireParReference, chercher, lister, sousLeSeuil,
+  creer, modifier, retirer, lireParId, lireParReference, lireParCodeBarres,
+  chercher, lister, sousLeSeuil,
 };

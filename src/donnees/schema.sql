@@ -1,5 +1,9 @@
--- Schema de la caisse. Tous les montants sont des entiers, en francs CFA :
--- la monnaie n'a pas de subdivision, et un entier ne derive pas comme un flottant.
+-- Forme d'origine des tables : c'est l'etape 1 des migrations, et elle ne
+-- bouge plus. Les changements de schema qui ont suivi sont dans migrations.js,
+-- si bien que le schema courant se lit ici PUIS la-bas.
+--
+-- Tous les montants sont des entiers, en francs CFA : la monnaie n'a pas de
+-- subdivision, et un entier ne derive pas comme un flottant.
 
 CREATE TABLE IF NOT EXISTS utilisateurs (
   id            INTEGER PRIMARY KEY,

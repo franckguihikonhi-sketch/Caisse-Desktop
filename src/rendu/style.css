@@ -313,3 +313,28 @@ td .bouton { padding: 4px 10px; font-size: 12px; }
 .etiquette-en-ligne input { margin: 0; padding: 6px 9px; background: var(--fond-champ); border: 1px solid var(--bord); border-radius: 6px; }
 
 .boite .actions .bouton { white-space: nowrap; }
+
+/* Annonce de la douchette : visible sans etre modale, elle s'efface seule. */
+.annonce {
+  max-height: 0;
+  padding: 0 16px;
+  overflow: hidden;
+  border-bottom: 1px solid transparent;
+  font-weight: 600;
+  transition: max-height 120ms ease, padding 120ms ease;
+}
+
+.annonce.visible {
+  max-height: 60px;
+  padding: 10px 16px;
+  border-bottom-color: var(--bord);
+}
+
+.annonce.succes { background: rgba(18, 165, 148, 0.18); color: #8fe3d8; }
+.annonce.erreur { background: rgba(229, 72, 77, 0.18); color: #ffb4b6; }
+.annonce.avertissement { background: rgba(245, 165, 36, 0.18); color: #ffd79a; }
+
+.verdict { margin: -8px 0 14px; font-size: 12px; min-height: 16px; }
+.verdict.bon { color: var(--accent-clair); }
+.verdict.mauvais { color: #ffb4b6; }
+td.code-barres { font-variant-numeric: tabular-nums; color: var(--texte-doux); }

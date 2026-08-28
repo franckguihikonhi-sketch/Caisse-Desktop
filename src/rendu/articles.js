@@ -30,7 +30,7 @@ const Articles = {
 
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '7' } }),
+        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '8' } }),
       ]));
       return;
     }
@@ -41,6 +41,7 @@ const Articles = {
       const bas = article.seuilAlerte > 0 && article.stock <= article.seuilAlerte;
       const cellules = [
         creer('td', { texte: article.reference }),
+        creer('td', { classe: 'code-barres', texte: article.codeBarres ?? '-' }),
         creer('td', { texte: article.designation }),
         creer('td', { classe: 'nombre montant', texte: formater(article.prixUnitaire) }),
         creer('td', { classe: 'nombre', texte: article.tauxTva + ' %' }),
@@ -67,14 +68,36 @@ const Articles = {
     }
   },
 
-  async editer(article) {
+  /**
+   * Ouvre la fiche d'un article, ou une fiche vierge. valeursParDefaut sert a
+   * la douchette : elle y depose le code lu pour qu'il soit deja rempli.
+   * Rend l'article enregistre, ou null si la saisie a ete abandonnee.
+   */
+  async editer(article, valeursParDefaut = {}) {
     const donnees = await ouvrirBoite((fermer) => {
       const champ = (nom, etiquette, attributs) => {
         const entree = creer('input', { attributs: { name: nom, ...attributs } });
         return { entree, bloc: creer('label', { texte: etiquette }, [entree]) };
       };
 
-      const reference = champ('reference', 'Reference', { type: 'text', required: 'required', value: article?.reference ?? '' });
+      const reference = champ('reference', 'Reference', { type: 'text', required: 'required', value: article?.reference ?? valeursParDefaut.reference ?? '' });
+      const code = champ('codeBarres', 'Code-barres (facultatif)', {
+        type: 'text', inputmode: 'numeric', autocomplete: 'off',
+        placeholder: 'a scanner ou a saisir',
+        value: article?.codeBarres ?? valeursParDefaut.codeBarres ?? '',
+      });
+      const verdictCode = creer('div', { classe: 'verdict' });
+
+      // Retour immediat : une cle fausse se voit a la saisie, pas a l'envoi.
+      code.entree.addEventListener('input', () => {
+        const saisie = code.entree.value.trim();
+        if (saisie === '') return (verdictCode.textContent = '');
+        const verdict = window.caisse.calcul.verifierCodeBarres(saisie);
+        verdictCode.textContent = verdict.valide
+          ? 'Code ' + verdict.type + ' valide.'
+          : verdict.motif;
+        verdictCode.className = 'verdict ' + (verdict.valide ? 'bon' : 'mauvais');
+      });
       const designation = champ('designation', 'Designation', { type: 'text', required: 'required', value: article?.designation ?? '' });
       const prix = champ('prixUnitaire', 'Prix de vente TTC (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
@@ -87,6 +110,7 @@ const Articles = {
         try {
           const saisie = {
             reference: reference.entree.value,
+            codeBarres: code.entree.value,
             designation: designation.entree.value,
             prixUnitaire: Number(prix.entree.value),
             tauxTva: Number(taux.entree.value),
@@ -105,7 +129,8 @@ const Articles = {
       const formulaire = creer('form', { sur: { submit: (e) => { e.preventDefault(); enregistrer(); } } }, [
         creer('h3', { texte: article ? 'Modifier ' + article.designation : 'Nouvel article' }),
         erreur,
-        reference.bloc, designation.bloc, prix.bloc, taux.bloc, stock.bloc, seuil.bloc,
+        reference.bloc, code.bloc, verdictCode, designation.bloc,
+        prix.bloc, taux.bloc, stock.bloc, seuil.bloc,
         creer('div', { classe: 'actions' }, [
           creer('button', {
             classe: 'bouton discret', texte: 'Annuler',
@@ -118,6 +143,7 @@ const Articles = {
     });
 
     if (donnees) await this.charger();
+    return donnees;
   },
 
   async retirer(article) {

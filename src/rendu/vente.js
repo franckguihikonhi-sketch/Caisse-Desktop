@@ -27,6 +27,12 @@ const Vente = {
       bouton.addEventListener('click', () => this.choisirMode(bouton.dataset.mode));
     }
 
+    Douchette.ecouter(
+      (code) => this.surCodeLu(code),
+      () => $('#vue-vente').classList.contains('actif') &&
+        !$('#voile').classList.contains('visible')
+    );
+
     document.addEventListener('keydown', (evenement) => {
       const enVente = $('#vue-vente').classList.contains('actif');
       if (!enVente || $('#voile').classList.contains('visible')) return;
@@ -76,7 +82,10 @@ const Vente = {
       }, [
         creer('div', {}, [
           creer('div', { classe: 'designation', texte: article.designation }),
-          creer('div', { classe: 'reference', texte: article.reference }),
+          creer('div', {
+            classe: 'reference',
+            texte: article.codeBarres ? article.reference + '  -  ' + article.codeBarres : article.reference,
+          }),
         ]),
         creer('div', {}, [
           creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) }),
@@ -89,12 +98,60 @@ const Vente = {
     }
   },
 
+  /**
+   * Un code lu par la douchette. L'article part directement au panier : c'est
+   * tout l'interet, le caissier n'a ni a chercher ni a viser.
+   */
+  async surCodeLu(code) {
+    $('#champ-recherche').value = '';
+
+    let article = null;
+    try {
+      article = await appeler(window.caisse.articles.parCodeBarres({ code }));
+    } catch (erreur) {
+      return annoncer(erreur.message, 'erreur');
+    }
+
+    if (article) {
+      this.ajouter(article);
+      await this.rechercher('');
+      return;
+    }
+
+    // Code inconnu : le caissier ne peut rien en faire, l'administrateur si.
+    if (App.utilisateur.role !== 'administrateur') {
+      return annoncer('Code-barres inconnu : ' + code, 'erreur');
+    }
+
+    const creer = await confirmer(
+      'Code-barres inconnu',
+      'Aucun article ne porte le code ' + code + '. Voulez-vous creer cet article ?',
+      "Creer l'article"
+    );
+    if (!creer) return;
+
+    const nouvel = await Articles.editer(null, { codeBarres: code });
+    if (nouvel) {
+      this.ajouter(nouvel);
+      await this.rechercher('');
+    }
+  },
+
   ajouter(article) {
     const ligne = this.panier.find((l) => l.reference === article.reference);
     if (ligne) {
-      if (ligne.quantite >= article.stock) return;
+      if (ligne.quantite >= article.stock) {
+        return annoncer(
+          article.designation + ' : tout le stock est deja au panier (' + article.stock + ').',
+          'avertissement'
+        );
+      }
       ligne.quantite += 1;
+      annoncer(article.designation + ' x ' + ligne.quantite);
     } else {
+      if (article.stock <= 0) {
+        return annoncer(article.designation + ' est en rupture de stock.', 'avertissement');
+      }
       this.panier.push({
         reference: article.reference,
         designation: article.designation,
@@ -104,6 +161,7 @@ const Vente = {
         remisePourcent: 0,
         stock: article.stock,
       });
+      annoncer(article.designation + '  ' + formater(article.prixUnitaire));
     }
     this.afficherPanier();
     this.afficherResultats();
@@ -154,7 +212,7 @@ const Vente = {
     vider(zone);
 
     if (this.panier.length === 0) {
-      zone.append(creer('p', { classe: 'vide', texte: 'Panier vide. Cherchez un article a gauche (F3).' }));
+      zone.append(creer('p', { classe: 'vide', texte: 'Panier vide. Scannez un article, ou cherchez-le a gauche (F3).' }));
     }
 
     for (const ligne of this.panier) {

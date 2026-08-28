@@ -89,6 +89,21 @@ function confirmer(titre, texte, libelle = 'Confirmer') {
   );
 }
 
+/**
+ * Annonce breve en haut de l'ecran de vente. Le caissier qui scanne regarde ses
+ * articles, pas l'ecran : il lui faut un retour qui s'impose et s'efface seul.
+ */
+let effacementAnnonce = null;
+
+function annoncer(texte, type = 'succes') {
+  const zone = $('#annonce');
+  if (!zone) return;
+  clearTimeout(effacementAnnonce);
+  zone.textContent = texte;
+  zone.className = 'annonce ' + type + ' visible';
+  effacementAnnonce = setTimeout(() => zone.classList.remove('visible'), 3500);
+}
+
 function heureDe(horodatage) {
   return String(horodatage).slice(11, 16);
 }

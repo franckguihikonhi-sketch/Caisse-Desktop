@@ -55,8 +55,12 @@ async function verifier() {
   articles.creer(bd, { reference: 'sav-01', designation: 'Savon de Marseille', prixUnitaire: 325, stock: 120, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'riz-05', designation: 'Riz parfume 5 kg', prixUnitaire: 4500, stock: 18, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'pain', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 60 });
+  articles.creer(bd, {
+    reference: 'nut-400', designation: 'Pate a tartiner 400 g', prixUnitaire: 3500,
+    stock: 12, seuilAlerte: 4, codeBarres: '3017620422003',
+  });
   enregistrerCanaux(bd, session);
-  noter('base ouverte et catalogue seme', '3 articles');
+  noter('base ouverte et catalogue seme', '4 articles, dont un a code-barres');
 
   const fenetre = new BrowserWindow({
     // Fenetre visible : une fenetre masquee ne repeint pas, et capturePage
@@ -114,13 +118,63 @@ async function verifier() {
   }
 
   const nombreArticles = await executer('document.querySelectorAll("#resultats-articles .article").length');
-  if (nombreArticles !== 3) {
-    problemes.push('le catalogue affiche ' + nombreArticles + ' articles au lieu de 3');
+  if (nombreArticles !== 4) {
+    problemes.push('le catalogue affiche ' + nombreArticles + ' articles au lieu de 4');
   } else {
     noter('catalogue affiche', nombreArticles + ' articles');
   }
 
+  // Une douchette tape ses chiffres en quelques millisecondes puis appuie sur
+  // Entree. On rejoue exactement cela, touches synthetiques comprises, pour
+  // verifier que la lecture est reconnue et que l'article part au panier.
   await executer(`
+    (async () => {
+      const frapper = (touche) => document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: touche, bubbles: true, cancelable: true })
+      );
+      for (const chiffre of '3017620422003') { frapper(chiffre); }
+      frapper('Enter');
+    })();
+  `);
+  await patienter(500);
+
+  const auPanier = await executer(
+    'document.querySelectorAll("#lignes-panier .ligne-panier .designation").length'
+  );
+  const annonce = await executer('document.querySelector("#annonce").textContent');
+  if (auPanier !== 1) {
+    problemes.push('la lecture du code-barres n a pas rempli le panier (' + auPanier + ' ligne(s))');
+  } else {
+    noter('code-barres lu et article ajoute', annonce.trim());
+  }
+
+  // Une saisie humaine, lente, ne doit surtout pas passer pour une lecture.
+  await executer('Vente.reinitialiser(); document.querySelector("#champ-recherche").value = "";');
+  await executer(`
+    (async () => {
+      const frapper = (touche) => document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: touche, bubbles: true, cancelable: true })
+      );
+      for (const chiffre of '3017620422003') {
+        frapper(chiffre);
+        await new Promise((r) => setTimeout(r, 60));
+      }
+      frapper('Enter');
+    })();
+  `);
+  await patienter(1400);
+
+  const apresSaisieLente = await executer(
+    'document.querySelectorAll("#lignes-panier .ligne-panier .designation").length'
+  );
+  if (apresSaisieLente !== 0) {
+    problemes.push('une frappe humaine lente a ete prise pour une lecture de douchette');
+  } else {
+    noter('frappe humaine lente ignoree par la douchette');
+  }
+
+  await executer(`
+    Vente.reinitialiser();
     Vente.ajouter({ reference: 'SAV-01', designation: 'Savon de Marseille', prixUnitaire: 325, tauxTva: 18, stock: 120, seuilAlerte: 20 });
     Vente.ajouter({ reference: 'SAV-01', designation: 'Savon de Marseille', prixUnitaire: 325, tauxTva: 18, stock: 120, seuilAlerte: 20 });
     Vente.ajouter({ reference: 'PAIN', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 60, seuilAlerte: 0 });

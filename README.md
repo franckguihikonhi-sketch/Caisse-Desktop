@@ -11,8 +11,8 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 
 | Ecran | Ce qu'on y fait |
 | --- | --- |
-| **Vente** | Chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, rendre la monnaie, imprimer le ticket |
-| **Articles** | Tenir le catalogue : reference, designation, prix TTC, taux de TVA, stock, seuil d'alerte |
+| **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, rendre la monnaie, imprimer le ticket |
+| **Articles** | Tenir le catalogue : reference, code-barres, designation, prix TTC, taux de TVA, stock, seuil d'alerte |
 | **Journal** | Les ventes de la journee, le ticket de chacune, l'annulation d'une vente (le stock revient) |
 | **Cloture** | Le total du jour, ventile par mode de paiement et par taux de TVA |
 | **Reglages** | Identite de la boutique (elle figure sur le ticket) et comptes utilisateurs |
@@ -40,7 +40,7 @@ compte n'existe pas.
 ## Verifier
 
 ```sh
-npm test        # 33 tests : monnaie, panier, ticket, base de donnees
+npm test        # 46 tests : monnaie, panier, ticket, codes-barres, migrations, base
 npm run verifier # lance l'application, se connecte, encaisse une vente, capture l'ecran
 ```
 
@@ -48,18 +48,20 @@ Les deux tournent aussi a chaque poussee et sur chaque demande de fusion
 (`.github/workflows/verification.yml`), et les captures y sont conservees en
 piece jointe.
 
-`npm test` couvre le calcul, sans Electron. `npm run verifier` demarre
+`npm test` couvre le calcul et la base, sans Electron. `npm run verifier` demarre
 l'application pour de vrai sur une base jetable et verifie qu'elle se lance,
-que le pont vers le rendu existe, que la connexion aboutit, que le total et la
-monnaie s'affichent juste, que l'encaissement ecrit la vente et decompte le
-stock. Il ecrit `verification-caisse.png` et `verification-ticket.png`.
+que le pont vers le rendu existe, que la connexion aboutit, qu'une lecture de
+douchette remplit le panier la ou une frappe humaine lente ne le fait pas, que
+le total et la monnaie s'affichent juste, que l'encaissement ecrit la vente et
+decompte le stock. Il ecrit `verification-caisse.png` et `verification-ticket.png`.
 
 ## Comment c'est bati
 
 ```
 src/
-  metier/     calcul pur, sans Electron ni base : monnaie, panier, ticket, dates
-  donnees/    schema SQLite et acces : articles, ventes, utilisateurs
+  metier/     calcul pur, sans Electron ni base : monnaie, panier, ticket,
+              codes-barres, dates
+  donnees/    schema SQLite, migrations et acces : articles, ventes, utilisateurs
   principal/  processus principal Electron : fenetre, canaux, impression, pont
   rendu/      l'interface, une page et quatre ecrans
 tests/        node:test, sans dependance
@@ -77,11 +79,48 @@ des references et des quantites. Prix, taux de TVA, stock et total sont relus
 et recalcules dans le processus principal. Une vente s'ecrit dans une seule
 transaction : elle est entiere ou elle n'existe pas.
 
+**La base se met a jour toute seule.** Le schema evolue par migrations
+numerotees (`src/donnees/migrations.js`), et la base retient dans
+`PRAGMA user_version` celle qu'elle a atteinte. Une caisse deja installee chez
+un commerçant rattrape les etapes qui lui manquent a l'ouverture, sans perdre
+ses ventes. Une migration publiee ne se modifie plus : un changement de schema
+est une migration de plus.
+
 **Le rendu n'a pas les cles.** `contextIsolation` est actif, `nodeIntegration`
 ne l'est pas : la page n'a ni `require`, ni acces au disque, ni `ipcRenderer`.
 Elle ne voit que les fonctions listees dans `src/principal/passerelle.js`.
 La session est tenue cote principal, une page ne peut pas se declarer
 administrateur.
+
+## La douchette
+
+Une douchette USB se presente au systeme comme un clavier : elle tape les
+chiffres du code puis appuie sur Entree. Rien ne la distingue d'un humain, sauf
+la vitesse — quelques millisecondes entre deux touches, la ou une main met des
+dixiemes de seconde. C'est ce seul critere qui separe une lecture d'une saisie.
+
+Il n'y a donc rien a installer ni a configurer : branchez la douchette, ouvrez
+l'ecran de vente, scannez. L'article part au panier sans que le curseur soit
+dans un champ, et une annonce confirme ce qui vient d'etre ajoute — le caissier
+regarde ses articles, pas l'ecran.
+
+Un code inconnu s'affiche tel quel. Si c'est l'administrateur qui scanne, la
+caisse propose de creer l'article, code-barres deja rempli : c'est le geste de
+la reception d'une livraison.
+
+**Les cles de controle sont verifiees.** EAN-13, EAN-8 et UPC-A portent un
+dernier chiffre calcule a partir des autres ; un code de cette longueur dont la
+cle est fausse est refuse, avec le chiffre attendu. C'est ce qui attrape la
+faute de frappe le jour ou la douchette est en panne et ou l'on saisit a la
+main. Elle attrape toute inversion de deux chiffres voisins, a une exception
+pres, qui tient au calcul : quand les deux chiffres different exactement de 5,
+la somme ponderee ne bouge pas et la cle ne voit rien. Un test le verifie
+plutot que de l'affirmer.
+Les codes internes, ceux que la boutique etiquette elle-meme, n'ont pas de
+longueur normalisee et sont acceptes tels quels — personne ne peut en verifier
+la cle.
+
+Le code-barres reste facultatif : tout ce qu'une boutique vend n'en porte pas.
 
 ## Le ticket
 
@@ -114,6 +153,7 @@ Monnaie rendue           1 150 F
 
 | Touche | Effet |
 | --- | --- |
+| *(scanner)* | Ajouter l'article lu au panier, ou qu'en soit le curseur |
 | `F3` | Revenir au champ de recherche |
 | `Entree` | Ajouter le premier article trouve |
 | `F2` | Encaisser |

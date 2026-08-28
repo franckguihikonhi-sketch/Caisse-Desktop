@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Database = require('better-sqlite3');
 
+const { migrer } = require('./migrations');
+
 const PARAMETRES_PAR_DEFAUT = {
   'boutique.nom': 'Ma boutique',
   'boutique.adresse': '',
@@ -13,8 +15,8 @@ const PARAMETRES_PAR_DEFAUT = {
 };
 
 /**
- * Ouvre la base et l'amene au schema courant. Passer ':memory:' donne une base
- * jetable, ce dont les tests se servent.
+ * Ouvre la base et lui applique les migrations qui lui manquent. Passer
+ * ':memory:' donne une base jetable, ce dont les tests se servent.
  */
 function ouvrir(chemin) {
   if (chemin !== ':memory:') {
@@ -24,8 +26,7 @@ function ouvrir(chemin) {
   base.pragma('journal_mode = WAL');
   base.pragma('foreign_keys = ON');
 
-  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-  base.exec(schema);
+  migrer(base);
 
   const poser = base.prepare(
     'INSERT INTO parametres (cle, valeur) VALUES (?, ?) ON CONFLICT (cle) DO NOTHING'

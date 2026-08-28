@@ -66,6 +66,7 @@ function enregistrerCanaux(bd, session) {
   // --- Articles --------------------------------------------------------------
   repondre('articles:lister', (options) => articles.lister(bd, options ?? {}));
   repondre('articles:chercher', ({ texte, options }) => articles.chercher(bd, texte, options));
+  repondre('articles:parCodeBarres', ({ code }) => articles.lireParCodeBarres(bd, code));
   repondre('articles:creer', (article) => articles.creer(bd, article), admin);
   repondre('articles:modifier', ({ id, article }) => articles.modifier(bd, id, article), admin);
   repondre('articles:retirer', ({ id }) => articles.retirer(bd, id), admin);

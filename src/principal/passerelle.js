@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 const panier = require('../metier/panier');
 const monnaie = require('../metier/monnaie');
 const ticket = require('../metier/ticket');
+const codeBarres = require('../metier/code-barres');
 
 /**
  * Seul pont entre la page et l'application. Le rendu ne recoit ni require, ni
@@ -26,6 +27,7 @@ contextBridge.exposeInMainWorld('caisse', {
   articles: {
     lister: appeler('articles:lister'),
     chercher: appeler('articles:chercher'),
+    parCodeBarres: appeler('articles:parCodeBarres'),
     creer: appeler('articles:creer'),
     modifier: appeler('articles:modifier'),
     retirer: appeler('articles:retirer'),
@@ -58,5 +60,6 @@ contextBridge.exposeInMainWorld('caisse', {
     rendreMonnaie: (du, recu) => monnaie.rendreMonnaie(du, recu),
     arrondirEspeces: (montant) => monnaie.arrondirEspeces(montant),
     ticket: (donnees) => ticket.construireTicket(donnees),
+    verifierCodeBarres: (code) => codeBarres.verifier(code),
   },
 });
