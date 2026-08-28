@@ -25,9 +25,13 @@ l'ecran masque les boutons inutiles, mais c'est le coeur qui refuse.
 ## Demarrer
 
 ```sh
-npm install     # installe Electron et recompile better-sqlite3 pour lui
+npm install
 npm start
 ```
+
+Aucune compilation native n'est necessaire : better-sqlite3 est livre en
+Node-API, dont l'ABI vaut aussi bien pour Node que pour Electron. Il n'y a donc
+ni node-gyp, ni Visual Studio Build Tools a installer sous Windows.
 
 A la premiere ouverture, la caisse demande de creer le compte administrateur.
 **Il n'y a pas de mot de passe par defaut** : rien n'est ouvert tant que ce
@@ -39,6 +43,10 @@ compte n'existe pas.
 npm test        # 33 tests : monnaie, panier, ticket, base de donnees
 npm run verifier # lance l'application, se connecte, encaisse une vente, capture l'ecran
 ```
+
+Les deux tournent aussi a chaque poussee et sur chaque demande de fusion
+(`.github/workflows/verification.yml`), et les captures y sont conservees en
+piece jointe.
 
 `npm test` couvre le calcul, sans Electron. `npm run verifier` demarre
 l'application pour de vrai sur une base jetable et verifie qu'elle se lance,

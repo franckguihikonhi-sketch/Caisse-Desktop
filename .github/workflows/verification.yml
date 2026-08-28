@@ -1,0 +1,60 @@
+# Verification automatique : les tests de calcul, puis un demarrage reel de
+# l'application. Le second compte autant que le premier : une caisse dont les
+# tests passent mais qui ne s'ouvre pas ne sert a rien.
+
+name: Verification
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verification:
+    name: Tests et demarrage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Le binaire Electron pese une centaine de megaoctets et ne change qu'avec
+      # le verrou de dependances : on le garde d'une execution a l'autre.
+      - name: Cache du binaire Electron
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron
+          key: electron-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-${{ runner.os }}-
+
+      - name: Installation
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Affichage virtuel
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends xvfb
+
+      # --no-sandbox : le bac a sable de Chromium demande des espaces de noms
+      # non privilegies, que l'image du coureur restreint.
+      - name: Demarrage de l'application
+        run: xvfb-run --auto-servernum npm run verifier -- --no-sandbox
+
+      - name: Captures d'ecran
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-verification
+          path: verification-*.png
+          if-no-files-found: ignore
+          retention-days: 14
