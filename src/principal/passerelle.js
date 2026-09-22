@@ -26,6 +26,15 @@ contextBridge.exposeInMainWorld('caisse', {
     connexion: appeler('session:connexion'),
     deconnexion: appeler('session:deconnexion'),
   },
+  tableauDeBord: {
+    lire: appeler('tableauDeBord:lire'),
+  },
+  caisseJournee: {
+    etat: appeler('caisse:etat'),
+    ouvrir: appeler('caisse:ouvrir'),
+    fermer: appeler('caisse:fermer'),
+    sessions: appeler('caisse:sessions'),
+  },
   articles: {
     lister: appeler('articles:lister'),
     chercher: appeler('articles:chercher'),
@@ -35,6 +44,28 @@ contextBridge.exposeInMainWorld('caisse', {
     retirer: appeler('articles:retirer'),
     attribuerCodeInterne: appeler('articles:attribuerCodeInterne'),
     sousLeSeuil: appeler('articles:sousLeSeuil'),
+  },
+  stock: {
+    mouvement: appeler('stock:mouvement'),
+    lister: appeler('stock:lister'),
+  },
+  clients: {
+    lister: appeler('clients:lister'),
+    creer: appeler('clients:creer'),
+    modifier: appeler('clients:modifier'),
+    retirer: appeler('clients:retirer'),
+    creances: appeler('clients:creances'),
+    creanceAnterieure: appeler('clients:creanceAnterieure'),
+    regler: appeler('clients:regler'),
+  },
+  fournisseurs: {
+    lister: appeler('fournisseurs:lister'),
+    creer: appeler('fournisseurs:creer'),
+    modifier: appeler('fournisseurs:modifier'),
+    retirer: appeler('fournisseurs:retirer'),
+    dettes: appeler('fournisseurs:dettes'),
+    detteAnterieure: appeler('fournisseurs:detteAnterieure'),
+    regler: appeler('fournisseurs:regler'),
   },
   ventes: {
     enregistrer: appeler('ventes:enregistrer'),

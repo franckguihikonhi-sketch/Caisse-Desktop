@@ -118,6 +118,14 @@ async function verifier() {
     noter('connexion aboutie', await executer('document.querySelector("#nom-utilisateur").textContent'));
   }
 
+  await executer(`
+    const ouverture = await window.caisse.caisseJournee.ouvrir({ fondOuverture: 0 });
+    if (!ouverture.ok) throw new Error(ouverture.erreur);
+    document.querySelector('.navigation button[data-vue=vente]').click();
+  `);
+  await patienter(700);
+  noter('caisse ouverte et ecran vente affiche');
+
   const nombreArticles = await executer('document.querySelectorAll("#resultats-articles .article").length');
   if (nombreArticles !== 4) {
     problemes.push('le catalogue affiche ' + nombreArticles + ' articles au lieu de 4');

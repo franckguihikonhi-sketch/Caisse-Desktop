@@ -99,7 +99,11 @@ const Articles = {
       if (admin) {
         actions.append(
           creer('button', {
-            classe: 'bouton discret', texte: 'Modifier',
+            classe: 'bouton discret', texte: 'Stock',
+            sur: { click: () => this.mouvementStock(article) },
+          }),
+          creer('button', {
+            classe: 'bouton discret espace-gauche', texte: 'Modifier',
             sur: { click: () => this.editer(article) },
           }),
           creer('button', {
@@ -185,7 +189,7 @@ const Articles = {
       const designation = champ('designation', 'Designation', { type: 'text', required: 'required', value: article?.designation ?? '' });
       const prix = champ('prixUnitaire', 'Prix de vente TTC (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
-      const stock = champ('stock', 'Stock', { type: 'number', step: '1', required: 'required', value: article?.stock ?? '0' });
+      const stock = champ('stock', 'Stock courant (correction journalisee)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.stock ?? '0' });
       const seuil = champ('seuilAlerte', "Seuil d'alerte (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
 
       const enregistrer = async () => {
@@ -226,6 +230,59 @@ const Articles = {
 
     if (donnees) await this.charger();
     return donnees;
+  },
+
+  async mouvementStock(article) {
+    const fournisseurs = await appeler(window.caisse.fournisseurs.lister()).catch(() => []);
+    const fait = await ouvrirBoite((fermer) => {
+      const type = creer('select', {}, [
+        creer('option', { texte: 'Entree en stock', attributs: { value: 'entree' } }),
+        creer('option', { texte: 'Sortie / casse / perte', attributs: { value: 'sortie' } }),
+        creer('option', { texte: 'Correction par ecart', attributs: { value: 'ajustement' } }),
+      ]);
+      const quantite = creer('input', { attributs: { type: 'number', step: '1', min: '1', required: 'required' } });
+      const motif = creer('input', { attributs: { type: 'text', placeholder: 'livraison, casse, inventaire...', required: 'required' } });
+      const reference = creer('input', { attributs: { type: 'text', placeholder: 'bon, facture...' } });
+      const fournisseur = creer('select', {}, [
+        creer('option', { texte: 'Aucun fournisseur', attributs: { value: '' } }),
+        ...fournisseurs.map((f) => creer('option', { texte: f.nom, attributs: { value: String(f.id) } })),
+      ]);
+      const aide = creer('p', { classe: 'aide', texte: 'Stock actuel : ' + article.stock + '. Pour une correction, saisissez un ecart positif ou negatif.' });
+      const erreur = creer('p', { classe: 'message erreur' });
+      type.addEventListener('change', () => {
+        quantite.min = type.value === 'ajustement' ? '' : '1';
+        aide.textContent = type.value === 'ajustement'
+          ? 'Stock actuel : ' + article.stock + '. Saisissez +5 ou -2 pour corriger l ecart.'
+          : 'Stock actuel : ' + article.stock + '. La quantite saisie sera ' + (type.value === 'entree' ? 'ajoutee.' : 'retiree.');
+      });
+      return creer('form', { sur: { submit: async (e) => {
+        e.preventDefault();
+        try {
+          fermer(await appeler(window.caisse.stock.mouvement({
+            articleId: article.id,
+            type: type.value,
+            quantite: Number(quantite.value),
+            motif: motif.value,
+            reference: reference.value,
+            fournisseurId: fournisseur.value ? Number(fournisseur.value) : null,
+          })));
+        } catch (probleme) { afficherMessage(erreur, probleme.message); }
+      } } }, [
+        creer('h3', { texte: 'Mouvement de stock - ' + article.designation }),
+        aide,
+        erreur,
+        creer('label', { texte: 'Operation' }, [type]),
+        creer('label', { texte: 'Quantite / ecart' }, [quantite]),
+        creer('label', { texte: 'Motif' }, [motif]),
+        creer('label', { texte: 'Reference document' }, [reference]),
+        creer('label', { texte: 'Fournisseur' }, [fournisseur]),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Enregistrer', attributs: { type: 'submit' } }),
+        ]),
+      ]);
+    });
+    if (fait) await this.charger();
   },
 
   /**

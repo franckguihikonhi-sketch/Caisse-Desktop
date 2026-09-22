@@ -11,10 +11,12 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 
 | Ecran | Ce qu'on y fait |
 | --- | --- |
-| **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, rendre la monnaie, imprimer le ticket |
-| **Articles** | Tenir le catalogue : reference, code-barres, designation, prix TTC, taux de TVA, stock, seuil d'alerte ; imprimer les etiquettes |
-| **Journal** | Les ventes de la journee, le ticket de chacune, l'annulation d'une vente (le stock revient) |
-| **Cloture** | Le total du jour, ventile par mode de paiement et par taux de TVA |
+| **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
+| **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
+| **Articles** | Tenir le catalogue : reference, code-barres, designation, prix TTC, taux de TVA, stock, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
+| **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
+| **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
+| **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, annuler une vente, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique (elle figure sur le ticket) et comptes utilisateurs |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
@@ -40,7 +42,7 @@ compte n'existe pas.
 ## Verifier
 
 ```sh
-npm test        # 75 tests : monnaie, panier, ticket, codes-barres, etiquettes, migrations, base
+npm test        # tests : monnaie, panier, ticket, codes-barres, etiquettes, migrations, base
 npm run verifier # lance l'application, se connecte, encaisse une vente, capture l'ecran
 ```
 
@@ -66,7 +68,7 @@ src/
               codes-barres et leur trace, planches d'etiquettes, dates
   donnees/    schema SQLite, migrations et acces : articles, ventes, utilisateurs
   principal/  processus principal Electron : fenetre, canaux, impression, pont
-  rendu/      l'interface, une page et quatre ecrans
+  rendu/      l'interface, une page et les ecrans metier
 tests/        node:test, sans dependance
 ```
 
@@ -88,6 +90,13 @@ numerotees (`src/donnees/migrations.js`), et la base retient dans
 un commerçant rattrape les etapes qui lui manquent a l'ouverture, sans perdre
 ses ventes. Une migration publiee ne se modifie plus : un changement de schema
 est une migration de plus.
+
+**La caisse est stricte.** Une vente lancee depuis l'interface exige une session
+de caisse ouverte. Les ventes a credit creent automatiquement une creance client
+et respectent le plafond de credit. Les creances ou dettes qui existaient avant
+l'application se saisissent separement pour demarrer avec des soldes justes.
+Chaque entree, sortie, retour ou correction de stock passe par le journal des
+mouvements : le stock ne peut jamais devenir negatif.
 
 **Le rendu n'a pas les cles.** `contextIsolation` est actif, `nodeIntegration`
 ne l'est pas : la page n'a ni `require`, ni acces au disque, ni `ipcRenderer`.

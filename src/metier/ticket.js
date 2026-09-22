@@ -42,6 +42,7 @@ const LIBELLES_PAIEMENT = {
   especes: 'Especes',
   mobile: 'Mobile money',
   carte: 'Carte bancaire',
+  credit: 'Vente a credit',
 };
 
 function construireTicket({ boutique, vente }) {
@@ -56,6 +57,7 @@ function construireTicket({ boutique, vente }) {
 
   pousser(justifier('Ticket', vente.numero));
   pousser(justifier(dateLisible(vente.date), vente.caissier));
+  if (vente.client) pousser(justifier('Client', vente.client.nom));
   pousser(separateur());
 
   for (const l of vente.panier.lignes) {

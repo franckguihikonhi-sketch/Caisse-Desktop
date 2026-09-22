@@ -6,6 +6,11 @@ const base = require('../donnees/base');
 const utilisateurs = require('../donnees/utilisateurs');
 const articles = require('../donnees/articles');
 const ventes = require('../donnees/ventes');
+const clients = require('../donnees/clients');
+const fournisseurs = require('../donnees/fournisseurs');
+const caisse = require('../donnees/caisse');
+const stocks = require('../donnees/stocks');
+const tableauDeBord = require('../donnees/tableau-de-bord');
 const { jour } = require('../metier/horodatage');
 
 /**
@@ -63,6 +68,13 @@ function enregistrerCanaux(bd, session) {
     return true;
   }, libre);
 
+  // --- Tableau de bord et caisse --------------------------------------------
+  repondre('tableauDeBord:lire', (options) => tableauDeBord.lire(bd, options ?? {}));
+  repondre('caisse:etat', () => caisse.etat(bd));
+  repondre('caisse:ouvrir', (donnees) => caisse.ouvrir(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
+  repondre('caisse:fermer', (donnees) => caisse.fermer(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
+  repondre('caisse:sessions', (options) => caisse.lister(bd, options ?? {}), admin);
+
   // --- Articles --------------------------------------------------------------
   repondre('articles:lister', (options) => articles.lister(bd, options ?? {}));
   repondre('articles:chercher', ({ texte, options }) => articles.chercher(bd, texte, options));
@@ -72,14 +84,40 @@ function enregistrerCanaux(bd, session) {
   repondre('articles:retirer', ({ id }) => articles.retirer(bd, id), admin);
   repondre('articles:attribuerCodeInterne', () => articles.attribuerCodeInterne(bd), admin);
   repondre('articles:sousLeSeuil', () => articles.sousLeSeuil(bd));
+  repondre('stock:mouvement', (demande) => stocks.mouvement(bd, { ...demande, utilisateurId: session.utilisateur.id }), admin);
+  repondre('stock:lister', (options) => stocks.lister(bd, options ?? {}));
+
+  // --- Clients et creances ---------------------------------------------------
+  repondre('clients:lister', (options) => clients.lister(bd, options ?? {}));
+  repondre('clients:creer', (donnees) => clients.creer(bd, donnees), admin);
+  repondre('clients:modifier', ({ id, client }) => clients.modifier(bd, id, client), admin);
+  repondre('clients:retirer', ({ id }) => clients.retirer(bd, id), admin);
+  repondre('clients:creances', (options) => clients.listerCreances(bd, options ?? {}));
+  repondre('clients:creanceAnterieure', (donnees) => clients.creerCreanceAnterieure(bd, donnees), admin);
+  repondre('clients:regler', (donnees) =>
+    clients.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
+
+  // --- Fournisseurs et dettes ------------------------------------------------
+  repondre('fournisseurs:lister', (options) => fournisseurs.lister(bd, options ?? {}));
+  repondre('fournisseurs:creer', (donnees) => fournisseurs.creer(bd, donnees), admin);
+  repondre('fournisseurs:modifier', ({ id, fournisseur }) => fournisseurs.modifier(bd, id, fournisseur), admin);
+  repondre('fournisseurs:retirer', ({ id }) => fournisseurs.retirer(bd, id), admin);
+  repondre('fournisseurs:dettes', (options) => fournisseurs.listerDettes(bd, options ?? {}));
+  repondre('fournisseurs:detteAnterieure', (donnees) => fournisseurs.creerDetteAnterieure(bd, donnees), admin);
+  repondre('fournisseurs:regler', (donnees) =>
+    fournisseurs.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
 
   // --- Ventes ----------------------------------------------------------------
   repondre('ventes:enregistrer', (commande) =>
-    ventes.lire(bd, ventes.enregistrer(bd, { ...commande, utilisateurId: session.utilisateur.id }).id));
+    ventes.lire(bd, ventes.enregistrer(bd, {
+      ...commande,
+      utilisateurId: session.utilisateur.id,
+      exigerCaisse: true,
+    }).id));
   repondre('ventes:lire', ({ id }) => ventes.lire(bd, id));
   repondre('ventes:journal', ({ jour: j } = {}) => ventes.journal(bd, j ?? jour()));
   repondre('ventes:cloture', ({ jour: j } = {}) => ventes.cloture(bd, j ?? jour()));
-  repondre('ventes:annuler', ({ id, motif }) => ventes.annuler(bd, id, motif), admin);
+  repondre('ventes:annuler', ({ id, motif }) => ventes.annuler(bd, id, motif, session.utilisateur.id), admin);
 
   // --- Utilisateurs ----------------------------------------------------------
   repondre('utilisateurs:lister', () => utilisateurs.lister(bd), admin);

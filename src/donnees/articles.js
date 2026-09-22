@@ -2,6 +2,7 @@
 
 const codeBarres = require('../metier/code-barres');
 const { lireParametres, ecrireParametres } = require('./base');
+const stocks = require('./stocks');
 
 function normaliser(article) {
   const reference = String(article.reference ?? '').trim().toUpperCase();
@@ -17,7 +18,9 @@ function normaliser(article) {
   if (!Number.isFinite(taux) || taux < 0) throw new RangeError('Taux de TVA invalide.');
 
   const stock = Number(article.stock ?? 0);
-  if (!Number.isInteger(stock)) throw new RangeError('Le stock doit etre un entier.');
+  if (!Number.isInteger(stock) || stock < 0) {
+    throw new RangeError('Le stock doit etre un entier positif ou nul.');
+  }
 
   const seuil = Number(article.seuilAlerte ?? 0);
   if (!Number.isInteger(seuil) || seuil < 0) throw new RangeError("Seuil d'alerte invalide.");
@@ -50,13 +53,24 @@ function enLigne(l) {
 function creer(base, article) {
   const a = normaliser(article);
   try {
-    const r = base
-      .prepare(
-        'INSERT INTO articles (reference, designation, prix_unitaire, taux_tva, ' +
-          'stock, seuil_alerte, code_barres) VALUES (?, ?, ?, ?, ?, ?, ?)'
-      )
-      .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil, a.code);
-    return lireParId(base, r.lastInsertRowid);
+    return base.transaction(() => {
+      const r = base
+        .prepare(
+          'INSERT INTO articles (reference, designation, prix_unitaire, taux_tva, ' +
+            'stock, seuil_alerte, code_barres) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )
+        // Le stock initial passe par le journal de stock pour garder la trace.
+        .run(a.reference, a.designation, a.prix, a.taux, 0, a.seuil, a.code);
+      if (a.stock > 0) {
+        stocks.mouvement(base, {
+          articleId: r.lastInsertRowid,
+          type: 'entree',
+          quantite: a.stock,
+          motif: 'Stock initial',
+        });
+      }
+      return lireParId(base, r.lastInsertRowid);
+    })();
   } catch (erreur) {
     throw traduireCollision(erreur, a);
   }
@@ -75,12 +89,19 @@ function traduireCollision(erreur, article) {
 function modifier(base, id, article) {
   const a = normaliser(article);
   try {
-    base
-      .prepare(
-        'UPDATE articles SET reference = ?, designation = ?, prix_unitaire = ?, ' +
-          'taux_tva = ?, stock = ?, seuil_alerte = ?, code_barres = ? WHERE id = ?'
-      )
-      .run(a.reference, a.designation, a.prix, a.taux, a.stock, a.seuil, a.code, id);
+    base.transaction(() => {
+      base
+        .prepare(
+          'UPDATE articles SET reference = ?, designation = ?, prix_unitaire = ?, ' +
+            'taux_tva = ?, seuil_alerte = ?, code_barres = ? WHERE id = ?'
+        )
+        .run(a.reference, a.designation, a.prix, a.taux, a.seuil, a.code, id);
+      stocks.fixerStock(base, {
+        articleId: id,
+        nouveauStock: a.stock,
+        motif: 'Correction depuis la fiche article',
+      });
+    })();
   } catch (erreur) {
     throw traduireCollision(erreur, a);
   }

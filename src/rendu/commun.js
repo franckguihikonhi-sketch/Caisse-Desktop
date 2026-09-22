@@ -108,4 +108,4 @@ function heureDe(horodatage) {
   return String(horodatage).slice(11, 16);
 }
 
-const LIBELLES_PAIEMENT = { especes: 'Especes', mobile: 'Mobile money', carte: 'Carte' };
+const LIBELLES_PAIEMENT = { especes: 'Especes', mobile: 'Mobile money', carte: 'Carte', credit: 'Credit client' };

@@ -3,9 +3,12 @@
 /* Point d'entree du rendu : etat de session, aiguillage entre les ecrans. */
 
 const VUES = {
+  tableauBord: { titre: 'Tableau de bord', module: () => TableauBord },
   vente: { titre: 'Vente', module: () => Vente },
   articles: { titre: 'Articles', module: () => Articles },
-  journal: { titre: 'Journal et cloture', module: () => Journal },
+  clients: { titre: 'Clients et credits', module: () => Clients },
+  fournisseurs: { titre: 'Fournisseurs', module: () => Fournisseurs },
+  journal: { titre: 'Caisse et journal', module: () => Journal },
   reglages: { titre: 'Reglages', module: () => Reglages },
 };
 
@@ -56,7 +59,7 @@ async function entrerDansApplication(utilisateur) {
 
   montrerEcran('application');
   Vente.reinitialiser();
-  await ouvrirVue('vente');
+  await ouvrirVue('tableauBord');
 }
 
 async function demarrer() {

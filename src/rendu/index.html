@@ -42,9 +42,12 @@
   <aside class="barre-laterale">
     <div class="marque">Caisse<small id="nom-boutique"></small></div>
     <nav class="navigation">
-      <button data-vue="vente" class="actif">Vente</button>
+      <button data-vue="tableauBord" class="actif">Tableau de bord</button>
+      <button data-vue="vente">Vente</button>
       <button data-vue="articles">Articles</button>
-      <button data-vue="journal">Journal</button>
+      <button data-vue="clients">Clients & credits</button>
+      <button data-vue="fournisseurs" data-admin>Fournisseurs</button>
+      <button data-vue="journal">Caisse</button>
       <button data-vue="reglages" data-admin>Reglages</button>
     </nav>
     <div class="pied-laterale">
@@ -60,8 +63,13 @@
       <div id="actions-vue"></div>
     </header>
 
+    <!-- Tableau de bord -->
+    <div id="vue-tableauBord" class="vue actif">
+      <div class="tableau-bord" id="contenu-tableau-bord"></div>
+    </div>
+
     <!-- Vente -->
-    <div id="vue-vente" class="vue actif">
+    <div id="vue-vente" class="vue">
       <div class="colonne-catalogue">
         <div class="recherche">
           <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
@@ -86,6 +94,15 @@
             <button data-mode="especes" class="actif">Especes</button>
             <button data-mode="mobile">Mobile money</button>
             <button data-mode="carte">Carte</button>
+            <button data-mode="credit">Credit client</button>
+          </div>
+
+          <div class="client-credit" id="bloc-client-credit" hidden>
+            <div>
+              <span class="libelle-doux">Client</span>
+              <strong id="client-credit-nom">Aucun client choisi</strong>
+            </div>
+            <button class="bouton discret" id="bouton-choisir-client" type="button">Choisir</button>
           </div>
 
           <div class="encaissement" id="zone-especes">
@@ -115,15 +132,56 @@
       </div>
     </div>
 
-    <!-- Journal -->
+    <!-- Clients -->
+    <div id="vue-clients" class="vue">
+      <div class="deux-colonnes gestion-tiers">
+        <div class="panneau">
+          <h3>Clients</h3>
+          <table>
+            <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">Solde</th><th></th></tr></thead>
+            <tbody id="corps-clients"></tbody>
+          </table>
+        </div>
+        <div class="panneau">
+          <h3>Creances clients</h3>
+          <table>
+            <thead><tr><th>Numero</th><th>Client</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+            <tbody id="corps-creances-clients"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fournisseurs -->
+    <div id="vue-fournisseurs" class="vue">
+      <div class="deux-colonnes gestion-tiers">
+        <div class="panneau">
+          <h3>Fournisseurs</h3>
+          <table>
+            <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">A payer</th><th></th></tr></thead>
+            <tbody id="corps-fournisseurs"></tbody>
+          </table>
+        </div>
+        <div class="panneau">
+          <h3>Dettes fournisseurs</h3>
+          <table>
+            <thead><tr><th>Numero</th><th>Fournisseur</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+            <tbody id="corps-dettes-fournisseurs"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caisse et journal -->
     <div id="vue-journal" class="vue">
       <div class="deux-colonnes">
         <div>
+          <div class="panneau" id="panneau-session-caisse"></div>
           <div class="panneau">
             <h3>Ventes de la journee</h3>
             <table>
               <thead>
-                <tr><th>Numero</th><th>Heure</th><th>Caissier</th><th class="nombre">Total</th><th></th></tr>
+                <tr><th>Numero</th><th>Heure</th><th>Caissier</th><th>Mode</th><th class="nombre">Total</th><th></th></tr>
               </thead>
               <tbody id="corps-journal"></tbody>
             </table>
@@ -173,8 +231,11 @@
 
 <script src="commun.js"></script>
 <script src="douchette.js"></script>
+<script src="tableau-bord.js"></script>
 <script src="vente.js"></script>
 <script src="articles.js"></script>
+<script src="clients.js"></script>
+<script src="fournisseurs.js"></script>
 <script src="journal.js"></script>
 <script src="reglages.js"></script>
 <script src="app.js"></script>

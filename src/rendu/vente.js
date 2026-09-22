@@ -7,6 +7,8 @@
 const Vente = {
   panier: [],
   mode: 'especes',
+  clientCredit: null,
+  caisseOuverte: false,
   articlesTrouves: [],
   totaux: null,
 
@@ -21,6 +23,7 @@ const Vente = {
 
     $('#remise-globale').addEventListener('input', () => this.rafraichirTotaux());
     $('#montant-recu').addEventListener('input', () => this.rafraichirRendu());
+    $('#bouton-choisir-client').addEventListener('click', () => this.choisirClientCredit());
     $('#bouton-encaisser').addEventListener('click', () => this.encaisser());
 
     for (const bouton of $$('#modes-paiement button')) {
@@ -49,8 +52,42 @@ const Vente = {
   },
 
   async activer() {
+    const actions = $('#actions-vue');
+    vider(actions);
+    await this.actualiserCaisse();
+    actions.append(creer('button', {
+      classe: this.caisseOuverte ? 'bouton discret' : 'bouton',
+      texte: this.caisseOuverte ? 'Caisse ouverte' : 'Ouvrir la caisse',
+      sur: { click: () => this.ouvrirCaisseRapide() },
+    }));
     $('#champ-recherche').focus();
     await this.rechercher('');
+  },
+
+  async actualiserCaisse() {
+    try {
+      const etat = await appeler(window.caisse.caisseJournee.etat());
+      this.caisseOuverte = Boolean(etat.ouverte);
+      this.rafraichirTotaux();
+      return etat;
+    } catch (_erreur) {
+      this.caisseOuverte = false;
+      return null;
+    }
+  },
+
+  async ouvrirCaisseRapide() {
+    const etat = await this.actualiserCaisse();
+    if (etat?.ouverte) {
+      annoncer('Caisse ouverte depuis ' + heureDe(etat.session.ouverteLe) + '.', 'succes');
+      return;
+    }
+    const ouverte = await Journal.ouvrirCaisse();
+    if (ouverte) {
+      await this.actualiserCaisse();
+      await this.activer();
+      annoncer('Caisse ouverte. Vous pouvez encaisser.', 'succes');
+    }
   },
 
   async rechercher(texte) {
@@ -260,9 +297,15 @@ const Vente = {
     $('#total-brut').textContent = formater(this.totaux?.totalBrut ?? 0);
     $('#total-tva').textContent = formater(this.totaux?.totalTva ?? 0);
     $('#total-ttc').textContent = formater(total);
-    $('#bouton-encaisser').disabled = this.panier.length === 0;
-    $('#bouton-encaisser').textContent =
-      this.panier.length === 0 ? 'Encaisser' : 'Encaisser ' + formater(total) + '  (F2)';
+    const manqueClient = this.mode === 'credit' && !this.clientCredit;
+    $('#bouton-encaisser').disabled = this.panier.length === 0 || !this.caisseOuverte || manqueClient;
+    $('#bouton-encaisser').textContent = this.panier.length === 0
+      ? 'Encaisser'
+      : !this.caisseOuverte
+        ? 'Ouvrir la caisse avant encaissement'
+        : manqueClient
+          ? 'Choisir le client credit'
+          : 'Encaisser ' + formater(total) + '  (F2)';
     this.rafraichirRendu();
   },
 
@@ -272,7 +315,19 @@ const Vente = {
       bouton.classList.toggle('actif', bouton.dataset.mode === mode);
     }
     $('#zone-especes').hidden = mode !== 'especes';
+    $('#bloc-client-credit').hidden = mode !== 'credit';
     if (mode === 'especes') $('#montant-recu').focus();
+    if (mode === 'credit' && !this.clientCredit) this.choisirClientCredit();
+    this.rafraichirTotaux();
+  },
+
+  async choisirClientCredit() {
+    const client = await Clients.choisir();
+    if (client) {
+      this.clientCredit = client;
+      $('#client-credit-nom').textContent = client.nom + ' - solde ' + formater(client.solde);
+      this.rafraichirTotaux();
+    }
   },
 
   rafraichirRendu() {
@@ -289,6 +344,20 @@ const Vente = {
 
   async encaisser() {
     if (this.panier.length === 0) return;
+    const etat = await this.actualiserCaisse();
+    if (!etat?.ouverte) {
+      const ouvrir = await confirmer(
+        'Caisse fermee',
+        "Ouvrez la caisse avant d'enregistrer une vente.",
+        'Ouvrir maintenant'
+      );
+      if (ouvrir) await this.ouvrirCaisseRapide();
+      return;
+    }
+    if (this.mode === 'credit' && !this.clientCredit) {
+      await this.choisirClientCredit();
+      if (!this.clientCredit) return;
+    }
     const bouton = $('#bouton-encaisser');
     bouton.disabled = true;
 
@@ -298,6 +367,7 @@ const Vente = {
           reference: l.reference, quantite: l.quantite, remisePourcent: l.remisePourcent,
         })),
         remiseGlobalePourcent: Number($('#remise-globale').value) || 0,
+        clientId: this.mode === 'credit' ? this.clientCredit.id : null,
         paiement: {
           mode: this.mode,
           montantRecu: this.mode === 'especes' ? Number($('#montant-recu').value) || undefined : undefined,
@@ -318,12 +388,20 @@ const Vente = {
         ])
       );
     } finally {
-      bouton.disabled = this.panier.length === 0;
+      this.rafraichirTotaux();
     }
   },
 
   reinitialiser() {
     this.panier = [];
+    this.clientCredit = null;
+    this.mode = 'especes';
+    for (const bouton of $$('#modes-paiement button')) {
+      bouton.classList.toggle('actif', bouton.dataset.mode === 'especes');
+    }
+    $('#bloc-client-credit').hidden = true;
+    $('#zone-especes').hidden = false;
+    $('#client-credit-nom').textContent = 'Aucun client choisi';
     $('#remise-globale').value = '0';
     $('#montant-recu').value = '';
     this.afficherPanier();
