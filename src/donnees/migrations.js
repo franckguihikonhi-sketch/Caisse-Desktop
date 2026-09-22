@@ -219,6 +219,58 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 5,
+    intitule: 'Achats marchandises et liaison stock',
+    appliquer(base) {
+      base.exec(`
+        CREATE TABLE IF NOT EXISTS achats (
+          id                 INTEGER PRIMARY KEY,
+          numero             TEXT    NOT NULL UNIQUE,
+          date_achat         TEXT    NOT NULL,
+          fournisseur_id     INTEGER NOT NULL REFERENCES fournisseurs (id),
+          utilisateur_id     INTEGER REFERENCES utilisateurs (id),
+          caisse_id          INTEGER REFERENCES sessions_caisse (id),
+          dette_id           INTEGER REFERENCES dettes_fournisseurs (id),
+          reference_document TEXT,
+          mode_reglement     TEXT    NOT NULL CHECK (mode_reglement IN ('especes', 'mobile', 'carte', 'credit')),
+          total_brut         INTEGER NOT NULL CHECK (total_brut >= 0),
+          total_ht           INTEGER NOT NULL CHECK (total_ht >= 0),
+          total_tva          INTEGER NOT NULL CHECK (total_tva >= 0),
+          total_ttc          INTEGER NOT NULL CHECK (total_ttc >= 0),
+          statut             TEXT    NOT NULL DEFAULT 'valide' CHECK (statut IN ('valide', 'annule')),
+          note               TEXT,
+          annule_le          TEXT,
+          motif_annulation   TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_achats_date ON achats (date_achat);
+        CREATE INDEX IF NOT EXISTS idx_achats_fournisseur ON achats (fournisseur_id, date_achat DESC);
+        CREATE INDEX IF NOT EXISTS idx_achats_dette ON achats (dette_id);
+
+        CREATE TABLE IF NOT EXISTS lignes_achat (
+          id                  INTEGER PRIMARY KEY,
+          achat_id            INTEGER NOT NULL REFERENCES achats (id) ON DELETE CASCADE,
+          article_id          INTEGER NOT NULL REFERENCES articles (id),
+          reference           TEXT    NOT NULL,
+          designation         TEXT    NOT NULL,
+          unite_achat         TEXT    NOT NULL CHECK (unite_achat IN ('piece', 'carton')),
+          facteur_stock       INTEGER NOT NULL CHECK (facteur_stock >= 1),
+          quantite            INTEGER NOT NULL CHECK (quantite > 0),
+          quantite_stock      INTEGER NOT NULL CHECK (quantite_stock > 0),
+          prix_achat_unitaire INTEGER NOT NULL CHECK (prix_achat_unitaire >= 0),
+          taux_tva            REAL    NOT NULL CHECK (taux_tva >= 0),
+          total_ttc           INTEGER NOT NULL CHECK (total_ttc >= 0)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lignes_achat_achat ON lignes_achat (achat_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_achat_article ON lignes_achat (article_id);
+
+        ALTER TABLE mouvements_stock ADD COLUMN achat_id INTEGER REFERENCES achats (id);
+        CREATE INDEX IF NOT EXISTS idx_mouvements_stock_achat ON mouvements_stock (achat_id);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

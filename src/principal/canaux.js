@@ -8,6 +8,7 @@ const articles = require('../donnees/articles');
 const ventes = require('../donnees/ventes');
 const clients = require('../donnees/clients');
 const fournisseurs = require('../donnees/fournisseurs');
+const achats = require('../donnees/achats');
 const caisse = require('../donnees/caisse');
 const stocks = require('../donnees/stocks');
 const tableauDeBord = require('../donnees/tableau-de-bord');
@@ -106,6 +107,13 @@ function enregistrerCanaux(bd, session) {
   repondre('fournisseurs:detteAnterieure', (donnees) => fournisseurs.creerDetteAnterieure(bd, donnees), admin);
   repondre('fournisseurs:regler', (donnees) =>
     fournisseurs.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
+
+  // --- Achats marchandises ---------------------------------------------------
+  repondre('achats:enregistrer', (donnees) =>
+    achats.enregistrer(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
+  repondre('achats:lister', (options) => achats.lister(bd, options ?? {}), admin);
+  repondre('achats:lire', ({ id }) => achats.lire(bd, id), admin);
+  repondre('achats:annuler', ({ id, motif }) => achats.annuler(bd, id, motif, session.utilisateur.id), admin);
 
   // --- Ventes ----------------------------------------------------------------
   repondre('ventes:enregistrer', (commande) =>

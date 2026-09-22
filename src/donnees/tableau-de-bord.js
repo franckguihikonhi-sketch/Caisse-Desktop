@@ -4,6 +4,7 @@ const { jour } = require('../metier/horodatage');
 const caisse = require('./caisse');
 const clients = require('./clients');
 const fournisseurs = require('./fournisseurs');
+const achats = require('./achats');
 const articles = require('./articles');
 
 function ventesDuJour(base, date = jour()) {
@@ -37,6 +38,7 @@ function lire(base, { date = jour() } = {}) {
     ventes: ventesDuJour(base, date),
     clients: clients.synthese(base),
     fournisseurs: fournisseurs.synthese(base),
+    achats: achats.synthese(base, { date }),
     stock: { alertes: stockBas, rupture },
     topArticles,
   };

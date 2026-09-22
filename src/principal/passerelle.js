@@ -67,6 +67,12 @@ contextBridge.exposeInMainWorld('caisse', {
     detteAnterieure: appeler('fournisseurs:detteAnterieure'),
     regler: appeler('fournisseurs:regler'),
   },
+  achats: {
+    enregistrer: appeler('achats:enregistrer'),
+    lister: appeler('achats:lister'),
+    lire: appeler('achats:lire'),
+    annuler: appeler('achats:annuler'),
+  },
   ventes: {
     enregistrer: appeler('ventes:enregistrer'),
     lire: appeler('ventes:lire'),

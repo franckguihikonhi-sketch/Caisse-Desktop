@@ -5,6 +5,7 @@
 const VUES = {
   tableauBord: { titre: 'Tableau de bord', module: () => TableauBord },
   vente: { titre: 'Vente', module: () => Vente },
+  achats: { titre: 'Achats marchandises', module: () => Achats },
   articles: { titre: 'Articles', module: () => Articles },
   clients: { titre: 'Clients et credits', module: () => Clients },
   fournisseurs: { titre: 'Fournisseurs', module: () => Fournisseurs },

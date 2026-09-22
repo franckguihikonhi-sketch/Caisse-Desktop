@@ -13,6 +13,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | --- | --- |
 | **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
+| **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement et creer la dette fournisseur |
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix piece et prix carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
@@ -93,14 +94,18 @@ est une migration de plus.
 
 **La caisse est stricte.** Une vente lancee depuis l'interface exige une session
 de caisse ouverte. Les ventes a credit creent automatiquement une creance client
-et respectent le plafond de credit. Les creances ou dettes qui existaient avant
-l'application se saisissent separement pour demarrer avec des soldes justes.
-Chaque entree, sortie, retour ou correction de stock passe par le journal des
-mouvements : le stock ne peut jamais devenir negatif. Le stock est tenu dans
-l'unite minimale, la **piece**. Un article peut aussi se vendre en **carton**
-(1 carton = N pieces, prix et code-barres carton possibles) : vendre 2 cartons
-de 50 pieces retire exactement 100 pieces, annuler la vente les remet, et une
-sortie carton est refusee s'il ne reste pas assez de pieces.
+et respectent le plafond de credit. Les achats de marchandise creent une dette
+fournisseur ; s'ils sont payes comptant, la caisse doit etre ouverte et le
+reglement fournisseur sort de la caisse. Les creances ou dettes qui existaient
+avant l'application se saisissent separement pour demarrer avec des soldes
+justes. Chaque entree, sortie, retour ou correction de stock passe par le
+journal des mouvements : le stock ne peut jamais devenir negatif. Le stock est
+tenu dans l'unite minimale, la **piece**. Un article peut aussi se vendre ou
+s'acheter en **carton** (1 carton = N pieces, prix et code-barres carton
+possibles) : vendre 2 cartons de 50 pieces retire exactement 100 pieces,
+acheter 2 cartons en ajoute exactement 100, annuler une vente ou un achat fait
+le mouvement inverse, et toute sortie carton est refusee s'il ne reste pas
+assez de pieces.
 
 **Le rendu n'a pas les cles.** `contextIsolation` est actif, `nodeIntegration`
 ne l'est pas : la page n'a ni `require`, ni acces au disque, ni `ipcRenderer`.

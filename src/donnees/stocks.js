@@ -81,14 +81,15 @@ function mouvement(base, demande) {
     base.prepare('UPDATE articles SET stock = ? WHERE id = ?').run(stockApres, article.id);
     const r = base.prepare(
       'INSERT INTO mouvements_stock (article_id, date_mouvement, type, quantite, stock_avant, stock_apres, ' +
-        'motif, reference, utilisateur_id, fournisseur_id, vente_id, unite_mouvement, facteur_stock, quantite_unites) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'motif, reference, utilisateur_id, fournisseur_id, vente_id, achat_id, unite_mouvement, facteur_stock, quantite_unites) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run(
       article.id, date, type, quantite, stockAvant, stockApres, motif,
       demande.reference ? String(demande.reference).trim() : null,
       demande.utilisateurId ?? null,
       demande.fournisseurId ?? null,
       demande.venteId ?? null,
+      demande.achatId ?? null,
       q.unite,
       q.facteur,
       type === 'ajustement' ? q.quantiteUnites : Math.abs(q.quantiteUnites)
@@ -163,6 +164,7 @@ function enLigne(l) {
     fournisseur: l.fournisseur,
     fournisseurId: l.fournisseur_id,
     venteId: l.vente_id,
+    achatId: l.achat_id,
   };
 }
 

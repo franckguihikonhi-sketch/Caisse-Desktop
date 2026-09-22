@@ -44,6 +44,7 @@
     <nav class="navigation">
       <button data-vue="tableauBord" class="actif">Tableau de bord</button>
       <button data-vue="vente">Vente</button>
+      <button data-vue="achats" data-admin>Achats</button>
       <button data-vue="articles">Articles</button>
       <button data-vue="clients">Clients & credits</button>
       <button data-vue="fournisseurs" data-admin>Fournisseurs</button>
@@ -111,6 +112,32 @@
           </div>
 
           <button class="bouton grand pleine-largeur" id="bouton-encaisser" disabled>Encaisser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achats -->
+    <div id="vue-achats" class="vue">
+      <div class="achats-page">
+        <div class="panneau achats-entete">
+          <div>
+            <span class="libelle-doux">Reception marchandise</span>
+            <h3>Achats fournisseurs lies au stock</h3>
+            <p class="aide">Chaque achat valide ajoute automatiquement les pieces ou cartons au stock et cree la dette fournisseur correspondante.</p>
+          </div>
+          <div class="resume-achats" id="resume-achats"></div>
+        </div>
+        <div class="panneau achats-historique">
+          <h3>Historique des achats</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Numero</th><th>Date</th><th>Fournisseur</th><th>Document</th><th>Reglement</th>
+                <th class="nombre">Total</th><th class="nombre">Dette</th><th>Statut</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="corps-achats"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -233,6 +260,7 @@
 <script src="douchette.js"></script>
 <script src="tableau-bord.js"></script>
 <script src="vente.js"></script>
+<script src="achats.js"></script>
 <script src="articles.js"></script>
 <script src="clients.js"></script>
 <script src="fournisseurs.js"></script>

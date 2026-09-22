@@ -35,6 +35,7 @@ const TableauBord = {
       carte('Caisse', etatCaisse, detailCaisse, d.caisse.ouverte ? 'succes' : 'alerte'),
       carte('Ventes du jour', formater(d.ventes.total), d.ventes.nombre + ' ticket(s)'),
       carte('Encaisse', formater(d.ventes.encaisse), 'Hors ventes a credit'),
+      carte('Achats du jour', formater(d.achats?.total ?? 0), (d.achats?.nombre ?? 0) + ' reception(s)'),
       carte('Credit clients', formater(d.clients.solde), d.clients.nombre + ' creance(s)'),
       carte('A payer fournisseurs', formater(d.fournisseurs.solde), d.fournisseurs.nombre + ' dette(s)'),
       carte('Stock en alerte', String(d.stock.alertes.length), d.stock.rupture + ' rupture(s)', d.stock.alertes.length ? 'warning' : ''),

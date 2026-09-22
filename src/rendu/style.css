@@ -586,3 +586,106 @@ input:focus, select:focus {
   border-color: var(--accent-clair);
   box-shadow: 0 0 0 3px rgba(23, 195, 178, 0.14);
 }
+
+/* --- Achats marchandises ------------------------------------------------- */
+#vue-achats { overflow-y: auto; }
+.achats-page {
+  flex: 1;
+  min-width: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.achats-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 18px;
+  border-left: 5px solid var(--or);
+}
+.achats-entete h3 { margin: 4px 0 6px; font-size: 22px; }
+.resume-achats {
+  min-width: 420px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+}
+.achat-stat {
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(255,209,102,0.12), rgba(18,165,148,0.08));
+}
+.achat-stat strong { display: block; margin: 5px 0 2px; font-size: 20px; }
+.achat-stat small { color: var(--texte-doux); }
+.achats-historique { overflow-x: auto; }
+.achats-historique table { min-width: 980px; }
+.formulaire-achat { min-width: min(920px, calc(100vw - 72px)); }
+.boite:has(.formulaire-achat), .boite:has(.details-achats) { width: min(980px, calc(100vw - 32px)); }
+.grille-formulaire {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ajout-ligne-achat {
+  margin: 12px 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(130px, 1fr) minmax(100px, 0.7fr) minmax(150px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 14px;
+  background: rgba(10, 22, 38, 0.52);
+}
+.ajout-ligne-achat label { margin: 0; }
+.lignes-achat-saisie {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.ligne-achat-saisie {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+}
+.ligne-achat-saisie span { display: block; color: var(--texte-doux); font-size: 12px; }
+.ligne-achat-saisie .retirer {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(229,72,77,0.14);
+  color: #ffb4b6;
+  cursor: pointer;
+}
+.total-achat-saisie {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(18,165,148,0.45);
+  border-radius: 12px;
+  background: rgba(18,165,148,0.10);
+  color: #9ff4ea;
+  font-weight: 800;
+}
+.details-achats-lignes {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.055);
+  border-radius: 12px;
+  background: rgba(10,22,38,0.45);
+}
+@media (max-width: 1180px) {
+  .achats-entete { flex-direction: column; }
+  .resume-achats { min-width: 0; }
+  .grille-formulaire { grid-template-columns: 1fr 1fr; }
+  .ajout-ligne-achat { grid-template-columns: 1fr 1fr; }
+}
