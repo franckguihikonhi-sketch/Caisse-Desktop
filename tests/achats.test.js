@@ -36,7 +36,10 @@ test('un achat fournisseur ajoute le stock et cree la dette exacte', () => {
 
   assert.match(achat.numero, /^ACH-20260922-/);
   assert.equal(achat.totalTtc, 13650);
-  assert.equal(articles.lireParReference(base, 'LAIT-12').stock, 27);
+  const articleAvecPrixAchat = articles.lireParReference(base, 'LAIT-12');
+  assert.equal(articleAvecPrixAchat.stock, 27);
+  assert.equal(articleAvecPrixAchat.prixAchatCarton, 6000);
+  assert.equal(articleAvecPrixAchat.prixAchatPiece, 550);
 
   const dette = fournisseurs.listerDettes(base, { fournisseurId: fournisseur.id })[0];
   assert.equal(dette.solde, 13650);
@@ -102,6 +105,8 @@ test('annuler un achat credit retire le stock et annule la dette si rien n a ete
 
   const annule = achats.annuler(base, achat.id, 'Erreur de saisie', admin.id);
   assert.equal(annule.statut, 'annule');
-  assert.equal(articles.lireParReference(base, 'SUCRE').stock, 0);
+  const sucre = articles.lireParReference(base, 'SUCRE');
+  assert.equal(sucre.stock, 0);
+  assert.equal(sucre.prixAchatPiece, null);
   assert.equal(fournisseurs.listerDettes(base, { fournisseurId: fournisseur.id, inclureReglees: true })[0].statut, 'annulee');
 });

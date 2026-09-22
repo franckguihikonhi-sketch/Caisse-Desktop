@@ -140,6 +140,7 @@ const Vente = {
             classe: 'prix-carton montant',
             texte: formater(prixUnite(article, 'carton')) + ' / carton',
           }) : creer('span'),
+          this.affichagePrixAchat(article),
           creer('div', {
             classe: 'stock' + (restant > 0 && restant <= article.seuilAlerte ? ' bas' : ''),
             texte: epuise ? 'epuise' : formaterStock(restant, article),
@@ -148,6 +149,20 @@ const Vente = {
         ]),
       ]));
     }
+  },
+
+  affichagePrixAchat(article) {
+    const lignes = [];
+    if (article.prixAchatPiece !== null && article.prixAchatPiece !== undefined) {
+      lignes.push(creer('div', { classe: 'prix-achat montant', texte: 'Prix achat : ' + formater(article.prixAchatPiece) + ' / piece' }));
+    }
+    if (piecesParCarton(article) > 1 && article.prixAchatCarton !== null && article.prixAchatCarton !== undefined) {
+      lignes.push(creer('div', { classe: 'prix-achat carton montant', texte: 'Prix achat carton : ' + formater(article.prixAchatCarton) + ' / carton' }));
+    }
+    if (lignes.length === 0) {
+      return creer('div', { classe: 'prix-achat indisponible', texte: 'Prix achat : non renseigne' });
+    }
+    return creer('div', { classe: 'prix-achats' }, lignes);
   },
 
   clePanier(reference, unite) {

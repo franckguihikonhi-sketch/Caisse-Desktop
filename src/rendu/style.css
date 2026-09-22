@@ -205,6 +205,10 @@ label > input, label > select { color: var(--texte); }
 .article .reference { color: var(--texte-doux); font-size: 12px; }
 .article .prix { font-weight: 700; }
 .article .prix-carton { color: var(--accent-clair); font-size: 12px; }
+.article .prix-achats { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.article .prix-achat { color: var(--or, #ffd166); font-size: 12px; font-weight: 700; }
+.article .prix-achat.carton { color: #ffe2a6; }
+.article .prix-achat.indisponible { color: var(--texte-doux); font-weight: 500; }
 .article .stock { color: var(--texte-doux); font-size: 12px; text-align: right; }
 .article-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .mini-action {

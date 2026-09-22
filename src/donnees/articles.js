@@ -82,6 +82,22 @@ function normaliser(article) {
   };
 }
 
+function sqlArticles(supplement = '') {
+  return 'SELECT articles.*, ' +
+    "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
+      "JOIN achats ON achats.id = lignes_achat.achat_id " +
+      "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'piece' " +
+        "AND achats.statut = 'valide' " +
+      "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1) AS prix_achat_piece, " +
+    "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
+      "JOIN achats ON achats.id = lignes_achat.achat_id " +
+      "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'carton' " +
+        "AND achats.statut = 'valide' " +
+      "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1) AS prix_achat_carton" +
+    (supplement ? ', ' + supplement : '') +
+    ' FROM articles ';
+}
+
 function enLigne(l, supplement = {}) {
   if (!l) return null;
   const article = {
@@ -96,6 +112,8 @@ function enLigne(l, supplement = {}) {
     codeBarresCarton: l.code_barres_carton,
     piecesParCarton: l.pieces_par_carton ?? 1,
     prixCarton: l.prix_carton,
+    prixAchatPiece: l.prix_achat_piece ?? null,
+    prixAchatCarton: l.prix_achat_carton ?? null,
     ventePiece: l.vente_piece === undefined ? true : Boolean(l.vente_piece),
     venteCarton: l.vente_carton === undefined ? false : Boolean(l.vente_carton),
     actif: Boolean(l.actif),
@@ -177,13 +195,13 @@ function retirer(base, id) {
 }
 
 function lireParId(base, id) {
-  return enLigne(base.prepare('SELECT * FROM articles WHERE id = ?').get(id));
+  return enLigne(base.prepare(sqlArticles('') + 'WHERE articles.id = ?').get(id));
 }
 
 function lireParReference(base, reference) {
   return enLigne(
     base
-      .prepare('SELECT * FROM articles WHERE reference = ? AND actif = 1')
+      .prepare(sqlArticles('') + 'WHERE articles.reference = ? AND articles.actif = 1')
       .get(String(reference ?? '').trim().toUpperCase())
   );
 }
@@ -219,8 +237,8 @@ function lireParCodeBarres(base, code) {
   const c = codeBarres.normaliser(code);
   if (c === '') return null;
   const ligne = base
-    .prepare('SELECT *, CASE WHEN code_barres_carton = ? THEN 1 ELSE 0 END AS lu_carton ' +
-      'FROM articles WHERE (code_barres = ? OR code_barres_carton = ?) AND actif = 1')
+    .prepare(sqlArticles('CASE WHEN articles.code_barres_carton = ? THEN 1 ELSE 0 END AS lu_carton') +
+      'WHERE (articles.code_barres = ? OR articles.code_barres_carton = ?) AND articles.actif = 1')
     .get(c, c, c);
   if (!ligne) return null;
   const unite = ligne.lu_carton ? 'carton' : 'piece';
@@ -236,24 +254,24 @@ function lireParCodeBarres(base, code) {
 /** Recherche par reference, designation ou code-barres, pour la barre de la caisse. */
 function chercher(base, texte, { inclureInactifs = false, limite = 50 } = {}) {
   const motif = '%' + String(texte ?? '').trim() + '%';
-  const filtre = inclureInactifs ? '' : ' AND actif = 1';
+  const filtre = inclureInactifs ? '' : ' AND articles.actif = 1';
   return base
     .prepare(
-      'SELECT * FROM articles WHERE (reference LIKE ? OR designation LIKE ? OR code_barres LIKE ? ' +
-        'OR code_barres_carton LIKE ?)' + filtre + ' ORDER BY designation LIMIT ?'
+      sqlArticles('') + 'WHERE (articles.reference LIKE ? OR articles.designation LIKE ? OR articles.code_barres LIKE ? ' +
+        'OR articles.code_barres_carton LIKE ?)' + filtre + ' ORDER BY articles.designation LIMIT ?'
     )
     .all(motif, motif, motif, motif, limite)
     .map(enLigne);
 }
 
 function lister(base, { inclureInactifs = false } = {}) {
-  const filtre = inclureInactifs ? '' : ' WHERE actif = 1';
-  return base.prepare('SELECT * FROM articles' + filtre + ' ORDER BY designation').all().map(enLigne);
+  const filtre = inclureInactifs ? '' : ' WHERE articles.actif = 1';
+  return base.prepare(sqlArticles('') + filtre + ' ORDER BY articles.designation').all().map(enLigne);
 }
 
 function sousLeSeuil(base) {
   return base
-    .prepare('SELECT * FROM articles WHERE actif = 1 AND seuil_alerte > 0 AND stock <= seuil_alerte ORDER BY stock')
+    .prepare(sqlArticles('') + 'WHERE articles.actif = 1 AND articles.seuil_alerte > 0 AND articles.stock <= articles.seuil_alerte ORDER BY articles.stock')
     .all()
     .map(enLigne);
 }
