@@ -114,6 +114,10 @@ function enregistrerCanaux(bd, session) {
   repondre('achats:lister', (options) => achats.lister(bd, options ?? {}), admin);
   repondre('achats:lire', ({ id }) => achats.lire(bd, id), admin);
   repondre('achats:annuler', ({ id, motif }) => achats.annuler(bd, id, motif, session.utilisateur.id), admin);
+  repondre('achats:retourner', (donnees) =>
+    achats.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
+  repondre('achats:retours', (options) => achats.listerRetours(bd, options ?? {}), admin);
+  repondre('achats:annulerRetour', ({ id, motif }) => achats.annulerRetour(bd, id, motif, session.utilisateur.id), admin);
 
   // --- Ventes ----------------------------------------------------------------
   repondre('ventes:enregistrer', (commande) =>

@@ -72,6 +72,9 @@ contextBridge.exposeInMainWorld('caisse', {
     lister: appeler('achats:lister'),
     lire: appeler('achats:lire'),
     annuler: appeler('achats:annuler'),
+    retourner: appeler('achats:retourner'),
+    retours: appeler('achats:retours'),
+    annulerRetour: appeler('achats:annulerRetour'),
   },
   ventes: {
     enregistrer: appeler('ventes:enregistrer'),

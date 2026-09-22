@@ -110,3 +110,114 @@ test('annuler un achat credit retire le stock et annule la dette si rien n a ete
   assert.equal(sucre.prixAchatPiece, null);
   assert.equal(fournisseurs.listerDettes(base, { fournisseurId: fournisseur.id, inclureReglees: true })[0].statut, 'annulee');
 });
+
+test('un retour fournisseur retire le stock et diminue la dette ouverte', () => {
+  const base = ouvrir(':memory:');
+  const admin = utilisateurs.creer(base, {
+    identifiant: 'admin', nom: 'Administrateur', role: 'administrateur', motDePasse: 'secret123',
+  });
+  const fournisseur = fournisseurs.creer(base, { nom: 'Retour Grossiste' });
+  const article = articles.creer(base, {
+    reference: 'BISC-12', designation: 'Biscuits carton', prixUnitaire: 700,
+    piecesParCarton: 12, prixCarton: 7800, stock: 0,
+  });
+
+  const achat = achats.enregistrer(base, {
+    fournisseurId: fournisseur.id,
+    dateAchat: '2026-09-22',
+    modeReglement: 'credit',
+    utilisateurId: admin.id,
+    lignes: [
+      { articleId: article.id, uniteAchat: 'carton', quantite: 2, prixAchatUnitaire: 6000 },
+      { articleId: article.id, uniteAchat: 'piece', quantite: 3, prixAchatUnitaire: 550 },
+    ],
+  });
+  assert.equal(articles.lireParReference(base, 'BISC-12').stock, 27);
+
+  const retour = achats.retourner(base, {
+    achatId: achat.id,
+    dateRetour: '2026-09-23',
+    referenceDocument: 'AV-15',
+    utilisateurId: admin.id,
+    lignes: [{ ligneAchatId: achat.lignes[0].id, quantite: 1 }],
+  });
+
+  assert.match(retour.numero, /^RF-20260923-/);
+  assert.equal(retour.totalTtc, 6000);
+  assert.equal(retour.montantDeduitDette, 6000);
+  assert.equal(retour.montantAvoir, 0);
+  assert.equal(articles.lireParReference(base, 'BISC-12').stock, 15);
+  assert.equal(fournisseurs.lireDette(base, achat.detteId).solde, 7650);
+
+  const relu = achats.lire(base, achat.id);
+  assert.equal(relu.totalRetours, 6000);
+  assert.equal(relu.montantNet, 7650);
+  assert.equal(relu.lignes[0].quantiteRetournee, 1);
+  assert.equal(relu.lignes[0].quantiteRetourable, 1);
+  assert.equal(relu.retours.length, 1);
+  assert.throws(() => achats.retourner(base, {
+    achatId: achat.id,
+    utilisateurId: admin.id,
+    lignes: [{ ligneAchatId: achat.lignes[0].id, quantite: 2 }],
+  }), /Retour trop eleve/);
+
+  const mouvement = stocks.lister(base, { articleId: article.id, limite: 1 })[0];
+  assert.equal(mouvement.type, 'sortie');
+  assert.equal(mouvement.retourFournisseurId, retour.id);
+});
+
+test('un retour fournisseur deja paye garde un avoir trace sans toucher la caisse', () => {
+  const base = ouvrir(':memory:');
+  const admin = utilisateurs.creer(base, {
+    identifiant: 'admin', nom: 'Administrateur', role: 'administrateur', motDePasse: 'secret123',
+  });
+  const fournisseur = fournisseurs.creer(base, { nom: 'Fournisseur Cash' });
+  const article = articles.creer(base, { reference: 'THE', designation: 'The', prixUnitaire: 1200, stock: 0 });
+  caisse.ouvrir(base, { fondOuverture: 10000, utilisateurId: admin.id });
+  const achat = achats.enregistrer(base, {
+    fournisseurId: fournisseur.id,
+    modeReglement: 'especes',
+    utilisateurId: admin.id,
+    lignes: [{ articleId: article.id, quantite: 5, prixAchatUnitaire: 800 }],
+  });
+
+  const retour = achats.retourner(base, {
+    achatId: achat.id,
+    utilisateurId: admin.id,
+    lignes: [{ ligneAchatId: achat.lignes[0].id, quantite: 2 }],
+  });
+
+  assert.equal(articles.lireParReference(base, 'THE').stock, 3);
+  assert.equal(retour.montantDeduitDette, 0);
+  assert.equal(retour.montantAvoir, 1600);
+  assert.equal(fournisseurs.lireDette(base, achat.detteId).statut, 'reglee');
+  assert.equal(caisse.etat(base).resume.totalTheorique, 6000);
+});
+
+test('annuler un retour fournisseur restaure le stock et la dette', () => {
+  const base = ouvrir(':memory:');
+  const admin = utilisateurs.creer(base, {
+    identifiant: 'admin', nom: 'Administrateur', role: 'administrateur', motDePasse: 'secret123',
+  });
+  const fournisseur = fournisseurs.creer(base, { nom: 'Retour Annulable' });
+  const article = articles.creer(base, { reference: 'CAFE', designation: 'Cafe', prixUnitaire: 1000, stock: 0 });
+  const achat = achats.enregistrer(base, {
+    fournisseurId: fournisseur.id,
+    modeReglement: 'credit',
+    utilisateurId: admin.id,
+    lignes: [{ articleId: article.id, quantite: 4, prixAchatUnitaire: 700 }],
+  });
+  const retour = achats.retourner(base, {
+    achatId: achat.id,
+    utilisateurId: admin.id,
+    lignes: [{ ligneAchatId: achat.lignes[0].id, quantite: 2 }],
+  });
+  assert.equal(articles.lireParReference(base, 'CAFE').stock, 2);
+  assert.equal(fournisseurs.lireDette(base, achat.detteId).solde, 1400);
+
+  const annule = achats.annulerRetour(base, retour.id, 'Erreur retour', admin.id);
+  assert.equal(annule.statut, 'annule');
+  assert.equal(articles.lireParReference(base, 'CAFE').stock, 4);
+  assert.equal(fournisseurs.lireDette(base, achat.detteId).solde, 2800);
+  assert.equal(achats.lire(base, achat.id).totalRetours, 0);
+});

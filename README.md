@@ -13,7 +13,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | --- | --- |
 | **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
-| **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement et creer la dette fournisseur |
+| **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
 | **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil et les mouvements par article |
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
@@ -104,9 +104,11 @@ journal des mouvements : le stock ne peut jamais devenir negatif. Le stock est
 tenu dans l'unite minimale, la **piece**. Un article peut aussi se vendre ou
 s'acheter en **carton** (1 carton = N pieces, prix et code-barres carton
 possibles) : vendre 2 cartons de 50 pieces retire exactement 100 pieces,
-acheter 2 cartons en ajoute exactement 100, annuler une vente ou un achat fait
-le mouvement inverse, et toute sortie carton est refusee s'il ne reste pas
-assez de pieces.
+acheter 2 cartons en ajoute exactement 100, retourner de la marchandise chez le
+fournisseur retire exactement les pieces du stock et diminue la dette ouverte ;
+si l'achat etait deja paye, le montant reste trace comme avoir fournisseur.
+Annuler une vente, un achat ou un retour fait le mouvement inverse, et toute
+sortie carton est refusee s'il ne reste pas assez de pieces.
 
 **Le rendu n'a pas les cles.** `contextIsolation` est actif, `nodeIntegration`
 ne l'est pas : la page n'a ni `require`, ni acces au disque, ni `ipcRenderer`.

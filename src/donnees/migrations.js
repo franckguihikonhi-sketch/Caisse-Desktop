@@ -307,6 +307,59 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 7,
+    intitule: 'Retours articles chez fournisseur',
+    appliquer(base) {
+      base.exec(`
+        CREATE TABLE IF NOT EXISTS retours_fournisseurs (
+          id                    INTEGER PRIMARY KEY,
+          numero                TEXT    NOT NULL UNIQUE,
+          date_retour           TEXT    NOT NULL,
+          fournisseur_id        INTEGER NOT NULL REFERENCES fournisseurs (id),
+          achat_id              INTEGER NOT NULL REFERENCES achats (id),
+          dette_id              INTEGER REFERENCES dettes_fournisseurs (id),
+          utilisateur_id        INTEGER REFERENCES utilisateurs (id),
+          reference_document    TEXT,
+          total_ttc             INTEGER NOT NULL CHECK (total_ttc >= 0),
+          montant_deduit_dette  INTEGER NOT NULL DEFAULT 0 CHECK (montant_deduit_dette >= 0),
+          montant_avoir         INTEGER NOT NULL DEFAULT 0 CHECK (montant_avoir >= 0),
+          statut                TEXT    NOT NULL DEFAULT 'valide' CHECK (statut IN ('valide', 'annule')),
+          note                  TEXT,
+          annule_le             TEXT,
+          motif_annulation      TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_retours_fournisseurs_date ON retours_fournisseurs (date_retour);
+        CREATE INDEX IF NOT EXISTS idx_retours_fournisseurs_achat ON retours_fournisseurs (achat_id);
+        CREATE INDEX IF NOT EXISTS idx_retours_fournisseurs_fournisseur ON retours_fournisseurs (fournisseur_id, date_retour DESC);
+        CREATE INDEX IF NOT EXISTS idx_retours_fournisseurs_dette ON retours_fournisseurs (dette_id);
+
+        CREATE TABLE IF NOT EXISTS lignes_retour_fournisseur (
+          id                  INTEGER PRIMARY KEY,
+          retour_id           INTEGER NOT NULL REFERENCES retours_fournisseurs (id) ON DELETE CASCADE,
+          ligne_achat_id      INTEGER NOT NULL REFERENCES lignes_achat (id),
+          article_id          INTEGER NOT NULL REFERENCES articles (id),
+          reference           TEXT    NOT NULL,
+          designation         TEXT    NOT NULL,
+          unite_retour        TEXT    NOT NULL CHECK (unite_retour IN ('piece', 'carton')),
+          facteur_stock       INTEGER NOT NULL CHECK (facteur_stock >= 1),
+          quantite            INTEGER NOT NULL CHECK (quantite > 0),
+          quantite_stock      INTEGER NOT NULL CHECK (quantite_stock > 0),
+          prix_achat_unitaire INTEGER NOT NULL CHECK (prix_achat_unitaire >= 0),
+          total_ttc           INTEGER NOT NULL CHECK (total_ttc >= 0)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_retour ON lignes_retour_fournisseur (retour_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_ligne_achat ON lignes_retour_fournisseur (ligne_achat_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_article ON lignes_retour_fournisseur (article_id);
+
+        ALTER TABLE mouvements_stock ADD COLUMN retour_fournisseur_id INTEGER REFERENCES retours_fournisseurs (id);
+        CREATE INDEX IF NOT EXISTS idx_mouvements_stock_retour_fournisseur
+          ON mouvements_stock (retour_fournisseur_id);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */
