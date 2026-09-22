@@ -7,6 +7,7 @@
  */
 
 const { formater } = require('./monnaie');
+const { libelleUnite } = require('./conditionnement');
 
 const LARGEUR = 32;
 
@@ -62,7 +63,10 @@ function construireTicket({ boutique, vente }) {
 
   for (const l of vente.panier.lignes) {
     pousser(l.designation.slice(0, LARGEUR));
-    const detail = l.quantite + ' x ' + formater(l.prixUnitaire);
+    const unite = l.uniteVente && l.uniteVente !== 'piece'
+      ? ' ' + libelleUnite(l.uniteVente, l.quantite)
+      : '';
+    const detail = l.quantite + unite + ' x ' + formater(l.prixUnitaire);
     pousser(justifier('  ' + detail, formater(l.totalTtc)));
     if (l.remisePourcent > 0) {
       pousser('  remise ' + l.remisePourcent + ' %');

@@ -3,6 +3,7 @@
 const { calculer } = require('../metier/panier');
 const { horodater, jourDe } = require('../metier/horodatage');
 const { arrondirEspeces, rendreMonnaie } = require('../metier/monnaie');
+const conditionnement = require('../metier/conditionnement');
 const articles = require('./articles');
 const clients = require('./clients');
 const caisse = require('./caisse');
@@ -50,19 +51,27 @@ function enregistrer(base, {
       if (!Number.isInteger(l.quantite) || l.quantite <= 0) {
         throw new RangeError('Quantite invalide pour ' + article.designation + '.');
       }
-      if (article.stock < l.quantite) {
+      const uniteVente = conditionnement.normaliserUnite(l.uniteVente ?? l.unite ?? 'piece');
+      conditionnement.verifierVendable(article, uniteVente);
+      const facteurStock = conditionnement.facteurStock(article, uniteVente);
+      const quantiteStock = l.quantite * facteurStock;
+      if (article.stock < quantiteStock) {
         throw new RangeError(
           'Stock insuffisant pour ' + article.designation +
-            ' : ' + article.stock + ' en rayon, ' + l.quantite + ' demandes.'
+            ' : ' + conditionnement.decrireStock(article.stock, article) +
+            ' en rayon, ' + conditionnement.decrireStock(quantiteStock, article) + ' demandes.'
         );
       }
       return {
         articleId: article.id,
         reference: article.reference,
         designation: article.designation,
-        prixUnitaire: article.prixUnitaire,
+        prixUnitaire: conditionnement.prixPourUnite(article, uniteVente),
         tauxTva: article.tauxTva,
         quantite: l.quantite,
+        uniteVente,
+        facteurStock,
+        quantiteStock,
         remisePourcent: l.remisePourcent ?? 0,
       };
     });
@@ -101,18 +110,20 @@ function enregistrer(base, {
         sessionCaisse?.id ?? null, client?.id ?? null, paiement.mode === 'credit' ? 1 : 0);
 
     const poserLigne = base.prepare(
-      'INSERT INTO lignes_vente (vente_id, article_id, reference, designation, ' +
-        'prix_unitaire, quantite, taux_tva, remise_pourcent, total_ttc) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO lignes_vente (vente_id, article_id, reference, designation, prix_unitaire, ' +
+        'quantite, taux_tva, remise_pourcent, total_ttc, unite_vente, facteur_stock) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     panier.lignes.forEach((l, i) => {
       const source = lignesVerifiees[i];
       poserLigne.run(vente.lastInsertRowid, source.articleId, l.reference, l.designation,
-        l.prixUnitaire, l.quantite, l.tauxTva, l.remisePourcent, l.totalTtc);
+        l.prixUnitaire, l.quantite, l.tauxTva, l.remisePourcent, l.totalTtc,
+        source.uniteVente, source.facteurStock);
       stocks.mouvement(base, {
         articleId: source.articleId,
         type: 'sortie',
+        unite: source.uniteVente,
         quantite: l.quantite,
         motif: 'Vente ' + numero,
         venteId: vente.lastInsertRowid,
@@ -166,6 +177,9 @@ function lire(base, id) {
       tauxTva: l.taux_tva,
       remisePourcent: l.remise_pourcent,
       totalTtc: l.total_ttc,
+      uniteVente: l.unite_vente ?? 'piece',
+      facteurStock: l.facteur_stock ?? 1,
+      quantiteStock: l.quantite * (l.facteur_stock ?? 1),
     }));
   return {
     id: v.id,
@@ -189,6 +203,7 @@ function lire(base, id) {
       totalHt: v.total_ht,
       totalTva: v.total_tva,
       nombreArticles: lignes.reduce((s, l) => s + l.quantite, 0),
+      nombrePiecesStock: lignes.reduce((s, l) => s + l.quantiteStock, 0),
       ventilation: ventiler(lignes),
     },
   };
@@ -300,6 +315,7 @@ function annuler(base, id, motif, utilisateurId = null) {
         stocks.mouvement(base, {
           articleId: l.article_id,
           type: 'retour',
+          unite: l.unite_vente ?? 'piece',
           quantite: l.quantite,
           motif: 'Annulation vente ' + vente.numero,
           venteId: id,

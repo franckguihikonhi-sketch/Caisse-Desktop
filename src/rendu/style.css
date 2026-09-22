@@ -204,7 +204,19 @@ label > input, label > select { color: var(--texte); }
 .article .designation { font-weight: 600; }
 .article .reference { color: var(--texte-doux); font-size: 12px; }
 .article .prix { font-weight: 700; }
+.article .prix-carton { color: var(--accent-clair); font-size: 12px; }
 .article .stock { color: var(--texte-doux); font-size: 12px; text-align: right; }
+.article-droite { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.mini-action {
+  margin-top: 4px;
+  padding: 3px 8px;
+  background: rgba(18, 165, 148, 0.14);
+  border: 1px solid rgba(18, 165, 148, 0.45);
+  border-radius: 5px;
+  color: var(--texte);
+  cursor: pointer;
+}
+.mini-action:disabled { opacity: 0.45; cursor: not-allowed; }
 .article.epuise { opacity: 0.5; cursor: not-allowed; }
 .article .stock.bas { color: var(--avertissement); }
 

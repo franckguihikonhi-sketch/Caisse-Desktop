@@ -14,6 +14,39 @@ const $$ = (selecteur) => [...document.querySelectorAll(selecteur)];
 
 const formater = (montant) => window.caisse.calcul.formater(montant);
 
+function libelleUnite(unite, quantite = 1) {
+  if (unite === 'carton') return quantite > 1 ? 'cartons' : 'carton';
+  return quantite > 1 ? 'pieces' : 'piece';
+}
+
+function piecesParCarton(article) {
+  const n = Number(article?.piecesParCarton ?? 1);
+  return Number.isInteger(n) && n > 0 ? n : 1;
+}
+
+function facteurUnite(article, unite = 'piece') {
+  return unite === 'carton' ? piecesParCarton(article) : 1;
+}
+
+function prixUnite(article, unite = 'piece') {
+  if (unite === 'carton') {
+    return article.prixCarton ?? (article.prixUnitaire * piecesParCarton(article));
+  }
+  return article.prixUnitaire;
+}
+
+function formaterStock(stockPieces, article) {
+  const stock = Number(stockPieces ?? 0);
+  const parCarton = piecesParCarton(article);
+  if (parCarton <= 1) return stock + ' ' + libelleUnite('piece', Math.abs(stock));
+  const cartons = Math.floor(Math.abs(stock) / parCarton);
+  const pieces = Math.abs(stock) % parCarton;
+  const morceaux = [];
+  if (cartons > 0) morceaux.push(cartons + ' ' + libelleUnite('carton', cartons));
+  if (pieces > 0 || morceaux.length === 0) morceaux.push(pieces + ' ' + libelleUnite('piece', pieces));
+  return (stock < 0 ? '-' : '') + morceaux.join(' + ');
+}
+
 /**
  * Deroule une reponse {ok, valeur|erreur} des canaux. Une erreur metier remonte
  * comme une exception porteuse du message affichable.

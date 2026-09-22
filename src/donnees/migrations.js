@@ -186,6 +186,39 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 4,
+    intitule: 'Conditionnement piece carton strict',
+    appliquer(base) {
+      base.exec(`
+        ALTER TABLE articles ADD COLUMN pieces_par_carton INTEGER NOT NULL DEFAULT 1
+          CHECK (pieces_par_carton >= 1);
+        ALTER TABLE articles ADD COLUMN prix_carton INTEGER
+          CHECK (prix_carton IS NULL OR prix_carton >= 0);
+        ALTER TABLE articles ADD COLUMN code_barres_carton TEXT;
+        ALTER TABLE articles ADD COLUMN vente_piece INTEGER NOT NULL DEFAULT 1
+          CHECK (vente_piece IN (0, 1));
+        ALTER TABLE articles ADD COLUMN vente_carton INTEGER NOT NULL DEFAULT 0
+          CHECK (vente_carton IN (0, 1));
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_articles_code_barres_carton
+          ON articles (code_barres_carton) WHERE code_barres_carton IS NOT NULL;
+
+        ALTER TABLE lignes_vente ADD COLUMN unite_vente TEXT NOT NULL DEFAULT 'piece'
+          CHECK (unite_vente IN ('piece', 'carton'));
+        ALTER TABLE lignes_vente ADD COLUMN facteur_stock INTEGER NOT NULL DEFAULT 1
+          CHECK (facteur_stock >= 1);
+
+        ALTER TABLE mouvements_stock ADD COLUMN unite_mouvement TEXT NOT NULL DEFAULT 'piece'
+          CHECK (unite_mouvement IN ('piece', 'carton'));
+        ALTER TABLE mouvements_stock ADD COLUMN facteur_stock INTEGER NOT NULL DEFAULT 1
+          CHECK (facteur_stock >= 1);
+        ALTER TABLE mouvements_stock ADD COLUMN quantite_unites INTEGER;
+
+        UPDATE mouvements_stock SET quantite_unites = quantite WHERE quantite_unites IS NULL;
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

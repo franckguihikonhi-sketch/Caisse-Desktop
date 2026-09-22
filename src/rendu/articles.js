@@ -56,7 +56,7 @@ const Articles = {
 
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '9' } }),
+        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '10' } }),
       ]));
       return;
     }
@@ -87,12 +87,17 @@ const Articles = {
       const cellules = [
         creer('td', { classe: 'choix' }, [case_]),
         creer('td', { texte: article.reference }),
-        creer('td', { classe: 'code-barres', texte: article.codeBarres ?? '-' }),
+        creer('td', { classe: 'code-barres', texte: [
+          article.codeBarres ? 'P: ' + article.codeBarres : 'P: -',
+          article.codeBarresCarton ? 'C: ' + article.codeBarresCarton : null,
+        ].filter(Boolean).join(' / ') }),
         creer('td', { texte: article.designation }),
+        creer('td', { texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
         creer('td', { classe: 'nombre montant', texte: formater(article.prixUnitaire) }),
+        creer('td', { classe: 'nombre montant', texte: article.venteCarton ? formater(prixUnite(article, 'carton')) : '-' }),
         creer('td', { classe: 'nombre', texte: article.tauxTva + ' %' }),
-        creer('td', { classe: 'nombre', texte: String(article.stock) }),
-        creer('td', { classe: 'nombre', texte: article.seuilAlerte > 0 ? String(article.seuilAlerte) : '-' }),
+        creer('td', { classe: 'nombre', texte: article.stockLibelle ?? formaterStock(article.stock, article) }),
+        creer('td', { classe: 'nombre', texte: article.seuilAlerte > 0 ? formaterStock(article.seuilAlerte, article) : '-' }),
       ];
 
       const actions = creer('td', { classe: 'nombre' });
@@ -187,18 +192,28 @@ const Articles = {
         },
       });
       const designation = champ('designation', 'Designation', { type: 'text', required: 'required', value: article?.designation ?? '' });
-      const prix = champ('prixUnitaire', 'Prix de vente TTC (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
+      const pieces = champ('piecesParCarton', 'Pieces par carton (1 si vente piece seule)', { type: 'number', min: '1', step: '1', required: 'required', value: article?.piecesParCarton ?? '1' });
+      const codeCarton = champ('codeBarresCarton', 'Code-barres carton (facultatif)', {
+        type: 'text', inputmode: 'numeric', autocomplete: 'off',
+        placeholder: 'code du carton complet',
+        value: article?.codeBarresCarton ?? valeursParDefaut.codeBarresCarton ?? '',
+      });
+      const prix = champ('prixUnitaire', 'Prix de vente TTC piece (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
+      const prixCarton = champ('prixCarton', 'Prix de vente TTC carton (vide = piece x quantite)', { type: 'number', min: '0', step: '1', value: article?.prixCarton ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
-      const stock = champ('stock', 'Stock courant (correction journalisee)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.stock ?? '0' });
-      const seuil = champ('seuilAlerte', "Seuil d'alerte (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
+      const stock = champ('stock', 'Stock courant total en pieces (correction journalisee)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.stock ?? '0' });
+      const seuil = champ('seuilAlerte', "Seuil d'alerte en pieces (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
 
       const enregistrer = async () => {
         try {
           const saisie = {
             reference: reference.entree.value,
             codeBarres: code.entree.value,
+            codeBarresCarton: codeCarton.entree.value,
             designation: designation.entree.value,
+            piecesParCarton: Number(pieces.entree.value),
             prixUnitaire: Number(prix.entree.value),
+            prixCarton: prixCarton.entree.value === '' ? null : Number(prixCarton.entree.value),
             tauxTva: Number(taux.entree.value),
             stock: Number(stock.entree.value),
             seuilAlerte: Number(seuil.entree.value),
@@ -216,7 +231,7 @@ const Articles = {
         creer('h3', { texte: article ? 'Modifier ' + article.designation : 'Nouvel article' }),
         erreur,
         reference.bloc, code.bloc, attribuer, verdictCode, designation.bloc,
-        prix.bloc, taux.bloc, stock.bloc, seuil.bloc,
+        pieces.bloc, codeCarton.bloc, prix.bloc, prixCarton.bloc, taux.bloc, stock.bloc, seuil.bloc,
         creer('div', { classe: 'actions' }, [
           creer('button', {
             classe: 'bouton discret', texte: 'Annuler',
@@ -240,6 +255,12 @@ const Articles = {
         creer('option', { texte: 'Sortie / casse / perte', attributs: { value: 'sortie' } }),
         creer('option', { texte: 'Correction par ecart', attributs: { value: 'ajustement' } }),
       ]);
+      const unite = creer('select', {}, [
+        creer('option', { texte: 'Pieces', attributs: { value: 'piece' } }),
+        ...(article.piecesParCarton > 1 ? [creer('option', {
+          texte: 'Cartons (' + article.piecesParCarton + ' pieces)', attributs: { value: 'carton' },
+        })] : []),
+      ]);
       const quantite = creer('input', { attributs: { type: 'number', step: '1', min: '1', required: 'required' } });
       const motif = creer('input', { attributs: { type: 'text', placeholder: 'livraison, casse, inventaire...', required: 'required' } });
       const reference = creer('input', { attributs: { type: 'text', placeholder: 'bon, facture...' } });
@@ -247,20 +268,25 @@ const Articles = {
         creer('option', { texte: 'Aucun fournisseur', attributs: { value: '' } }),
         ...fournisseurs.map((f) => creer('option', { texte: f.nom, attributs: { value: String(f.id) } })),
       ]);
-      const aide = creer('p', { classe: 'aide', texte: 'Stock actuel : ' + article.stock + '. Pour une correction, saisissez un ecart positif ou negatif.' });
+      const aide = creer('p', { classe: 'aide', texte: 'Stock actuel : ' + formaterStock(article.stock, article) + '. Pour une correction, saisissez un ecart positif ou negatif.' });
       const erreur = creer('p', { classe: 'message erreur' });
-      type.addEventListener('change', () => {
+      const rafraichirAide = () => {
         quantite.min = type.value === 'ajustement' ? '' : '1';
+        const uniteTexte = unite.value === 'carton' ? 'carton(s)' : 'piece(s)';
         aide.textContent = type.value === 'ajustement'
-          ? 'Stock actuel : ' + article.stock + '. Saisissez +5 ou -2 pour corriger l ecart.'
-          : 'Stock actuel : ' + article.stock + '. La quantite saisie sera ' + (type.value === 'entree' ? 'ajoutee.' : 'retiree.');
-      });
+          ? 'Stock actuel : ' + formaterStock(article.stock, article) + '. Saisissez +5 ou -2 ' + uniteTexte + ' pour corriger l ecart.'
+          : 'Stock actuel : ' + formaterStock(article.stock, article) + '. La quantite saisie en ' + uniteTexte + ' sera ' + (type.value === 'entree' ? 'ajoutee.' : 'retiree.');
+      };
+      type.addEventListener('change', rafraichirAide);
+      unite.addEventListener('change', rafraichirAide);
+      rafraichirAide();
       return creer('form', { sur: { submit: async (e) => {
         e.preventDefault();
         try {
           fermer(await appeler(window.caisse.stock.mouvement({
             articleId: article.id,
             type: type.value,
+            unite: unite.value,
             quantite: Number(quantite.value),
             motif: motif.value,
             reference: reference.value,
@@ -272,6 +298,7 @@ const Articles = {
         aide,
         erreur,
         creer('label', { texte: 'Operation' }, [type]),
+        creer('label', { texte: 'Unite de saisie' }, [unite]),
         creer('label', { texte: 'Quantite / ecart' }, [quantite]),
         creer('label', { texte: 'Motif' }, [motif]),
         creer('label', { texte: 'Reference document' }, [reference]),

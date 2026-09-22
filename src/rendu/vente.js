@@ -109,30 +109,59 @@ const Vente = {
     }
 
     for (const article of this.articlesTrouves) {
-      const dejaAuPanier = this.panier.find((l) => l.reference === article.reference);
-      const restant = article.stock - (dejaAuPanier?.quantite ?? 0);
+      const restant = this.restantStock(article);
       const epuise = restant <= 0;
+      const boutonCarton = article.venteCarton && article.piecesParCarton > 1
+        ? creer('button', {
+          classe: 'mini-action',
+          texte: '+ carton',
+          attributs: { type: 'button', title: 'Ajouter un carton de ' + article.piecesParCarton + ' pieces' },
+          sur: { click: (e) => { e.stopPropagation(); this.ajouter(article, 'carton'); } },
+        })
+        : null;
+      if (boutonCarton && restant < piecesParCarton(article)) boutonCarton.disabled = true;
 
       zone.append(creer('div', {
         classe: 'article' + (epuise ? ' epuise' : ''),
-        sur: { click: () => (epuise ? null : this.ajouter(article)) },
+        sur: { click: () => (epuise ? null : this.ajouter(article, article.ventePiece === false ? 'carton' : 'piece')) },
       }, [
         creer('div', {}, [
           creer('div', { classe: 'designation', texte: article.designation }),
           creer('div', {
             classe: 'reference',
-            texte: article.codeBarres ? article.reference + '  -  ' + article.codeBarres : article.reference,
+            texte: [article.reference, article.codeBarres, article.codeBarresCarton ? 'carton ' + article.codeBarresCarton : '']
+              .filter(Boolean).join('  -  '),
           }),
+          creer('div', { classe: 'reference', texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
         ]),
-        creer('div', {}, [
-          creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) }),
+        creer('div', { classe: 'article-droite' }, [
+          creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) + ' / piece' }),
+          article.venteCarton ? creer('div', {
+            classe: 'prix-carton montant',
+            texte: formater(prixUnite(article, 'carton')) + ' / carton',
+          }) : creer('span'),
           creer('div', {
             classe: 'stock' + (restant > 0 && restant <= article.seuilAlerte ? ' bas' : ''),
-            texte: epuise ? 'epuise' : restant + ' en stock',
+            texte: epuise ? 'epuise' : formaterStock(restant, article),
           }),
+          boutonCarton ?? creer('span'),
         ]),
       ]));
     }
+  },
+
+  clePanier(reference, unite) {
+    return reference + '|' + (unite ?? 'piece');
+  },
+
+  stockReserve(article) {
+    return this.panier
+      .filter((l) => l.reference === article.reference)
+      .reduce((s, l) => s + l.quantite * l.facteurStock, 0);
+  },
+
+  restantStock(article) {
+    return article.stock - this.stockReserve(article);
   },
 
   /**
@@ -150,7 +179,7 @@ const Vente = {
     }
 
     if (article) {
-      this.ajouter(article);
+      this.ajouter(article, article.uniteScannee ?? 'piece');
       await this.rechercher('');
       return;
     }
@@ -174,49 +203,65 @@ const Vente = {
     }
   },
 
-  ajouter(article) {
-    const ligne = this.panier.find((l) => l.reference === article.reference);
+  ajouter(article, unite = 'piece') {
+    const uniteVente = unite === 'carton' ? 'carton' : 'piece';
+    const facteurStock = facteurUnite(article, uniteVente);
+    if (uniteVente === 'carton' && (!article.venteCarton || article.piecesParCarton <= 1)) {
+      return annoncer(article.designation + ' ne se vend pas en carton.', 'avertissement');
+    }
+    if (uniteVente === 'piece' && article.ventePiece === false) {
+      return annoncer(article.designation + ' ne se vend pas a la piece.', 'avertissement');
+    }
+    if (this.restantStock(article) < facteurStock) {
+      return annoncer(
+        article.designation + ' : stock insuffisant (' + formaterStock(this.restantStock(article), article) + ').',
+        'avertissement'
+      );
+    }
+
+    const cle = this.clePanier(article.reference, uniteVente);
+    const ligne = this.panier.find((l) => l.cle === cle);
     if (ligne) {
-      if (ligne.quantite >= article.stock) {
-        return annoncer(
-          article.designation + ' : tout le stock est deja au panier (' + article.stock + ').',
-          'avertissement'
-        );
-      }
       ligne.quantite += 1;
-      annoncer(article.designation + ' x ' + ligne.quantite);
+      annoncer(article.designation + ' ' + ligne.quantite + ' ' + libelleUnite(uniteVente, ligne.quantite));
     } else {
-      if (article.stock <= 0) {
-        return annoncer(article.designation + ' est en rupture de stock.', 'avertissement');
-      }
       this.panier.push({
+        cle,
         reference: article.reference,
         designation: article.designation,
-        prixUnitaire: article.prixUnitaire,
+        prixUnitaire: prixUnite(article, uniteVente),
         tauxTva: article.tauxTva,
         quantite: 1,
+        uniteVente,
+        facteurStock,
+        piecesParCarton: piecesParCarton(article),
         remisePourcent: 0,
         stock: article.stock,
       });
-      annoncer(article.designation + '  ' + formater(article.prixUnitaire));
+      annoncer(article.designation + '  ' + formater(prixUnite(article, uniteVente)) + ' / ' + libelleUnite(uniteVente));
     }
     this.afficherPanier();
     this.afficherResultats();
   },
 
-  changerQuantite(reference, ecart) {
-    const ligne = this.panier.find((l) => l.reference === reference);
+  changerQuantite(cle, ecart) {
+    const ligne = this.panier.find((l) => l.cle === cle);
     if (!ligne) return;
     const nouvelle = ligne.quantite + ecart;
-    if (nouvelle <= 0) return this.retirer(reference);
-    if (nouvelle > ligne.stock) return;
+    if (nouvelle <= 0) return this.retirer(cle);
+    const reserveAutres = this.panier
+      .filter((l) => l.reference === ligne.reference && l.cle !== cle)
+      .reduce((s, l) => s + l.quantite * l.facteurStock, 0);
+    if (reserveAutres + nouvelle * ligne.facteurStock > ligne.stock) {
+      return annoncer('Stock insuffisant pour ' + ligne.designation + '.', 'avertissement');
+    }
     ligne.quantite = nouvelle;
     this.afficherPanier();
     this.afficherResultats();
   },
 
-  retirer(reference) {
-    this.panier = this.panier.filter((l) => l.reference !== reference);
+  retirer(cle) {
+    this.panier = this.panier.filter((l) => l.cle !== cle);
     this.afficherPanier();
     this.afficherResultats();
   },
@@ -253,7 +298,10 @@ const Vente = {
     }
 
     for (const ligne of this.panier) {
-      const detail = ligne.quantite + ' x ' + formater(ligne.prixUnitaire) +
+      const unite = ligne.uniteVente === 'carton'
+        ? ' ' + libelleUnite('carton', ligne.quantite) + ' (' + ligne.facteurStock + ' pieces/carton)'
+        : ' ' + libelleUnite('piece', ligne.quantite);
+      const detail = ligne.quantite + unite + ' x ' + formater(ligne.prixUnitaire) +
         (ligne.remisePourcent > 0 ? '  -' + ligne.remisePourcent + ' %' : '');
 
       zone.append(creer('div', { classe: 'ligne-panier' }, [
@@ -266,9 +314,9 @@ const Vente = {
           }),
         ]),
         creer('div', { classe: 'quantite' }, [
-          creer('button', { texte: '-', sur: { click: () => this.changerQuantite(ligne.reference, -1) } }),
+          creer('button', { texte: '-', sur: { click: () => this.changerQuantite(ligne.cle, -1) } }),
           creer('span', { texte: String(ligne.quantite) }),
-          creer('button', { texte: '+', sur: { click: () => this.changerQuantite(ligne.reference, 1) } }),
+          creer('button', { texte: '+', sur: { click: () => this.changerQuantite(ligne.cle, 1) } }),
         ]),
         creer('div', {
           classe: 'total montant',
@@ -277,7 +325,7 @@ const Vente = {
         creer('button', {
           classe: 'retirer', texte: 'x',
           attributs: { title: 'Retirer du panier' },
-          sur: { click: () => this.retirer(ligne.reference) },
+          sur: { click: () => this.retirer(ligne.cle) },
         }),
       ]));
     }
@@ -364,7 +412,10 @@ const Vente = {
     try {
       const vente = await appeler(window.caisse.ventes.enregistrer({
         lignes: this.panier.map((l) => ({
-          reference: l.reference, quantite: l.quantite, remisePourcent: l.remisePourcent,
+          reference: l.reference,
+          quantite: l.quantite,
+          uniteVente: l.uniteVente,
+          remisePourcent: l.remisePourcent,
         })),
         remiseGlobalePourcent: Number($('#remise-globale').value) || 0,
         clientId: this.mode === 'credit' ? this.clientCredit.id : null,
