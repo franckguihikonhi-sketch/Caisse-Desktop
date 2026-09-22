@@ -297,6 +297,9 @@ tr.stock-bas td.nombre { color: var(--avertissement); font-weight: 700; }
 
 .deux-colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 20px; overflow-y: auto; flex: 1; }
 .gestion-tiers { align-items: start; }
+.fournisseur-bloc-unique { flex: 1; width: 100%; padding: 20px; overflow-y: auto; }
+.panneau-fournisseurs-unique { width: 100%; overflow-x: auto; }
+.section-fournisseurs + .section-fournisseurs { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--bord); }
 .panneau { padding: 18px; background: var(--fond-panneau); border: 1px solid var(--bord); border-radius: var(--rayon); }
 .panneau h3 { margin: 0 0 14px; font-size: 15px; }
 .panneau + .panneau { margin-top: 20px; }

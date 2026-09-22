@@ -187,20 +187,22 @@
 
     <!-- Fournisseurs -->
     <div id="vue-fournisseurs" class="vue">
-      <div class="deux-colonnes gestion-tiers">
-        <div class="panneau">
-          <h3>Fournisseurs</h3>
-          <table>
-            <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">A payer</th><th></th></tr></thead>
-            <tbody id="corps-fournisseurs"></tbody>
-          </table>
-        </div>
-        <div class="panneau">
-          <h3>Dettes fournisseurs</h3>
-          <table>
-            <thead><tr><th>Numero</th><th>Fournisseur</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
-            <tbody id="corps-dettes-fournisseurs"></tbody>
-          </table>
+      <div class="gestion-tiers fournisseur-bloc-unique">
+        <div class="panneau panneau-fournisseurs-unique">
+          <section class="section-fournisseurs">
+            <h3>Fournisseurs</h3>
+            <table>
+              <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">A payer</th><th></th></tr></thead>
+              <tbody id="corps-fournisseurs"></tbody>
+            </table>
+          </section>
+          <section class="section-fournisseurs">
+            <h3>Dettes fournisseurs</h3>
+            <table>
+              <thead><tr><th>Numero</th><th>Fournisseur</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+              <tbody id="corps-dettes-fournisseurs"></tbody>
+            </table>
+          </section>
         </div>
       </div>
     </div>
