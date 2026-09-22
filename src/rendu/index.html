@@ -167,20 +167,47 @@
 
     <!-- Clients -->
     <div id="vue-clients" class="vue">
-      <div class="deux-colonnes gestion-tiers">
-        <div class="panneau">
-          <h3>Clients</h3>
-          <table>
-            <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">Solde</th><th></th></tr></thead>
-            <tbody id="corps-clients"></tbody>
-          </table>
-        </div>
-        <div class="panneau">
-          <h3>Creances clients</h3>
-          <table>
-            <thead><tr><th>Numero</th><th>Client</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
-            <tbody id="corps-creances-clients"></tbody>
-          </table>
+      <div class="clients-page">
+        <section class="clients-hero">
+          <div>
+            <span class="libelle-doux">Portefeuille client</span>
+            <h3>Clients et credits</h3>
+            <p class="aide">Suivez les debiteurs, les creances ouvertes et les reglements sans perdre la lisibilite des factures.</p>
+          </div>
+          <div class="clients-kpis" id="resume-clients"></div>
+        </section>
+
+        <div class="clients-grille gestion-tiers">
+          <div class="panneau clients-panneau clients-liste-panneau">
+            <div class="panneau-entete-tiers">
+              <div>
+                <span class="libelle-doux">Fichier client</span>
+                <h3>Clients</h3>
+              </div>
+              <span class="compteur-puce" id="compteur-clients">0 client</span>
+            </div>
+            <div class="table-scroll clients-table-scroll">
+              <table class="clients-table">
+                <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">Solde</th><th></th></tr></thead>
+                <tbody id="corps-clients"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panneau clients-panneau creances-panneau">
+            <div class="panneau-entete-tiers">
+              <div>
+                <span class="libelle-doux">Factures ouvertes</span>
+                <h3>Creances clients</h3>
+              </div>
+              <span class="compteur-puce alerte" id="compteur-creances-clients">0 creance</span>
+            </div>
+            <div class="table-scroll clients-table-scroll">
+              <table class="creances-table">
+                <thead><tr><th>Numero</th><th>Client</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+                <tbody id="corps-creances-clients"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>

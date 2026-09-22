@@ -23,12 +23,52 @@ const Clients = {
     ]);
     this.liste = liste;
     this.creances = creances;
+    this.afficherResume();
     this.afficherClients();
     this.afficherCreances();
   },
 
+  afficherResume() {
+    const zone = $('#resume-clients');
+    if (!zone) return;
+    vider(zone);
+    const totalClients = this.liste.length;
+    const clientsDebiteurs = this.liste.filter((c) => c.solde > 0).length;
+    const totalSolde = this.liste.reduce((s, c) => s + c.solde, 0);
+    const plusGrosDebiteur = [...this.liste].sort((a, b) => b.solde - a.solde)[0];
+    const cartes = [
+      {
+        etiquette: 'Clients actifs',
+        valeur: String(totalClients),
+        detail: clientsDebiteurs + ' debiteur(s)',
+        classe: 'clients',
+      },
+      {
+        etiquette: 'Dette ouverte',
+        valeur: formater(totalSolde),
+        detail: this.creances.length + ' facture(s) a suivre',
+        classe: totalSolde > 0 ? 'dette' : 'sain',
+      },
+      {
+        etiquette: 'Plus gros solde',
+        valeur: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? plusGrosDebiteur.nom : 'Aucun',
+        detail: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? formater(plusGrosDebiteur.solde) : 'Portefeuille sain',
+        classe: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? 'alerte' : 'sain',
+      },
+    ];
+    for (const carte of cartes) {
+      zone.append(creer('div', { classe: 'client-kpi ' + carte.classe }, [
+        creer('span', { texte: carte.etiquette }),
+        creer('strong', { texte: carte.valeur }),
+        creer('small', { texte: carte.detail }),
+      ]));
+    }
+  },
+
   afficherClients() {
     const corps = $('#corps-clients');
+    const compteur = $('#compteur-clients');
+    if (compteur) compteur.textContent = this.liste.length + ' client' + (this.liste.length > 1 ? 's' : '');
     vider(corps);
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucun client.', attributs: { colspan: '5' } })]));
@@ -36,16 +76,22 @@ const Clients = {
     }
     const admin = App.utilisateur.role === 'administrateur';
     for (const client of this.liste) {
-      const actions = creer('td', { classe: 'nombre' });
-      actions.append(creer('button', { classe: 'bouton discret', texte: 'Credit', sur: { click: () => this.creanceAnterieure(client) } }));
+      const actions = creer('td', { classe: 'actions-ligne' });
+      actions.append(creer('button', { classe: 'bouton discret bouton-mini bouton-credit', texte: 'Credit', sur: { click: () => this.creanceAnterieure(client) } }));
       if (admin) {
-        actions.append(creer('button', { classe: 'bouton discret espace-gauche', texte: 'Modifier', sur: { click: () => this.editer(client) } }));
+        actions.append(creer('button', { classe: 'bouton discret bouton-mini', texte: 'Modifier', sur: { click: () => this.editer(client) } }));
       }
-      corps.append(creer('tr', {}, [
-        creer('td', { texte: client.code }),
-        creer('td', { texte: client.nom }),
-        creer('td', { texte: client.telephone ?? '-' }),
-        creer('td', { classe: 'nombre montant ' + (client.solde > 0 ? 'dette' : ''), texte: formater(client.solde) }),
+      const statut = client.solde > 0 ? 'debiteur' : 'a-jour';
+      corps.append(creer('tr', { classe: 'client-row ' + statut }, [
+        creer('td', { classe: 'client-code' }, [creer('span', { classe: 'badge-code', texte: client.code })]),
+        creer('td', { classe: 'client-identite' }, [
+          creer('strong', { texte: client.nom }),
+          creer('span', { texte: client.solde > 0 ? 'Credit ouvert' : 'A jour' }),
+        ]),
+        creer('td', { classe: 'telephone-client', texte: client.telephone ?? '-' }),
+        creer('td', { classe: 'nombre' }, [
+          creer('span', { classe: 'solde-badge ' + (client.solde > 0 ? 'dette' : 'neutre'), texte: formater(client.solde) }),
+        ]),
         actions,
       ]));
     }
@@ -53,20 +99,26 @@ const Clients = {
 
   afficherCreances() {
     const corps = $('#corps-creances-clients');
+    const compteur = $('#compteur-creances-clients');
+    if (compteur) compteur.textContent = this.creances.length + ' creance' + (this.creances.length > 1 ? 's' : '');
     vider(corps);
     if (this.creances.length === 0) {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucune creance ouverte.', attributs: { colspan: '5' } })]));
       return;
     }
     for (const c of this.creances) {
-      const actions = creer('td', { classe: 'nombre' }, [
-        creer('button', { classe: 'bouton discret', texte: 'Regler', sur: { click: () => this.regler(c) } }),
+      const actions = creer('td', { classe: 'actions-ligne' }, [
+        creer('button', { classe: 'bouton discret bouton-mini bouton-regler', texte: 'Regler', sur: { click: () => this.regler(c) } }),
       ]);
-      corps.append(creer('tr', { classe: c.statut === 'partielle' ? 'partiel' : '' }, [
-        creer('td', { texte: c.numero }),
-        creer('td', { texte: c.clientNom }),
-        creer('td', { texte: c.libelle + (c.anterieure ? ' (anterieure)' : '') }),
-        creer('td', { classe: 'nombre montant dette', texte: formater(c.solde) }),
+      const libelle = c.libelle + (c.anterieure ? ' (anterieure)' : '');
+      corps.append(creer('tr', { classe: 'creance-row ' + (c.statut === 'partielle' ? 'partiel' : '') }, [
+        creer('td', { classe: 'numero-creance' }, [creer('span', { classe: 'numero-document', texte: c.numero })]),
+        creer('td', { classe: 'client-creance' }, [creer('strong', { texte: c.clientNom })]),
+        creer('td', { classe: 'creance-libelle' }, [
+          creer('strong', { texte: libelle }),
+          creer('span', { texte: c.statut === 'partielle' ? 'Reglement partiel' : 'En attente de reglement' }),
+        ]),
+        creer('td', { classe: 'nombre' }, [creer('span', { classe: 'solde-badge dette', texte: formater(c.solde) })]),
         actions,
       ]));
     }
