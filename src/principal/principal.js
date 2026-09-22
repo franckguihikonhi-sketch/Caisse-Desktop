@@ -1,7 +1,7 @@
 'use strict';
 
 const path = require('node:path');
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron');
 
 const { ouvrir, boutique } = require('../donnees/base');
 const ventes = require('../donnees/ventes');
@@ -26,6 +26,7 @@ function creerFenetre() {
     minWidth: 1024,
     minHeight: 680,
     show: false,
+    autoHideMenuBar: true,
     backgroundColor: '#0f1b2a',
     title: 'Caisse',
     webPreferences: {
@@ -36,6 +37,7 @@ function creerFenetre() {
     },
   });
 
+  fenetre.setMenuBarVisibility(false);
   fenetre.once('ready-to-show', () => fenetre.show());
   fenetre.loadFile(path.join(__dirname, '..', 'rendu', 'index.html'));
 
@@ -88,6 +90,8 @@ function canauxImpression() {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
   try {
     bd = ouvrir(cheminBase());
   } catch (erreur) {
