@@ -2,7 +2,6 @@
 
 const Stock = {
   articles: [],
-  mouvements: [],
   recherche: '',
   filtre: 'tous',
 
@@ -21,12 +20,7 @@ const Stock = {
   },
 
   async charger() {
-    const [articles, mouvements] = await Promise.all([
-      appeler(window.caisse.articles.lister()),
-      appeler(window.caisse.stock.lister({ limite: 80 })),
-    ]);
-    this.articles = articles;
-    this.mouvements = mouvements;
+    this.articles = await appeler(window.caisse.articles.lister());
     this.afficher();
   },
 
@@ -108,13 +102,7 @@ const Stock = {
 
     const tableau = creer('div', { classe: 'panneau stock-tableau' });
     tableau.append(creer('h3', { texte: 'Stock restant par article' }), this.tableauStock());
-    zone.append(creer('div', { classe: 'stock-grille' }, [
-      tableau,
-      creer('div', { classe: 'panneau mouvements-recents' }, [
-        creer('h3', { texte: 'Mouvements recents' }),
-        this.listeMouvements(),
-      ]),
-    ]));
+    zone.append(creer('div', { classe: 'stock-grille' }, [tableau]));
   },
 
   rafraichirTableStock() {
@@ -178,24 +166,6 @@ const Stock = {
     return table;
   },
 
-  listeMouvements() {
-    const liste = creer('div', { classe: 'liste-mouvements-stock' });
-    if (this.mouvements.length === 0) {
-      liste.append(creer('p', { classe: 'vide compacte', texte: 'Aucun mouvement de stock.' }));
-      return liste;
-    }
-    for (const m of this.mouvements.slice(0, 12)) {
-      const positif = m.quantite > 0;
-      liste.append(creer('div', { classe: 'mouvement-stock ' + (positif ? 'entree' : 'sortie') }, [
-        creer('div', {}, [
-          creer('strong', { texte: m.articleDesignation }),
-          creer('span', { texte: this.dateCourte(m.date) + ' — ' + m.motif }),
-        ]),
-        creer('b', { texte: (positif ? '+' : '-') + m.quantiteLibelle }),
-      ]));
-    }
-    return liste;
-  },
 
   async details(article) {
     const mouvements = await appeler(window.caisse.stock.lister({ articleId: article.id, limite: 80 }));
