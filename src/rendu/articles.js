@@ -56,7 +56,7 @@ const Articles = {
 
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '10' } }),
+        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '12' } }),
       ]));
       return;
     }
@@ -93,6 +93,7 @@ const Articles = {
         ].filter(Boolean).join(' / ') }),
         creer('td', { texte: article.designation }),
         creer('td', { texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
+        this.cellulePrixAchat(article),
         creer('td', { classe: 'nombre montant', texte: formater(article.prixUnitaire) }),
         creer('td', { classe: 'nombre montant', texte: article.venteCarton ? formater(prixUnite(article, 'carton')) : '-' }),
         creer('td', { classe: 'nombre', texte: article.tauxTva + ' %' }),
@@ -122,6 +123,20 @@ const Articles = {
       corps.append(creer('tr', { classe: bas ? 'stock-bas' : '' }, cellules));
     }
     this.rafraichirBouton();
+  },
+
+  cellulePrixAchat(article) {
+    const lignes = [];
+    if (article.prixAchatPiece !== null && article.prixAchatPiece !== undefined) {
+      lignes.push(creer('div', { texte: 'P: ' + formater(article.prixAchatPiece) }));
+    }
+    if (piecesParCarton(article) > 1 && article.prixAchatCarton !== null && article.prixAchatCarton !== undefined) {
+      lignes.push(creer('div', { texte: 'C: ' + formater(article.prixAchatCarton) }));
+    }
+    if (lignes.length === 0) {
+      return creer('td', { classe: 'nombre prix-achat-article vide-prix', texte: '-' });
+    }
+    return creer('td', { classe: 'nombre montant prix-achat-article' }, lignes);
   },
 
   /**

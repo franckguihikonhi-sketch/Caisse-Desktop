@@ -397,6 +397,9 @@ td .bouton { padding: 4px 10px; font-size: 12px; }
 .verdict.bon { color: var(--accent-clair); }
 .verdict.mauvais { color: #ffb4b6; }
 td.code-barres { font-variant-numeric: tabular-nums; color: var(--texte-doux); }
+td.prix-achat-article { color: var(--or, #ffd166); font-weight: 700; white-space: nowrap; }
+td.prix-achat-article div + div { margin-top: 2px; color: #ffe2a6; }
+td.prix-achat-article.vide-prix { color: var(--texte-doux); font-weight: 500; }
 
 /* Choix des articles a etiqueter, et apercu de l'etiquette. */
 th.choix, td.choix { width: 34px; text-align: center; }
