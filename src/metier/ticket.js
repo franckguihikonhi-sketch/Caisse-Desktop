@@ -39,13 +39,6 @@ function dateLisible(iso) {
   );
 }
 
-const LIBELLES_PAIEMENT = {
-  especes: 'Especes',
-  mobile: 'Mobile money',
-  carte: 'Carte bancaire',
-  credit: 'Vente a credit',
-};
-
 function construireTicket({ boutique, vente }) {
   const lignes = [];
   const pousser = (t) => lignes.push(t);
@@ -81,19 +74,6 @@ function construireTicket({ boutique, vente }) {
   pousser(justifier('TOTAL', formater(vente.panier.totalTtc)));
   pousser('');
 
-  for (const v of vente.panier.ventilation) {
-    pousser(justifier('  HT ' + v.taux + ' %', formater(v.base)));
-    if (v.tva > 0) pousser(justifier('  TVA ' + v.taux + ' %', formater(v.tva)));
-  }
-
-  pousser(separateur());
-  pousser(justifier(LIBELLES_PAIEMENT[vente.paiement.mode] ?? vente.paiement.mode,
-    formater(vente.paiement.montantRecu ?? vente.panier.totalTtc)));
-  if (vente.paiement.mode === 'especes') {
-    pousser(justifier('Monnaie rendue', formater(vente.paiement.rendu ?? 0)));
-  }
-
-  pousser('');
   pousser(centrer('Merci de votre visite'));
   pousser(centrer('A bientot'));
 

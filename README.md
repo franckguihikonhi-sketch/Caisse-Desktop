@@ -209,12 +209,8 @@ Pain
 --------------------------------
 TOTAL                      850 F
 
-  HT 18 %                  551 F
-  TVA 18 %                  99 F
-  HT 0 %                   200 F
---------------------------------
-Especes                  2 000 F
-Monnaie rendue           1 150 F
+       Merci de votre visite
+            A bientot
 ```
 
 ## Raccourcis
