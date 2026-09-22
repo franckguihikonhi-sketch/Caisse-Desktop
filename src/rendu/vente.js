@@ -111,19 +111,19 @@ const Vente = {
     for (const article of this.articlesTrouves) {
       const restant = this.restantStock(article);
       const epuise = restant <= 0;
-      const boutonCarton = article.venteCarton && article.piecesParCarton > 1
+      const boutonChoisir = article.venteCarton && article.piecesParCarton > 1
         ? creer('button', {
           classe: 'mini-action',
-          texte: '+ carton',
-          attributs: { type: 'button', title: 'Ajouter un carton de ' + article.piecesParCarton + ' pieces' },
-          sur: { click: (e) => { e.stopPropagation(); this.ajouter(article, 'carton'); } },
+          texte: 'Choisir carton / piece',
+          attributs: { type: 'button', title: 'Vendre en cartons, en pieces, ou les deux' },
+          sur: { click: (e) => { e.stopPropagation(); this.choisirQuantites(article); } },
         })
         : null;
-      if (boutonCarton && restant < piecesParCarton(article)) boutonCarton.disabled = true;
+      if (boutonChoisir && epuise) boutonChoisir.disabled = true;
 
       zone.append(creer('div', {
-        classe: 'article' + (epuise ? ' epuise' : ''),
-        sur: { click: () => (epuise ? null : this.ajouter(article, article.ventePiece === false ? 'carton' : 'piece')) },
+        classe: 'article' + (epuise ? ' epuise' : '') + (article.venteCarton ? ' conditionne' : ''),
+        sur: { click: () => (epuise ? null : this.choisirQuantites(article)) },
       }, [
         creer('div', {}, [
           creer('div', { classe: 'designation', texte: article.designation }),
@@ -144,7 +144,7 @@ const Vente = {
             classe: 'stock' + (restant > 0 && restant <= article.seuilAlerte ? ' bas' : ''),
             texte: epuise ? 'epuise' : formaterStock(restant, article),
           }),
-          boutonCarton ?? creer('span'),
+          boutonChoisir ?? creer('span'),
         ]),
       ]));
     }
@@ -203,7 +203,127 @@ const Vente = {
     }
   },
 
-  ajouter(article, unite = 'piece') {
+  async choisirQuantites(article) {
+    if (!article.venteCarton || article.piecesParCarton <= 1) {
+      return this.ajouter(article, article.ventePiece === false ? 'carton' : 'piece');
+    }
+
+    const restant = this.restantStock(article);
+    if (restant <= 0) return annoncer(article.designation + ' est en rupture de stock.', 'avertissement');
+
+    const choix = await ouvrirBoite((fermer) => {
+      const parCarton = piecesParCarton(article);
+      const cartonsMax = Math.floor(restant / parCarton);
+      const piecesMax = restant;
+      const champCartons = creer('input', {
+        attributs: { type: 'number', min: '0', max: String(cartonsMax), step: '1', value: '0' },
+      });
+      const champPieces = creer('input', {
+        attributs: { type: 'number', min: '0', max: String(piecesMax), step: '1', value: '0' },
+      });
+      const message = creer('p', { classe: 'message erreur' });
+      const resume = creer('div', { classe: 'resume-conditionnement' });
+
+      const lire = () => ({
+        cartons: Math.max(0, Number(champCartons.value) || 0),
+        pieces: Math.max(0, Number(champPieces.value) || 0),
+      });
+      const redessiner = () => {
+        const v = lire();
+        const piecesStock = v.cartons * parCarton + v.pieces;
+        const montant = v.cartons * prixUnite(article, 'carton') + v.pieces * prixUnite(article, 'piece');
+        resume.textContent =
+          'Sortie prevue : ' + formaterStock(piecesStock, article) +
+          ' / total brut ' + formater(montant) +
+          ' / stock apres ' + formaterStock(restant - piecesStock, article);
+        resume.className = 'resume-conditionnement' + (piecesStock > restant ? ' mauvais' : '');
+      };
+      const valider = () => {
+        const v = lire();
+        if (!Number.isInteger(v.cartons) || !Number.isInteger(v.pieces)) {
+          return afficherMessage(message, 'Les quantites doivent etre des entiers.');
+        }
+        if (v.cartons === 0 && v.pieces === 0) {
+          return afficherMessage(message, 'Choisissez au moins une quantite.');
+        }
+        if (v.cartons * parCarton + v.pieces > restant) {
+          return afficherMessage(message, 'Stock insuffisant : il reste ' + formaterStock(restant, article) + '.');
+        }
+        fermer(v);
+      };
+      champCartons.addEventListener('input', redessiner);
+      champPieces.addEventListener('input', redessiner);
+      for (const champ of [champCartons, champPieces]) {
+        champ.addEventListener('keydown', (e) => { if (e.key === 'Enter') valider(); });
+      }
+
+      const boutonsRapides = creer('div', { classe: 'choix-rapides' }, [
+        creer('button', {
+          classe: 'bouton discret', texte: '+1 carton', attributs: { type: 'button' },
+          sur: { click: () => { champCartons.value = String((Number(champCartons.value) || 0) + 1); redessiner(); } },
+        }),
+        creer('button', {
+          classe: 'bouton discret', texte: '+1 piece', attributs: { type: 'button' },
+          sur: { click: () => { champPieces.value = String((Number(champPieces.value) || 0) + 1); redessiner(); } },
+        }),
+        creer('button', {
+          classe: 'bouton discret', texte: 'Max cartons', attributs: { type: 'button' },
+          sur: { click: () => { champCartons.value = String(cartonsMax); champPieces.value = '0'; redessiner(); } },
+        }),
+      ]);
+      if (cartonsMax <= 0) boutonsRapides.firstChild.disabled = true;
+
+      const boite = creer('div', { classe: 'boite-conditionnement' }, [
+        creer('h3', { texte: 'Vendre ' + article.designation }),
+        creer('p', {
+          classe: 'aide',
+          texte: 'Stock disponible : ' + formaterStock(restant, article) +
+            ' — 1 carton = ' + parCarton + ' pieces.',
+        }),
+        message,
+        creer('div', { classe: 'grille-conditionnement' }, [
+          creer('label', { texte: 'Cartons' }, [champCartons]),
+          creer('label', { texte: 'Pieces' }, [champPieces]),
+        ]),
+        creer('div', { classe: 'prix-conditionnement' }, [
+          creer('span', { texte: 'Prix carton : ' + formater(prixUnite(article, 'carton')) }),
+          creer('span', { texte: 'Prix piece : ' + formater(prixUnite(article, 'piece')) }),
+        ]),
+        boutonsRapides,
+        resume,
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Ajouter au panier', attributs: { type: 'button' }, sur: { click: valider } }),
+        ]),
+      ]);
+      redessiner();
+      return boite;
+    });
+
+    if (!choix) return null;
+    return this.ajouterConditionnement(article, choix);
+  },
+
+  ajouterConditionnement(article, { cartons = 0, pieces = 0 }) {
+    const nbCartons = Number(cartons) || 0;
+    const nbPieces = Number(pieces) || 0;
+    if (!Number.isInteger(nbCartons) || !Number.isInteger(nbPieces) || nbCartons < 0 || nbPieces < 0) {
+      return annoncer('Quantites invalides.', 'erreur');
+    }
+    const sortie = nbCartons * facteurUnite(article, 'carton') + nbPieces;
+    if (sortie <= 0) return null;
+    if (sortie > this.restantStock(article)) {
+      return annoncer('Stock insuffisant : il reste ' + formaterStock(this.restantStock(article), article) + '.', 'avertissement');
+    }
+    if (nbCartons > 0) this.ajouter(article, 'carton', nbCartons, { silencieux: true });
+    if (nbPieces > 0) this.ajouter(article, 'piece', nbPieces, { silencieux: true });
+    annoncer(article.designation + ' : ' + nbCartons + ' carton(s) + ' + nbPieces + ' piece(s) ajoutes.');
+    this.afficherPanier();
+    this.afficherResultats();
+    return true;
+  },
+
+  ajouter(article, unite = 'piece', quantite = 1, options = {}) {
     const uniteVente = unite === 'carton' ? 'carton' : 'piece';
     const facteurStock = facteurUnite(article, uniteVente);
     if (uniteVente === 'carton' && (!article.venteCarton || article.piecesParCarton <= 1)) {
@@ -212,7 +332,9 @@ const Vente = {
     if (uniteVente === 'piece' && article.ventePiece === false) {
       return annoncer(article.designation + ' ne se vend pas a la piece.', 'avertissement');
     }
-    if (this.restantStock(article) < facteurStock) {
+    const qte = Number(quantite) || 1;
+    if (!Number.isInteger(qte) || qte <= 0) return annoncer('Quantite invalide.', 'erreur');
+    if (this.restantStock(article) < facteurStock * qte) {
       return annoncer(
         article.designation + ' : stock insuffisant (' + formaterStock(this.restantStock(article), article) + ').',
         'avertissement'
@@ -222,8 +344,8 @@ const Vente = {
     const cle = this.clePanier(article.reference, uniteVente);
     const ligne = this.panier.find((l) => l.cle === cle);
     if (ligne) {
-      ligne.quantite += 1;
-      annoncer(article.designation + ' ' + ligne.quantite + ' ' + libelleUnite(uniteVente, ligne.quantite));
+      ligne.quantite += qte;
+      if (!options.silencieux) annoncer(article.designation + ' ' + ligne.quantite + ' ' + libelleUnite(uniteVente, ligne.quantite));
     } else {
       this.panier.push({
         cle,
@@ -231,17 +353,22 @@ const Vente = {
         designation: article.designation,
         prixUnitaire: prixUnite(article, uniteVente),
         tauxTva: article.tauxTva,
-        quantite: 1,
+        quantite: qte,
         uniteVente,
         facteurStock,
         piecesParCarton: piecesParCarton(article),
         remisePourcent: 0,
         stock: article.stock,
       });
-      annoncer(article.designation + '  ' + formater(prixUnite(article, uniteVente)) + ' / ' + libelleUnite(uniteVente));
+      if (!options.silencieux) {
+        annoncer(article.designation + '  ' + qte + ' ' + libelleUnite(uniteVente, qte) +
+          ' a ' + formater(prixUnite(article, uniteVente)) + ' / ' + libelleUnite(uniteVente));
+      }
     }
-    this.afficherPanier();
-    this.afficherResultats();
+    if (!options.silencieux) {
+      this.afficherPanier();
+      this.afficherResultats();
+    }
   },
 
   changerQuantite(cle, ecart) {

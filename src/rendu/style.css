@@ -438,3 +438,151 @@ label.case input { width: auto; margin: 0; }
   .tableau-bord-panneaux { grid-template-columns: 1fr; }
   .deux-colonnes { grid-template-columns: 1fr; }
 }
+
+/* --- Finition visuelle professionnelle ---------------------------------- */
+:root {
+  --fond-panneau: #182842;
+  --fond-champ: #0a1626;
+  --bord: #2b415f;
+  --accent-2: #7c5cff;
+  --or: #ffd166;
+  --ombre-forte: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(23, 195, 178, 0.22), transparent 30rem),
+    radial-gradient(circle at 92% 16%, rgba(124, 92, 255, 0.18), transparent 34rem),
+    linear-gradient(145deg, #06101d 0%, #0f1b2a 48%, #081321 100%);
+}
+
+.barre-laterale {
+  background: linear-gradient(180deg, rgba(31, 50, 80, 0.98), rgba(15, 27, 42, 0.98));
+  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.22);
+}
+
+.marque {
+  font-size: 21px;
+  padding-top: 22px;
+}
+
+.navigation button {
+  position: relative;
+  font-weight: 650;
+  letter-spacing: 0.1px;
+}
+.navigation button.actif {
+  background: linear-gradient(135deg, var(--accent), var(--accent-clair));
+  box-shadow: 0 12px 28px rgba(18, 165, 148, 0.22);
+}
+.navigation button.actif::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--or);
+}
+
+.entete-zone {
+  background: linear-gradient(180deg, rgba(14, 28, 48, 0.9), rgba(9, 20, 33, 0.72));
+  backdrop-filter: blur(12px);
+}
+.entete-zone h2 { font-size: 21px; }
+
+.bouton {
+  background: linear-gradient(135deg, var(--accent), var(--accent-clair));
+  box-shadow: 0 10px 24px rgba(18, 165, 148, 0.18);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+.bouton:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(18, 165, 148, 0.24); }
+.bouton.discret { box-shadow: none; background: rgba(255,255,255,0.025); }
+
+.article {
+  border-color: rgba(255, 255, 255, 0.035);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015)),
+    var(--fond-panneau);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.article:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.20);
+}
+.article.conditionne { border-left: 4px solid var(--or); }
+.article.conditionne .designation::after {
+  content: ' carton / piece';
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 209, 102, 0.13);
+  color: #ffe2a6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ligne-panier {
+  margin-bottom: 6px;
+  padding: 12px 10px;
+  border: 1px solid rgba(255,255,255,0.035);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+}
+.totaux {
+  background: linear-gradient(180deg, rgba(31, 50, 80, 0.98), rgba(23, 37, 58, 0.98));
+  box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.18);
+}
+.totaux .ligne.total .montant { color: #9ff4ea; }
+
+.panneau, .carte-indicateur, .boite {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012)),
+    var(--fond-panneau);
+  box-shadow: var(--ombre-forte);
+}
+
+.boite-conditionnement h3 { font-size: 20px; }
+.grille-conditionnement {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.prix-conditionnement {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 6px 0 12px;
+}
+.prix-conditionnement span,
+.resume-conditionnement {
+  padding: 10px 12px;
+  border: 1px solid var(--bord);
+  border-radius: 10px;
+  background: rgba(10, 22, 38, 0.72);
+  color: var(--texte-doux);
+}
+.resume-conditionnement {
+  margin-top: 12px;
+  color: #9ff4ea;
+  border-color: rgba(18, 165, 148, 0.45);
+  font-weight: 700;
+}
+.resume-conditionnement.mauvais {
+  color: #ffb4b6;
+  border-color: rgba(229, 72, 77, 0.65);
+}
+.choix-rapides {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-clair);
+  box-shadow: 0 0 0 3px rgba(23, 195, 178, 0.14);
+}
