@@ -154,6 +154,24 @@ function enregistrer(base, {
   return transaction();
 }
 
+function facturesCreditClient(base, clientId) {
+  if (!clientId) return [];
+  return base.prepare(
+    'SELECT creances_clients.*, ventes.numero AS vente_numero FROM creances_clients ' +
+      'LEFT JOIN ventes ON ventes.id = creances_clients.vente_id ' +
+      "WHERE creances_clients.client_id = ? AND creances_clients.statut IN ('ouverte', 'partielle') " +
+        'AND creances_clients.solde > 0 ' +
+      'ORDER BY creances_clients.date_creation, creances_clients.id'
+  ).all(clientId).map((c) => ({
+    numero: c.vente_numero || c.numero,
+    creanceNumero: c.numero,
+    libelle: c.libelle,
+    dateCreation: c.date_creation,
+    montantInitial: c.montant_initial,
+    solde: c.solde,
+  }));
+}
+
 function lire(base, id) {
   const v = base
     .prepare(
@@ -181,6 +199,7 @@ function lire(base, id) {
       facteurStock: l.facteur_stock ?? 1,
       quantiteStock: l.quantite * (l.facteur_stock ?? 1),
     }));
+  const facturesCredit = v.paiement_credit ? facturesCreditClient(base, v.client_id) : [];
   return {
     id: v.id,
     numero: v.numero,
@@ -189,6 +208,9 @@ function lire(base, id) {
     annulee: Boolean(v.annulee),
     motifAnnulation: v.motif_annulation,
     client: v.client_id ? { id: v.client_id, code: v.client_code, nom: v.client_nom } : null,
+    creditClient: facturesCredit.length > 0
+      ? { factures: facturesCredit, totalSolde: facturesCredit.reduce((s, f) => s + f.solde, 0) }
+      : null,
     caisseId: v.session_id,
     paiement: {
       mode: v.paiement_credit ? 'credit' : v.mode_paiement,

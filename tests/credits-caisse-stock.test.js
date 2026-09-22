@@ -19,6 +19,11 @@ test('vente a credit, creance client et fermeture de caisse restent coherentes',
   });
   const client = clients.creer(base, { nom: 'Client Pro', plafondCredit: 1000 });
   articles.creer(base, { reference: 'EAU', designation: 'Eau minerale', prixUnitaire: 300, stock: 5 });
+  const detteAvant = clients.creerCreanceAnterieure(base, {
+    clientId: client.id,
+    montantInitial: 150,
+    libelle: 'Facture avant installation',
+  });
 
   assert.throws(() => ventes.enregistrer(base, {
     lignes: [{ reference: 'EAU', quantite: 1 }],
@@ -31,10 +36,15 @@ test('vente a credit, creance client et fermeture de caisse restent coherentes',
     paiement: { mode: 'credit' }, clientId: client.id, utilisateurId: admin.id, exigerCaisse: true,
   });
 
-  assert.equal(ventes.lire(base, vente.id).paiement.mode, 'credit');
+  const venteRelue = ventes.lire(base, vente.id);
+  assert.equal(venteRelue.paiement.mode, 'credit');
   assert.equal(articles.lireParReference(base, 'EAU').stock, 3);
-  assert.equal(clients.listerCreances(base, { clientId: client.id }).length, 1);
-  assert.equal(clients.listerCreances(base, { clientId: client.id })[0].solde, 600);
+  const creancesOuvertes = clients.listerCreances(base, { clientId: client.id });
+  assert.equal(creancesOuvertes.length, 2);
+  assert.equal(creancesOuvertes.reduce((s, c) => s + c.solde, 0), 750);
+  assert.equal(venteRelue.creditClient.totalSolde, 750);
+  assert.deepEqual(venteRelue.creditClient.factures.map((f) => f.solde), [detteAvant.solde, 600]);
+  assert.ok(venteRelue.creditClient.factures.some((f) => f.numero === vente.numero));
 
   clients.enregistrerReglement(base, {
     creanceId: clients.listerCreances(base, { clientId: client.id })[0].id,

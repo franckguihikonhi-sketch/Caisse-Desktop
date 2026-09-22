@@ -194,7 +194,8 @@ propose alors d'attribuer un code interne.
 
 Format 58 mm, 32 caracteres, texte a chasse fixe. L'apercu affiche a l'ecran
 est produit par la fonction qui alimente l'imprimante : les deux ne peuvent pas
-diverger.
+diverger. Pour une vente a credit, le pied du ticket ajoute automatiquement la
+liste des factures credit encore ouvertes du client et le total restant du.
 
 ```
           MA BOUTIQUE

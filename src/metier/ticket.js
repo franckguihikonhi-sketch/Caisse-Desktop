@@ -72,6 +72,17 @@ function construireTicket({ boutique, vente }) {
     pousser(justifier('Remise', '-' + formater(vente.panier.remise)));
   }
   pousser(justifier('TOTAL', formater(vente.panier.totalTtc)));
+
+  const facturesCredit = vente.creditClient?.factures ?? [];
+  if (facturesCredit.length > 0) {
+    pousser(separateur());
+    pousser('Factures a credit');
+    for (const facture of facturesCredit) {
+      pousser(justifier(facture.numero, formater(facture.solde)));
+    }
+    const totalCredit = vente.creditClient?.totalSolde ?? facturesCredit.reduce((s, f) => s + f.solde, 0);
+    pousser(justifier('Dette totale', formater(totalCredit)));
+  }
   pousser('');
 
   pousser(centrer('Merci de votre visite'));
