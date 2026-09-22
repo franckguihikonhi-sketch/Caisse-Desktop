@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const Database = require('better-sqlite3');
+const { BaseSqlite } = require('./sqlite');
 
 const { migrer } = require('./migrations');
 
@@ -24,7 +24,7 @@ function ouvrir(chemin) {
   if (chemin !== ':memory:') {
     fs.mkdirSync(path.dirname(chemin), { recursive: true });
   }
-  const base = new Database(chemin);
+  const base = new BaseSqlite(chemin);
   base.pragma('journal_mode = WAL');
   base.pragma('foreign_keys = ON');
 

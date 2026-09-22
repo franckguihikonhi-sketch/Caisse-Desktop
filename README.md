@@ -31,9 +31,9 @@ npm install
 npm start
 ```
 
-Aucune compilation native n'est necessaire : better-sqlite3 est livre en
-Node-API, dont l'ABI vaut aussi bien pour Node que pour Electron. Il n'y a donc
-ni node-gyp, ni Visual Studio Build Tools a installer sous Windows.
+Aucune compilation native n'est necessaire : la base SQLite passe par
+`node:sqlite`, fourni par Node et Electron. Il n'y a donc ni node-gyp, ni
+Visual Studio Build Tools a installer sous Windows.
 
 A la premiere ouverture, la caisse demande de creer le compte administrateur.
 **Il n'y a pas de mot de passe par defaut** : rien n'est ouvert tant que ce

@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const Database = require('better-sqlite3');
+const { BaseSqlite } = require('../src/donnees/sqlite');
 
 const { ouvrir } = require('../src/donnees/base');
 const { migrer, MIGRATIONS, DERNIERE_VERSION } = require('../src/donnees/migrations');
@@ -33,7 +33,7 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
   const chemin = path.join(dossier, 'caisse.db');
 
   // Une base restee a l'etape 1 : les tables d'origine, sans code-barres.
-  const ancienne = new Database(chemin);
+  const ancienne = new BaseSqlite(chemin);
   MIGRATIONS[0].appliquer(ancienne);
   ancienne.pragma('user_version = 1');
   ancienne
