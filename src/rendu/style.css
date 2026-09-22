@@ -1770,3 +1770,41 @@ td.prix-achat-article {
   .achats-historique table { min-width: 1120px; }
   .ligne-retour-fournisseur { grid-template-columns: 1fr; align-items: stretch; }
 }
+
+/* --- Retours clients ----------------------------------------------------- */
+.retour-client-montant { color: #9ff4ea; font-weight: 850; }
+.formulaire-retour-client { min-width: min(920px, calc(100vw - 72px)); }
+.boite:has(.formulaire-retour-client) { width: min(980px, calc(100vw - 32px)); }
+.lignes-retour-client {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  margin: 12px 0;
+  overflow-y: auto;
+}
+.ligne-retour-client {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto minmax(150px, 0.34fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid rgba(32,217,197,0.14);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(32,217,197,0.065), rgba(124,92,255,0.045));
+}
+.ligne-retour-client strong { display: block; color: #f8fbff; }
+.ligne-retour-client span { display: block; margin-top: 3px; color: #a9bdd6; font-size: 12px; }
+.ligne-retour-client label { margin: 0; }
+.total-retour-client {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(32,217,197,0.45);
+  border-radius: 12px;
+  background: rgba(32,217,197,0.10);
+  color: #9ff4ea;
+  font-weight: 850;
+}
+@media (max-width: 1180px) {
+  .ligne-retour-client { grid-template-columns: 1fr; align-items: stretch; }
+}

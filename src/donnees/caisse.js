@@ -90,6 +90,14 @@ function reglementsFournisseursParMode(base, sessionId) {
   ).all(sessionId);
 }
 
+function retoursClientsParMode(base, sessionId) {
+  return base.prepare(
+    'SELECT mode_remboursement AS mode, COUNT(*) AS nombre, COALESCE(SUM(montant_rembourse), 0) AS total ' +
+      'FROM retours_clients WHERE caisse_id = ? AND statut = \'valide\' AND montant_rembourse > 0 ' +
+      'GROUP BY mode_remboursement'
+  ).all(sessionId);
+}
+
 function sommeMode(lignes, mode) {
   return lignes.find((l) => l.mode === mode)?.total ?? 0;
 }
@@ -100,27 +108,32 @@ function resumeSession(base, sessionId) {
   const ventes = ventesParMode(base, sessionId);
   const reglementsClients = reglementsClientsParMode(base, sessionId);
   const reglementsFournisseurs = reglementsFournisseursParMode(base, sessionId);
+  const retoursClients = retoursClientsParMode(base, sessionId);
 
   const totalVentes = ventes.reduce((s, l) => s + l.total, 0);
   const ventesCredit = sommeMode(ventes, 'credit');
   const ventesEncaissees = totalVentes - ventesCredit;
   const entreesCreances = reglementsClients.reduce((s, l) => s + l.total, 0);
   const sortiesFournisseurs = reglementsFournisseurs.reduce((s, l) => s + l.total, 0);
+  const sortiesRetoursClients = retoursClients.reduce((s, l) => s + l.total, 0);
   const especesVentes = sommeMode(ventes, 'especes');
   const especesClients = sommeMode(reglementsClients, 'especes');
   const especesFournisseurs = sommeMode(reglementsFournisseurs, 'especes');
-  const totalTheorique = session.fondOuverture + especesVentes + especesClients - especesFournisseurs;
+  const especesRetoursClients = sommeMode(retoursClients, 'especes');
+  const totalTheorique = session.fondOuverture + especesVentes + especesClients - especesFournisseurs - especesRetoursClients;
 
   return {
     session,
     ventes,
     reglementsClients,
     reglementsFournisseurs,
+    retoursClients,
     totalVentes,
     ventesEncaissees,
     ventesCredit,
     entreesCreances,
     sortiesFournisseurs,
+    sortiesRetoursClients,
     totalTheorique,
   };
 }

@@ -2,12 +2,14 @@
 
 const { calculer } = require('../metier/panier');
 const { horodater, jourDe } = require('../metier/horodatage');
-const { arrondirEspeces, rendreMonnaie } = require('../metier/monnaie');
+const { arrondirEspeces, rendreMonnaie, formater } = require('../metier/monnaie');
 const conditionnement = require('../metier/conditionnement');
 const articles = require('./articles');
 const clients = require('./clients');
 const caisse = require('./caisse');
 const stocks = require('./stocks');
+
+const MODES_REMBOURSEMENT_RETOUR = ['avoir', 'especes', 'mobile', 'carte'];
 
 function numeroSuivant(base, horodatage) {
   const jour = jourDe(horodatage).replace(/-/g, '');
@@ -16,6 +18,15 @@ function numeroSuivant(base, horodatage) {
     .get('V-' + jour + '-%');
   const rang = derniere ? Number(derniere.numero.split('-')[2]) + 1 : 1;
   return 'V-' + jour + '-' + String(rang).padStart(4, '0');
+}
+
+function numeroRetourClientSuivant(base, horodatage) {
+  const jour = jourDe(horodatage).replace(/-/g, '');
+  const derniere = base
+    .prepare("SELECT numero FROM retours_clients WHERE numero LIKE ? ORDER BY numero DESC LIMIT 1")
+    .get('RC-' + jour + '-%');
+  const rang = derniere ? Number(derniere.numero.split('-')[2]) + 1 : 1;
+  return 'RC-' + jour + '-' + String(rang).padStart(4, '0');
 }
 
 /**
@@ -172,6 +183,246 @@ function facturesCreditClient(base, clientId) {
   }));
 }
 
+
+function modeRemboursementRetour(valeur) {
+  const mode = String(valeur ?? 'avoir').trim();
+  if (!MODES_REMBOURSEMENT_RETOUR.includes(mode)) {
+    throw new RangeError('Mode de remboursement retour client inconnu.');
+  }
+  return mode;
+}
+
+function quantitesRetournees(base, venteId) {
+  return new Map(base.prepare(
+    'SELECT lignes_retour_client.ligne_vente_id AS ligne_id, ' +
+      'COALESCE(SUM(lignes_retour_client.quantite), 0) AS quantite, ' +
+      'COALESCE(SUM(lignes_retour_client.quantite_stock), 0) AS quantite_stock, ' +
+      'COALESCE(SUM(lignes_retour_client.total_ttc), 0) AS total_ttc ' +
+      'FROM lignes_retour_client ' +
+      'JOIN retours_clients ON retours_clients.id = lignes_retour_client.retour_id ' +
+      "WHERE retours_clients.vente_id = ? AND retours_clients.statut = 'valide' " +
+      'GROUP BY lignes_retour_client.ligne_vente_id'
+  ).all(venteId).map((r) => [r.ligne_id, r]));
+}
+
+function lignesVente(base, venteId) {
+  const retournees = quantitesRetournees(base, venteId);
+  return base
+    .prepare(
+      'SELECT lignes_vente.*, articles.pieces_par_carton AS article_pieces_par_carton FROM lignes_vente ' +
+        'LEFT JOIN articles ON articles.id = lignes_vente.article_id ' +
+        'WHERE vente_id = ? ORDER BY lignes_vente.id'
+    )
+    .all(venteId)
+    .map((l) => {
+      const r = retournees.get(l.id) ?? { quantite: 0, quantite_stock: 0, total_ttc: 0 };
+      const quantiteRetournee = r.quantite ?? 0;
+      const quantiteStockRetournee = r.quantite_stock ?? 0;
+      const totalRetourne = r.total_ttc ?? 0;
+      const piecesParCarton = l.article_pieces_par_carton ?? l.facteur_stock ?? 1;
+      return {
+        id: l.id,
+        articleId: l.article_id,
+        reference: l.reference,
+        designation: l.designation,
+        prixUnitaire: l.prix_unitaire,
+        quantite: l.quantite,
+        tauxTva: l.taux_tva,
+        remisePourcent: l.remise_pourcent,
+        totalTtc: l.total_ttc,
+        uniteVente: l.unite_vente ?? 'piece',
+        facteurStock: l.facteur_stock ?? 1,
+        piecesParCarton,
+        quantiteStock: l.quantite * (l.facteur_stock ?? 1),
+        quantiteRetournee,
+        quantiteStockRetournee,
+        quantiteRetourable: Math.max(0, l.quantite - quantiteRetournee),
+        quantiteStockRetourable: Math.max(0, (l.quantite * (l.facteur_stock ?? 1)) - quantiteStockRetournee),
+        totalRetourne,
+        totalRetourable: Math.max(0, l.total_ttc - totalRetourne),
+      };
+    });
+}
+
+function enRetourClient(l) {
+  if (!l) return null;
+  return {
+    id: l.id,
+    numero: l.numero,
+    dateRetour: l.date_retour,
+    venteId: l.vente_id,
+    venteNumero: l.vente_numero,
+    clientId: l.client_id,
+    clientNom: l.client_nom,
+    creanceId: l.creance_id,
+    utilisateurId: l.utilisateur_id,
+    utilisateur: l.utilisateur,
+    caisseId: l.caisse_id,
+    referenceDocument: l.reference_document,
+    modeRemboursement: l.mode_remboursement,
+    totalTtc: l.total_ttc,
+    montantDeduitCreance: l.montant_deduit_creance,
+    montantRembourse: l.montant_rembourse,
+    montantAvoir: l.montant_avoir,
+    statut: l.statut,
+    note: l.note,
+    annuleLe: l.annule_le,
+    motifAnnulation: l.motif_annulation,
+  };
+}
+
+function enLigneRetourClient(l) {
+  if (!l) return null;
+  const piecesParCarton = l.article_pieces_par_carton ?? l.facteur_stock ?? 1;
+  return {
+    id: l.id,
+    retourId: l.retour_id,
+    ligneVenteId: l.ligne_vente_id,
+    articleId: l.article_id,
+    reference: l.reference,
+    designation: l.designation,
+    uniteRetour: l.unite_retour,
+    facteurStock: l.facteur_stock,
+    piecesParCarton,
+    quantite: l.quantite,
+    quantiteStock: l.quantite_stock,
+    quantiteStockLibelle: conditionnement.decrireStock(l.quantite_stock, piecesParCarton),
+    prixUnitaire: l.prix_unitaire,
+    totalTtc: l.total_ttc,
+  };
+}
+
+function sqlRetourClientBase() {
+  return 'SELECT retours_clients.*, ventes.numero AS vente_numero, clients.nom AS client_nom, utilisateurs.nom AS utilisateur ' +
+    'FROM retours_clients ' +
+    'JOIN ventes ON ventes.id = retours_clients.vente_id ' +
+    'LEFT JOIN clients ON clients.id = retours_clients.client_id ' +
+    'LEFT JOIN utilisateurs ON utilisateurs.id = retours_clients.utilisateur_id ';
+}
+
+function lignesRetourClient(base, retourId) {
+  return base.prepare(
+    'SELECT lignes_retour_client.*, articles.pieces_par_carton AS article_pieces_par_carton ' +
+      'FROM lignes_retour_client ' +
+      'LEFT JOIN articles ON articles.id = lignes_retour_client.article_id ' +
+      'WHERE retour_id = ? ORDER BY lignes_retour_client.id'
+  ).all(retourId).map(enLigneRetourClient);
+}
+
+function lireRetour(base, id) {
+  const retour = enRetourClient(base.prepare(sqlRetourClientBase() + 'WHERE retours_clients.id = ?').get(id));
+  if (!retour) return null;
+  return { ...retour, lignes: lignesRetourClient(base, retour.id) };
+}
+
+function retoursVente(base, venteId) {
+  return base.prepare(
+    sqlRetourClientBase() + 'WHERE retours_clients.vente_id = ? ORDER BY retours_clients.id DESC'
+  ).all(venteId).map(enRetourClient).map((retour) => ({ ...retour, lignes: lignesRetourClient(base, retour.id) }));
+}
+
+function listerRetours(base, { venteId = null, clientId = null, limite = 100, inclureAnnules = true } = {}) {
+  const conditions = [];
+  const params = [];
+  if (venteId) {
+    conditions.push('retours_clients.vente_id = ?');
+    params.push(venteId);
+  }
+  if (clientId) {
+    conditions.push('retours_clients.client_id = ?');
+    params.push(clientId);
+  }
+  if (!inclureAnnules) conditions.push("retours_clients.statut = 'valide'");
+  const borne = Math.max(1, Math.min(300, Number(limite) || 100));
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') + ' ' : '';
+  return base.prepare(sqlRetourClientBase() + where + 'ORDER BY retours_clients.id DESC LIMIT ?')
+    .all(...params, borne)
+    .map(enRetourClient);
+}
+
+function preparerLignesRetour(vente, lignes) {
+  if (!Array.isArray(lignes) || lignes.length === 0) {
+    throw new RangeError('Un retour client doit contenir au moins une ligne.');
+  }
+  const cumuls = new Map();
+  for (const ligne of lignes) {
+    const ligneVenteId = Number(ligne.ligneVenteId ?? ligne.id);
+    const quantite = Number(ligne.quantite);
+    if (!Number.isInteger(ligneVenteId) || ligneVenteId <= 0) {
+      throw new RangeError('Ligne de vente invalide dans le retour client.');
+    }
+    if (!Number.isInteger(quantite) || quantite < 0) {
+      throw new RangeError('La quantite retour client doit etre un entier positif.');
+    }
+    if (quantite === 0) continue;
+    cumuls.set(ligneVenteId, (cumuls.get(ligneVenteId) ?? 0) + quantite);
+  }
+  if (cumuls.size === 0) throw new RangeError('Indiquez au moins une quantite a retourner.');
+
+  const preparees = [];
+  for (const [ligneVenteId, quantite] of cumuls.entries()) {
+    const originale = vente.panier.lignes.find((l) => l.id === ligneVenteId);
+    if (!originale) throw new RangeError('La ligne retournee ne fait pas partie de cette vente.');
+    if (!originale.articleId) throw new RangeError('Cette ligne ne peut pas etre retournee en stock.');
+    if (quantite > originale.quantiteRetourable) {
+      throw new RangeError(
+        'Retour trop eleve pour ' + originale.designation +
+          ' : reste ' + originale.quantiteRetourable + ' ' + conditionnement.libelleUnite(originale.uniteVente, originale.quantiteRetourable) +
+          ' a retourner.'
+      );
+    }
+    const retourCompletReste = quantite === originale.quantiteRetourable;
+    const totalTtc = retourCompletReste
+      ? originale.totalRetourable
+      : Math.min(originale.totalRetourable, Math.round((originale.totalTtc * quantite) / originale.quantite));
+    preparees.push({
+      ...originale,
+      quantite,
+      quantiteStock: quantite * originale.facteurStock,
+      totalTtc,
+    });
+  }
+  return preparees;
+}
+
+function reduireCreancePourRetour(base, vente, totalRetour, numeroRetour) {
+  const creance = base.prepare('SELECT * FROM creances_clients WHERE vente_id = ?').get(vente.id);
+  if (!creance || totalRetour <= 0 || creance.solde <= 0 || !['ouverte', 'partielle'].includes(creance.statut)) {
+    return { creanceId: creance?.id ?? null, deduit: 0, reste: totalRetour };
+  }
+  const deduit = Math.min(totalRetour, creance.solde);
+  const nouveauSolde = creance.solde - deduit;
+  const statut = nouveauSolde === 0 ? 'reglee' : 'partielle';
+  base.prepare(
+    "UPDATE creances_clients SET solde = ?, statut = ?, note = TRIM(COALESCE(note, '') || ?) WHERE id = ?"
+  ).run(
+    nouveauSolde,
+    statut,
+    ' Retour client ' + numeroRetour + ' deduit ' + formater(deduit) + '.',
+    creance.id
+  );
+  return { creanceId: creance.id, deduit, reste: totalRetour - deduit };
+}
+
+function restaurerCreanceApresAnnulationRetour(base, retour) {
+  if (!retour.creanceId || retour.montantDeduitCreance <= 0) return;
+  const creance = clients.lireCreance(base, retour.creanceId);
+  if (!creance) throw new RangeError('Creance client introuvable pour annuler le retour.');
+  const nouveauSolde = creance.solde + retour.montantDeduitCreance;
+  if (nouveauSolde > creance.montantInitial) {
+    throw new RangeError('Annulation refusee : la creance client deviendrait superieure au montant initial.');
+  }
+  const statut = nouveauSolde === 0 ? 'reglee' : (nouveauSolde === creance.montantInitial ? 'ouverte' : 'partielle');
+  base.prepare(
+    "UPDATE creances_clients SET solde = ?, statut = ?, note = TRIM(COALESCE(note, '') || ?) WHERE id = ?"
+  ).run(
+    nouveauSolde,
+    statut,
+    ' Annulation retour client ' + retour.numero + ' +' + formater(retour.montantDeduitCreance) + '.',
+    creance.id
+  );
+}
+
 function lire(base, id) {
   const v = base
     .prepare(
@@ -184,21 +435,13 @@ function lire(base, id) {
     )
     .get(id);
   if (!v) return null;
-  const lignes = base
-    .prepare('SELECT * FROM lignes_vente WHERE vente_id = ? ORDER BY id')
-    .all(id)
-    .map((l) => ({
-      reference: l.reference,
-      designation: l.designation,
-      prixUnitaire: l.prix_unitaire,
-      quantite: l.quantite,
-      tauxTva: l.taux_tva,
-      remisePourcent: l.remise_pourcent,
-      totalTtc: l.total_ttc,
-      uniteVente: l.unite_vente ?? 'piece',
-      facteurStock: l.facteur_stock ?? 1,
-      quantiteStock: l.quantite * (l.facteur_stock ?? 1),
-    }));
+  const lignes = lignesVente(base, id);
+  const retours = retoursVente(base, id);
+  const retoursValides = retours.filter((r) => r.statut === 'valide');
+  const totalRetours = retoursValides.reduce((s, r) => s + r.totalTtc, 0);
+  const montantAvoirRetour = retoursValides.reduce((s, r) => s + r.montantAvoir, 0);
+  const montantRembourseRetour = retoursValides.reduce((s, r) => s + r.montantRembourse, 0);
+  const montantDeduitCreanceRetour = retoursValides.reduce((s, r) => s + r.montantDeduitCreance, 0);
   const facturesCredit = v.paiement_credit ? facturesCreditClient(base, v.client_id) : [];
   return {
     id: v.id,
@@ -217,6 +460,12 @@ function lire(base, id) {
       montantRecu: v.montant_recu,
       rendu: v.monnaie_rendue,
     },
+    totalRetours,
+    montantNet: Math.max(0, v.total_ttc - totalRetours),
+    montantAvoirRetour,
+    montantRembourseRetour,
+    montantDeduitCreanceRetour,
+    retours,
     panier: {
       lignes,
       totalBrut: v.total_brut,
@@ -229,6 +478,118 @@ function lire(base, id) {
       ventilation: ventiler(lignes),
     },
   };
+}
+
+
+function retourner(base, donnees) {
+  return base.transaction(() => {
+    const vente = lire(base, donnees.venteId);
+    if (!vente) throw new RangeError('Vente introuvable.');
+    if (vente.annulee) throw new RangeError('Impossible de retourner un article sur une vente annulee.');
+    const lignes = preparerLignesRetour(vente, donnees.lignes);
+    const total = lignes.reduce((s, l) => s + l.totalTtc, 0);
+    if (total <= 0) throw new RangeError('Le montant du retour client doit etre superieur a zero.');
+
+    const date = donnees.dateRetour || horodater();
+    const numero = donnees.numero || numeroRetourClientSuivant(base, date);
+    const referenceDocument = String(donnees.referenceDocument ?? donnees.reference ?? '').trim() || null;
+    const note = String(donnees.note ?? '').trim() || null;
+    const finance = reduireCreancePourRetour(base, vente, total, numero);
+    const mode = modeRemboursementRetour(donnees.modeRemboursement ?? donnees.modePaiement ?? 'avoir');
+    let session = null;
+    let montantRembourse = 0;
+    let montantAvoir = 0;
+    if (finance.reste > 0) {
+      if (mode === 'avoir') {
+        montantAvoir = finance.reste;
+      } else {
+        session = caisse.exigerOuverte(base);
+        montantRembourse = finance.reste;
+      }
+    }
+
+    const ins = base.prepare(
+      'INSERT INTO retours_clients (numero, date_retour, vente_id, client_id, creance_id, utilisateur_id, caisse_id, ' +
+        'reference_document, mode_remboursement, total_ttc, montant_deduit_creance, montant_rembourse, ' +
+        'montant_avoir, statut, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'valide\', ?)'
+    ).run(
+      numero,
+      date,
+      vente.id,
+      vente.client?.id ?? null,
+      finance.creanceId,
+      donnees.utilisateurId ?? null,
+      session?.id ?? null,
+      referenceDocument,
+      mode,
+      total,
+      finance.deduit,
+      montantRembourse,
+      montantAvoir,
+      note
+    );
+    const retourId = ins.lastInsertRowid;
+
+    const insererLigne = base.prepare(
+      'INSERT INTO lignes_retour_client (retour_id, ligne_vente_id, article_id, reference, designation, unite_retour, ' +
+        'facteur_stock, quantite, quantite_stock, prix_unitaire, total_ttc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    for (const ligne of lignes) {
+      insererLigne.run(
+        retourId,
+        ligne.id,
+        ligne.articleId,
+        ligne.reference,
+        ligne.designation,
+        ligne.uniteVente,
+        ligne.facteurStock,
+        ligne.quantite,
+        ligne.quantiteStock,
+        ligne.prixUnitaire,
+        ligne.totalTtc
+      );
+      stocks.mouvement(base, {
+        articleId: ligne.articleId,
+        type: 'retour',
+        unite: ligne.uniteVente,
+        quantite: ligne.quantite,
+        motif: 'Retour client ' + numero + ' - vente ' + vente.numero,
+        reference: referenceDocument || numero,
+        venteId: vente.id,
+        retourClientId: retourId,
+        utilisateurId: donnees.utilisateurId,
+      });
+    }
+
+    return lireRetour(base, retourId);
+  })();
+}
+
+function annulerRetour(base, id, motif = '', utilisateurId = null) {
+  return base.transaction(() => {
+    const retour = lireRetour(base, id);
+    if (!retour) throw new RangeError('Retour client introuvable.');
+    if (retour.statut === 'annule') throw new RangeError('Ce retour client est deja annule.');
+    const raison = String(motif ?? '').trim() || 'Annulation retour client ' + retour.numero;
+
+    for (const ligne of retour.lignes) {
+      stocks.mouvement(base, {
+        articleId: ligne.articleId,
+        type: 'sortie',
+        unite: ligne.uniteRetour,
+        quantite: ligne.quantite,
+        motif: 'Annulation retour client ' + retour.numero + ' - ' + raison,
+        reference: retour.referenceDocument || retour.numero,
+        venteId: retour.venteId,
+        retourClientId: retour.id,
+        utilisateurId,
+      });
+    }
+    restaurerCreanceApresAnnulationRetour(base, retour);
+    base.prepare("UPDATE retours_clients SET statut = 'annule', annule_le = ?, motif_annulation = ? WHERE id = ?")
+      .run(horodater(), raison, retour.id);
+    return lireRetour(base, retour.id);
+  })();
 }
 
 function ventiler(lignes) {
@@ -247,6 +608,7 @@ function journal(base, jour) {
   return base
     .prepare(
       'SELECT ventes.id, numero, date_vente, total_ttc, ' +
+        "COALESCE((SELECT SUM(total_ttc) FROM retours_clients WHERE vente_id = ventes.id AND statut = 'valide'), 0) AS total_retours, " +
         'CASE WHEN paiement_credit = 1 THEN \'credit\' ELSE mode_paiement END AS mode_paiement, ' +
         'annulee, utilisateurs.nom AS caissier, clients.nom AS client_nom FROM ventes ' +
         'JOIN utilisateurs ON utilisateurs.id = ventes.utilisateur_id ' +
@@ -259,6 +621,8 @@ function journal(base, jour) {
       numero: v.numero,
       date: v.date_vente,
       totalTtc: v.total_ttc,
+      totalRetours: v.total_retours ?? 0,
+      montantNet: Math.max(0, v.total_ttc - (v.total_retours ?? 0)),
       modePaiement: v.mode_paiement,
       annulee: Boolean(v.annulee),
       caissier: v.caissier,
@@ -293,6 +657,16 @@ function cloture(base, jour) {
     )
     .all(jour);
 
+  const retours = base
+    .prepare(
+      'SELECT COUNT(*) AS nombre, COALESCE(SUM(total_ttc), 0) AS total, ' +
+        'COALESCE(SUM(montant_deduit_creance), 0) AS deduitCreance, ' +
+        'COALESCE(SUM(montant_rembourse), 0) AS rembourse, ' +
+        'COALESCE(SUM(montant_avoir), 0) AS avoir FROM retours_clients ' +
+        "WHERE date(date_retour) = ? AND statut = 'valide'"
+    )
+    .get(jour);
+
   const parTaux = base
     .prepare(
       'SELECT taux_tva AS taux, SUM(lignes_vente.total_ttc) AS ttc FROM lignes_vente ' +
@@ -314,8 +688,15 @@ function cloture(base, jour) {
     jour,
     nombreVentes: totaux.nombre,
     totalTtc: totaux.ttc,
+    totalRetoursClients: retours.total,
+    nombreRetoursClients: retours.nombre,
+    chiffreAffairesNet: Math.max(0, totaux.ttc - retours.total),
     totalEncaisse: encaissement.encaisse,
+    totalEncaisseNet: Math.max(0, encaissement.encaisse - retours.rembourse),
     totalCredit: encaissement.credit,
+    totalRetoursDeduitsCreances: retours.deduitCreance,
+    totalRetoursRembourses: retours.rembourse,
+    totalAvoirsClients: retours.avoir,
     totalHt: totaux.ht,
     totalTva: totaux.tva,
     remise: totaux.remise,
@@ -331,6 +712,10 @@ function annuler(base, id, motif, utilisateurId = null) {
     const vente = base.prepare('SELECT * FROM ventes WHERE id = ?').get(id);
     if (!vente) throw new RangeError('Vente introuvable.');
     if (vente.annulee) throw new RangeError('Cette vente est deja annulee.');
+    const retours = base.prepare("SELECT COUNT(*) AS n FROM retours_clients WHERE vente_id = ? AND statut = 'valide'").get(id).n;
+    if (retours > 0) {
+      throw new RangeError('Cette vente a deja un retour client. Annulez le retour avant d annuler toute la vente.');
+    }
 
     for (const l of base.prepare('SELECT * FROM lignes_vente WHERE vente_id = ?').all(id)) {
       if (l.article_id !== null) {
@@ -359,4 +744,15 @@ function annuler(base, id, motif, utilisateurId = null) {
   })();
 }
 
-module.exports = { enregistrer, lire, journal, cloture, annuler, numeroSuivant };
+module.exports = {
+  enregistrer,
+  lire,
+  journal,
+  cloture,
+  annuler,
+  retourner,
+  lireRetour,
+  listerRetours,
+  annulerRetour,
+  numeroSuivant,
+};

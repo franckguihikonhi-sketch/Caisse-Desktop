@@ -64,6 +64,7 @@ const Journal = {
       ligneSession('Ventes a credit', formater(r.ventesCredit)),
       ligneSession('Reglements clients', formater(r.entreesCreances)),
       ligneSession('Paiements fournisseurs', '-' + formater(r.sortiesFournisseurs)),
+      r.sortiesRetoursClients > 0 ? ligneSession('Retours clients rembourses', '-' + formater(r.sortiesRetoursClients)) : creer('span'),
       creer('button', { classe: 'bouton danger pleine-largeur espace-haut', texte: 'Fermer la caisse', sur: { click: () => this.fermerCaisse(r) } })
     );
   },
@@ -145,7 +146,7 @@ const Journal = {
 
     if (ventes.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucune vente ce jour-la.', attributs: { colspan: '6' } }),
+        creer('td', { classe: 'vide', texte: 'Aucune vente ce jour-la.', attributs: { colspan: '7' } }),
       ]));
       return;
     }
@@ -159,6 +160,10 @@ const Journal = {
       ]);
       if (App.utilisateur.role === 'administrateur' && !vente.annulee) {
         actions.append(creer('button', {
+          classe: 'bouton discret espace-gauche', texte: 'Retour',
+          sur: { click: () => this.retourner(vente) },
+        }));
+        actions.append(creer('button', {
           classe: 'bouton discret espace-gauche', texte: 'Annuler',
           sur: { click: () => this.annuler(vente) },
         }));
@@ -170,6 +175,7 @@ const Journal = {
         creer('td', { texte: vente.caissier }),
         creer('td', { texte: (LIBELLES_PAIEMENT[vente.modePaiement] ?? vente.modePaiement) + (vente.clientNom ? ' - ' + vente.clientNom : '') }),
         creer('td', { classe: 'nombre montant', texte: formater(vente.totalTtc) }),
+        creer('td', { classe: 'nombre montant retour-client-montant', texte: vente.totalRetours > 0 ? formater(vente.totalRetours) : '-' }),
         actions,
       ]));
     }
@@ -188,8 +194,15 @@ const Journal = {
     panneau.append(creer('h3', { texte: 'Cloture du ' + z.jour }));
     panneau.append(ligne('Ventes', String(z.nombreVentes)));
     panneau.append(ligne('Chiffre d affaires', formater(z.totalTtc), 'forte'));
+    if (z.totalRetoursClients > 0) {
+      panneau.append(ligne('Retours clients', '-' + formater(z.totalRetoursClients)));
+      panneau.append(ligne('Chiffre net', formater(z.chiffreAffairesNet), 'forte'));
+    }
     panneau.append(ligne('Total encaisse', formater(z.totalEncaisse ?? z.totalTtc)));
+    if (z.totalRetoursRembourses > 0) panneau.append(ligne('Remboursements clients', '-' + formater(z.totalRetoursRembourses)));
     if (z.totalCredit > 0) panneau.append(ligne('Ventes a credit', formater(z.totalCredit)));
+    if (z.totalRetoursDeduitsCreances > 0) panneau.append(ligne('Retours deduits credits', '-' + formater(z.totalRetoursDeduitsCreances)));
+    if (z.totalAvoirsClients > 0) panneau.append(ligne('Avoirs clients', formater(z.totalAvoirsClients)));
 
     if (z.remise > 0) panneau.append(ligne('Remises accordees', '-' + formater(z.remise)));
     if (z.ventesAnnulees > 0) panneau.append(ligne('Ventes annulees', String(z.ventesAnnulees)));
@@ -209,6 +222,125 @@ const Journal = {
       }
       panneau.append(ligne('Total TVA', formater(z.totalTva), 'forte'));
     }
+  },
+
+  async retourner(venteCourte) {
+    const vente = await appeler(window.caisse.ventes.lire({ id: venteCourte.id }));
+    const lignesDisponibles = vente.panier.lignes.filter((l) => l.quantiteRetourable > 0);
+    if (lignesDisponibles.length === 0) {
+      return ouvrirBoite((fermer) => creer('div', {}, [
+        creer('h3', { texte: 'Aucun retour possible' }),
+        creer('p', { texte: 'Toutes les marchandises de cette vente ont deja ete retournees.' }),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+        ]),
+      ]));
+    }
+
+    const retour = await ouvrirBoite((fermer) => {
+      const erreur = creer('p', { classe: 'message erreur' });
+      const date = creer('input', { attributs: { type: 'date', value: new Date().toISOString().slice(0, 10), required: 'required' } });
+      const reference = creer('input', { attributs: { type: 'text', placeholder: 'numero avoir / bon retour' } });
+      const mode = creer('select', {}, [
+        creer('option', { texte: 'Avoir client / pas de sortie caisse', attributs: { value: 'avoir' } }),
+        creer('option', { texte: 'Remboursement especes', attributs: { value: 'especes' } }),
+        creer('option', { texte: 'Remboursement mobile money', attributs: { value: 'mobile' } }),
+        creer('option', { texte: 'Remboursement carte', attributs: { value: 'carte' } }),
+      ]);
+      const note = creer('input', { attributs: { type: 'text', placeholder: 'motif, observation...' } });
+      const lignesZone = creer('div', { classe: 'lignes-retour-client' });
+      const totalZone = creer('div', { classe: 'total-retour-client' });
+      const champs = new Map();
+
+      const recalculer = () => {
+        let total = 0;
+        let pieces = 0;
+        for (const l of lignesDisponibles) {
+          const q = Number(champs.get(l.id).value) || 0;
+          if (q === l.quantiteRetourable) total += l.totalRetourable;
+          else total += Math.min(l.totalRetourable, Math.round((l.totalTtc * q) / l.quantite));
+          pieces += q * l.facteurStock;
+        }
+        totalZone.textContent = 'Retour client : ' + formater(total) + ' — Entree stock : ' + pieces + ' piece(s)';
+      };
+
+      for (const l of lignesDisponibles) {
+        const quantite = creer('input', {
+          attributs: {
+            type: 'number', min: '0', max: String(l.quantiteRetourable), step: '1', value: '0',
+          },
+          sur: { input: recalculer },
+        });
+        champs.set(l.id, quantite);
+        lignesZone.append(creer('div', { classe: 'ligne-retour-client' }, [
+          creer('div', {}, [
+            creer('strong', { texte: l.designation }),
+            creer('span', { texte: 'Vendu : ' + l.quantite + ' ' + libelleUnite(l.uniteVente, l.quantite) + ' — deja retourne : ' + l.quantiteRetournee }),
+            creer('span', { texte: 'Retour possible : ' + l.quantiteRetourable + ' ' + libelleUnite(l.uniteVente, l.quantiteRetourable) + ' (' + formaterStock(l.quantiteStockRetourable, l) + ')' }),
+          ]),
+          creer('span', { classe: 'montant', texte: 'Reste ' + formater(l.totalRetourable) }),
+          creer('label', { texte: 'Quantite retour' }, [quantite]),
+        ]));
+      }
+
+      const enregistrer = async () => {
+        const lignes = lignesDisponibles.map((l) => ({
+          ligneVenteId: l.id,
+          quantite: Number(champs.get(l.id).value) || 0,
+        })).filter((l) => l.quantite > 0);
+        if (lignes.length === 0) return afficherMessage(erreur, 'Indiquez au moins une quantite a retourner.');
+        try {
+          fermer(await appeler(window.caisse.ventes.retourner({
+            venteId: vente.id,
+            dateRetour: date.value,
+            referenceDocument: reference.value,
+            modeRemboursement: mode.value,
+            note: note.value,
+            lignes,
+          })));
+        } catch (probleme) {
+          afficherMessage(erreur, probleme.message);
+        }
+      };
+
+      recalculer();
+      const aide = vente.paiement.mode === 'credit'
+        ? 'La dette client sera diminuee automatiquement. Si la dette est deja reglee, le reste sera traite selon le mode choisi.'
+        : 'Le stock sera augmente. Choisissez avoir client ou remboursement ; le remboursement especes sortira de la caisse ouverte.';
+      return creer('form', {
+        classe: 'formulaire-retour-client',
+        sur: { submit: (e) => { e.preventDefault(); enregistrer(); } },
+      }, [
+        creer('h3', { texte: 'Retour client - ' + vente.numero }),
+        creer('p', { classe: 'aide', texte: aide }),
+        erreur,
+        creer('div', { classe: 'grille-formulaire' }, [
+          creer('label', { texte: 'Date retour' }, [date]),
+          creer('label', { texte: 'Document / avoir' }, [reference]),
+          creer('label', { texte: 'Mode' }, [mode]),
+          creer('label', { texte: 'Note' }, [note]),
+        ]),
+        lignesZone,
+        totalZone,
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Valider le retour', attributs: { type: 'submit' } }),
+        ]),
+      ]);
+    });
+
+    if (retour) {
+      await this.charger();
+      await ouvrirBoite((fermer) => creer('div', {}, [
+        creer('h3', { texte: 'Retour enregistre' }),
+        creer('p', { texte: retour.numero + ' — montant ' + formater(retour.totalTtc) }),
+        creer('p', { classe: 'aide', texte: retour.montantDeduitCreance > 0 ? 'Deduit de la dette client : ' + formater(retour.montantDeduitCreance) : (retour.montantRembourse > 0 ? 'Rembourse : ' + formater(retour.montantRembourse) : 'Avoir client : ' + formater(retour.montantAvoir)) }),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+        ]),
+      ]));
+    }
+    return retour;
   },
 
   async voirTicket(id) {

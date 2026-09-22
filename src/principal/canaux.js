@@ -130,6 +130,10 @@ function enregistrerCanaux(bd, session) {
   repondre('ventes:journal', ({ jour: j } = {}) => ventes.journal(bd, j ?? jour()));
   repondre('ventes:cloture', ({ jour: j } = {}) => ventes.cloture(bd, j ?? jour()));
   repondre('ventes:annuler', ({ id, motif }) => ventes.annuler(bd, id, motif, session.utilisateur.id), admin);
+  repondre('ventes:retourner', (donnees) =>
+    ventes.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
+  repondre('ventes:retours', (options) => ventes.listerRetours(bd, options ?? {}), admin);
+  repondre('ventes:annulerRetour', ({ id, motif }) => ventes.annulerRetour(bd, id, motif, session.utilisateur.id), admin);
 
   // --- Utilisateurs ----------------------------------------------------------
   repondre('utilisateurs:lister', () => utilisateurs.lister(bd), admin);

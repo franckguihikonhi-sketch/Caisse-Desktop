@@ -82,6 +82,9 @@ contextBridge.exposeInMainWorld('caisse', {
     journal: appeler('ventes:journal'),
     cloture: appeler('ventes:cloture'),
     annuler: appeler('ventes:annuler'),
+    retourner: appeler('ventes:retourner'),
+    retours: appeler('ventes:retours'),
+    annulerRetour: appeler('ventes:annulerRetour'),
   },
   utilisateurs: {
     lister: appeler('utilisateurs:lister'),

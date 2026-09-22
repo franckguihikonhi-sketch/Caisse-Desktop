@@ -360,6 +360,64 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 8,
+    intitule: 'Retours articles clients',
+    appliquer(base) {
+      base.exec(`
+        CREATE TABLE IF NOT EXISTS retours_clients (
+          id                      INTEGER PRIMARY KEY,
+          numero                  TEXT    NOT NULL UNIQUE,
+          date_retour             TEXT    NOT NULL,
+          vente_id                INTEGER NOT NULL REFERENCES ventes (id),
+          client_id               INTEGER REFERENCES clients (id),
+          creance_id              INTEGER REFERENCES creances_clients (id),
+          utilisateur_id          INTEGER REFERENCES utilisateurs (id),
+          caisse_id               INTEGER REFERENCES sessions_caisse (id),
+          reference_document      TEXT,
+          mode_remboursement      TEXT    NOT NULL DEFAULT 'avoir'
+            CHECK (mode_remboursement IN ('avoir', 'especes', 'mobile', 'carte')),
+          total_ttc               INTEGER NOT NULL CHECK (total_ttc >= 0),
+          montant_deduit_creance  INTEGER NOT NULL DEFAULT 0 CHECK (montant_deduit_creance >= 0),
+          montant_rembourse       INTEGER NOT NULL DEFAULT 0 CHECK (montant_rembourse >= 0),
+          montant_avoir           INTEGER NOT NULL DEFAULT 0 CHECK (montant_avoir >= 0),
+          statut                  TEXT    NOT NULL DEFAULT 'valide' CHECK (statut IN ('valide', 'annule')),
+          note                    TEXT,
+          annule_le               TEXT,
+          motif_annulation        TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_retours_clients_date ON retours_clients (date_retour);
+        CREATE INDEX IF NOT EXISTS idx_retours_clients_vente ON retours_clients (vente_id);
+        CREATE INDEX IF NOT EXISTS idx_retours_clients_client ON retours_clients (client_id, date_retour DESC);
+        CREATE INDEX IF NOT EXISTS idx_retours_clients_creance ON retours_clients (creance_id);
+        CREATE INDEX IF NOT EXISTS idx_retours_clients_caisse ON retours_clients (caisse_id);
+
+        CREATE TABLE IF NOT EXISTS lignes_retour_client (
+          id                  INTEGER PRIMARY KEY,
+          retour_id           INTEGER NOT NULL REFERENCES retours_clients (id) ON DELETE CASCADE,
+          ligne_vente_id      INTEGER NOT NULL REFERENCES lignes_vente (id),
+          article_id          INTEGER NOT NULL REFERENCES articles (id),
+          reference           TEXT    NOT NULL,
+          designation         TEXT    NOT NULL,
+          unite_retour        TEXT    NOT NULL CHECK (unite_retour IN ('piece', 'carton')),
+          facteur_stock       INTEGER NOT NULL CHECK (facteur_stock >= 1),
+          quantite            INTEGER NOT NULL CHECK (quantite > 0),
+          quantite_stock      INTEGER NOT NULL CHECK (quantite_stock > 0),
+          prix_unitaire       INTEGER NOT NULL CHECK (prix_unitaire >= 0),
+          total_ttc           INTEGER NOT NULL CHECK (total_ttc >= 0)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_client_retour ON lignes_retour_client (retour_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_client_ligne_vente ON lignes_retour_client (ligne_vente_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_retour_client_article ON lignes_retour_client (article_id);
+
+        ALTER TABLE mouvements_stock ADD COLUMN retour_client_id INTEGER REFERENCES retours_clients (id);
+        CREATE INDEX IF NOT EXISTS idx_mouvements_stock_retour_client
+          ON mouvements_stock (retour_client_id);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

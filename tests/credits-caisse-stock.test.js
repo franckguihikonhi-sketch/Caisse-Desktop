@@ -95,3 +95,87 @@ test('stock journalise et dettes fournisseurs se reglent strictement', () => {
   assert.equal(fournisseurs.listerDettes(base, { fournisseurId: fournisseur.id })[0].solde, 2500);
   assert.equal(caisse.etat(base).resume.totalTheorique, 3500);
 });
+
+test('retour client sur vente credit remet le stock et diminue la creance', () => {
+  const base = ouvrir(':memory:');
+  const admin = utilisateurs.creer(base, {
+    identifiant: 'admin', nom: 'Administrateur', role: 'administrateur', motDePasse: 'secret123',
+  });
+  const client = clients.creer(base, { nom: 'Client Retour', plafondCredit: 5000 });
+  articles.creer(base, { reference: 'JUS', designation: 'Jus', prixUnitaire: 300, stock: 10 });
+  caisse.ouvrir(base, { fondOuverture: 1000, utilisateurId: admin.id });
+
+  const vente = ventes.enregistrer(base, {
+    lignes: [{ reference: 'JUS', quantite: 3 }],
+    paiement: { mode: 'credit' },
+    clientId: client.id,
+    utilisateurId: admin.id,
+    exigerCaisse: true,
+  });
+  const venteRelue = ventes.lire(base, vente.id);
+  assert.equal(articles.lireParReference(base, 'JUS').stock, 7);
+  assert.equal(clients.listerCreances(base, { clientId: client.id })[0].solde, 900);
+
+  const retour = ventes.retourner(base, {
+    venteId: vente.id,
+    utilisateurId: admin.id,
+    lignes: [{ ligneVenteId: venteRelue.panier.lignes[0].id, quantite: 1 }],
+  });
+
+  assert.match(retour.numero, /^RC-/);
+  assert.equal(retour.totalTtc, 300);
+  assert.equal(retour.montantDeduitCreance, 300);
+  assert.equal(retour.montantAvoir, 0);
+  assert.equal(articles.lireParReference(base, 'JUS').stock, 8);
+  assert.equal(clients.listerCreances(base, { clientId: client.id })[0].solde, 600);
+
+  const apresRetour = ventes.lire(base, vente.id);
+  assert.equal(apresRetour.totalRetours, 300);
+  assert.equal(apresRetour.montantNet, 600);
+  assert.equal(apresRetour.panier.lignes[0].quantiteRetournee, 1);
+  assert.equal(apresRetour.panier.lignes[0].quantiteRetourable, 2);
+  assert.equal(apresRetour.retours.length, 1);
+  assert.throws(() => ventes.retourner(base, {
+    venteId: vente.id,
+    utilisateurId: admin.id,
+    lignes: [{ ligneVenteId: venteRelue.panier.lignes[0].id, quantite: 3 }],
+  }), /Retour trop eleve/);
+  assert.throws(() => ventes.annuler(base, vente.id, 'Annulation impossible', admin.id), /retour client/);
+});
+
+test('retour client rembourse en especes et peut etre annule proprement', () => {
+  const base = ouvrir(':memory:');
+  const admin = utilisateurs.creer(base, {
+    identifiant: 'admin', nom: 'Administrateur', role: 'administrateur', motDePasse: 'secret123',
+  });
+  articles.creer(base, { reference: 'BIS', designation: 'Biscuit', prixUnitaire: 100, stock: 10 });
+  caisse.ouvrir(base, { fondOuverture: 1000, utilisateurId: admin.id });
+
+  const vente = ventes.enregistrer(base, {
+    lignes: [{ reference: 'BIS', quantite: 4 }],
+    paiement: { mode: 'especes', montantRecu: 400 },
+    utilisateurId: admin.id,
+    exigerCaisse: true,
+  });
+  const ligne = ventes.lire(base, vente.id).panier.lignes[0];
+  assert.equal(caisse.etat(base).resume.totalTheorique, 1400);
+
+  const retour = ventes.retourner(base, {
+    venteId: vente.id,
+    modeRemboursement: 'especes',
+    utilisateurId: admin.id,
+    lignes: [{ ligneVenteId: ligne.id, quantite: 2 }],
+  });
+
+  assert.equal(retour.montantRembourse, 200);
+  assert.equal(retour.montantAvoir, 0);
+  assert.equal(articles.lireParReference(base, 'BIS').stock, 8);
+  assert.equal(caisse.etat(base).resume.totalTheorique, 1200, 'fond 1000 + vente 400 - remboursement 200');
+  assert.equal(stocks.lister(base, { articleId: ligne.articleId, limite: 1 })[0].retourClientId, retour.id);
+
+  const annule = ventes.annulerRetour(base, retour.id, 'Erreur retour', admin.id);
+  assert.equal(annule.statut, 'annule');
+  assert.equal(articles.lireParReference(base, 'BIS').stock, 6);
+  assert.equal(caisse.etat(base).resume.totalTheorique, 1400);
+  assert.equal(ventes.lire(base, vente.id).totalRetours, 0);
+});

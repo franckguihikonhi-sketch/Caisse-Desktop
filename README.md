@@ -18,7 +18,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
-| **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, annuler une vente, fermer avec calcul theorique et ecart |
+| **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique (elle figure sur le ticket) et comptes utilisateurs |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
@@ -107,8 +107,11 @@ possibles) : vendre 2 cartons de 50 pieces retire exactement 100 pieces,
 acheter 2 cartons en ajoute exactement 100, retourner de la marchandise chez le
 fournisseur retire exactement les pieces du stock et diminue la dette ouverte ;
 si l'achat etait deja paye, le montant reste trace comme avoir fournisseur.
-Annuler une vente, un achat ou un retour fait le mouvement inverse, et toute
-sortie carton est refusee s'il ne reste pas assez de pieces.
+Un retour client fait l'inverse d'une vente : les pieces reviennent en stock,
+la creance client est diminuee si la vente etait a credit, sinon le retour est
+trace en avoir client ou en remboursement. Annuler une vente, un achat ou un
+retour fait le mouvement inverse, et toute sortie carton est refusee s'il ne
+reste pas assez de pieces.
 
 **Le rendu n'a pas les cles.** `contextIsolation` est actif, `nodeIntegration`
 ne l'est pas : la page n'a ni `require`, ni acces au disque, ni `ipcRenderer`.
