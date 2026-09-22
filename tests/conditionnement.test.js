@@ -23,6 +23,8 @@ test('un article vendu en cartons et pieces decompte toujours le stock en pieces
   const article = articles.creer(base, {
     reference: 'BIS-50',
     designation: 'Biscuits sachet',
+    prixAchatPiece: 70,
+    prixAchatCarton: 3200,
     prixUnitaire: 100,
     prixCarton: 4500,
     piecesParCarton: 50,
@@ -32,6 +34,8 @@ test('un article vendu en cartons et pieces decompte toujours le stock en pieces
     codeBarresCarton: codeCarton,
   });
 
+  assert.equal(article.prixAchatPiece, 70);
+  assert.equal(article.prixAchatCarton, 3200);
   assert.equal(article.stock, 120);
   assert.equal(article.stockLibelle, '2 cartons + 20 pieces');
   assert.equal(articles.lireParCodeBarres(base, codeCarton).uniteScannee, 'carton');

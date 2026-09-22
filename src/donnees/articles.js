@@ -15,6 +15,15 @@ function codeOuNull(valeur, champ = 'code-barres') {
   return code;
 }
 
+function montantOuNull(valeur, libelle) {
+  if (valeur === '' || valeur === undefined || valeur === null) return null;
+  const n = Number(valeur);
+  if (!Number.isInteger(n) || n < 0) {
+    throw new RangeError(libelle + ' doit etre un entier de francs positif ou nul.');
+  }
+  return n;
+}
+
 function normaliser(article) {
   const reference = String(article.reference ?? '').trim().toUpperCase();
   const designation = String(article.designation ?? '').trim();
@@ -54,6 +63,10 @@ function normaliser(article) {
   }
   if (piecesParCarton === 1) prixCarton = null;
 
+  const prixAchatPiece = montantOuNull(article.prixAchatPiece, "Le prix d'achat piece");
+  let prixAchatCarton = montantOuNull(article.prixAchatCarton, "Le prix d'achat carton");
+  if (piecesParCarton === 1) prixAchatCarton = null;
+
   const codePiece = codeOuNull(article.codeBarres, 'code-barres piece');
   const codeCarton = piecesParCarton > 1 ? codeOuNull(article.codeBarresCarton, 'code-barres carton') : null;
   if (codePiece && codeCarton && codePiece === codeCarton) {
@@ -76,6 +89,8 @@ function normaliser(article) {
     codePiece,
     piecesParCarton,
     prixCarton,
+    prixAchatPiece,
+    prixAchatCarton,
     codeCarton,
     ventePiece,
     venteCarton,
@@ -83,17 +98,19 @@ function normaliser(article) {
 }
 
 function sqlArticles(supplement = '') {
+  const dernierPrixPiece = "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
+    "JOIN achats ON achats.id = lignes_achat.achat_id " +
+    "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'piece' " +
+      "AND achats.statut = 'valide' " +
+    "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1)";
+  const dernierPrixCarton = "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
+    "JOIN achats ON achats.id = lignes_achat.achat_id " +
+    "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'carton' " +
+      "AND achats.statut = 'valide' " +
+    "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1)";
   return 'SELECT articles.*, ' +
-    "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
-      "JOIN achats ON achats.id = lignes_achat.achat_id " +
-      "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'piece' " +
-        "AND achats.statut = 'valide' " +
-      "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1) AS prix_achat_piece, " +
-    "(SELECT lignes_achat.prix_achat_unitaire FROM lignes_achat " +
-      "JOIN achats ON achats.id = lignes_achat.achat_id " +
-      "WHERE lignes_achat.article_id = articles.id AND lignes_achat.unite_achat = 'carton' " +
-        "AND achats.statut = 'valide' " +
-      "ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC LIMIT 1) AS prix_achat_carton" +
+    'COALESCE(articles.prix_achat_piece, ' + dernierPrixPiece + ') AS prix_achat_piece_affiche, ' +
+    'COALESCE(articles.prix_achat_carton, ' + dernierPrixCarton + ') AS prix_achat_carton_affiche' +
     (supplement ? ', ' + supplement : '') +
     ' FROM articles ';
 }
@@ -112,8 +129,8 @@ function enLigne(l, supplement = {}) {
     codeBarresCarton: l.code_barres_carton,
     piecesParCarton: l.pieces_par_carton ?? 1,
     prixCarton: l.prix_carton,
-    prixAchatPiece: l.prix_achat_piece ?? null,
-    prixAchatCarton: l.prix_achat_carton ?? null,
+    prixAchatPiece: l.prix_achat_piece_affiche ?? null,
+    prixAchatCarton: l.prix_achat_carton_affiche ?? null,
     ventePiece: l.vente_piece === undefined ? true : Boolean(l.vente_piece),
     venteCarton: l.vente_carton === undefined ? false : Boolean(l.vente_carton),
     actif: Boolean(l.actif),
@@ -130,12 +147,14 @@ function creer(base, article) {
       const r = base
         .prepare(
           'INSERT INTO articles (reference, designation, prix_unitaire, taux_tva, stock, seuil_alerte, ' +
-            'code_barres, pieces_par_carton, prix_carton, code_barres_carton, vente_piece, vente_carton) ' +
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'code_barres, pieces_par_carton, prix_carton, prix_achat_piece, prix_achat_carton, ' +
+            'code_barres_carton, vente_piece, vente_carton) ' +
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )
         // Le stock initial passe par le journal de stock pour garder la trace.
         .run(a.reference, a.designation, a.prix, a.taux, 0, a.seuil, a.codePiece,
-          a.piecesParCarton, a.prixCarton, a.codeCarton, a.ventePiece ? 1 : 0, a.venteCarton ? 1 : 0);
+          a.piecesParCarton, a.prixCarton, a.prixAchatPiece, a.prixAchatCarton,
+          a.codeCarton, a.ventePiece ? 1 : 0, a.venteCarton ? 1 : 0);
       if (a.stock > 0) {
         stocks.mouvement(base, {
           articleId: r.lastInsertRowid,
@@ -173,10 +192,12 @@ function modifier(base, id, article) {
         .prepare(
           'UPDATE articles SET reference = ?, designation = ?, prix_unitaire = ?, taux_tva = ?, ' +
             'seuil_alerte = ?, code_barres = ?, pieces_par_carton = ?, prix_carton = ?, ' +
-            'code_barres_carton = ?, vente_piece = ?, vente_carton = ? WHERE id = ?'
+            'prix_achat_piece = ?, prix_achat_carton = ?, code_barres_carton = ?, ' +
+            'vente_piece = ?, vente_carton = ? WHERE id = ?'
         )
         .run(a.reference, a.designation, a.prix, a.taux, a.seuil, a.codePiece,
-          a.piecesParCarton, a.prixCarton, a.codeCarton, a.ventePiece ? 1 : 0, a.venteCarton ? 1 : 0, id);
+          a.piecesParCarton, a.prixCarton, a.prixAchatPiece, a.prixAchatCarton,
+          a.codeCarton, a.ventePiece ? 1 : 0, a.venteCarton ? 1 : 0, id);
       stocks.fixerStock(base, {
         articleId: id,
         nouveauStock: a.stock,

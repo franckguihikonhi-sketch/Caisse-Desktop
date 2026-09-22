@@ -271,6 +271,42 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 6,
+    intitule: 'Prix achat sur fiche article',
+    appliquer(base) {
+      base.exec(`
+        ALTER TABLE articles ADD COLUMN prix_achat_piece INTEGER
+          CHECK (prix_achat_piece IS NULL OR prix_achat_piece >= 0);
+        ALTER TABLE articles ADD COLUMN prix_achat_carton INTEGER
+          CHECK (prix_achat_carton IS NULL OR prix_achat_carton >= 0);
+
+        UPDATE articles
+          SET prix_achat_piece = (
+            SELECT lignes_achat.prix_achat_unitaire
+              FROM lignes_achat
+              JOIN achats ON achats.id = lignes_achat.achat_id
+             WHERE lignes_achat.article_id = articles.id
+               AND lignes_achat.unite_achat = 'piece'
+               AND achats.statut = 'valide'
+             ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC
+             LIMIT 1
+          );
+
+        UPDATE articles
+          SET prix_achat_carton = (
+            SELECT lignes_achat.prix_achat_unitaire
+              FROM lignes_achat
+              JOIN achats ON achats.id = lignes_achat.achat_id
+             WHERE lignes_achat.article_id = articles.id
+               AND lignes_achat.unite_achat = 'carton'
+               AND achats.statut = 'valide'
+             ORDER BY achats.date_achat DESC, achats.id DESC, lignes_achat.id DESC
+             LIMIT 1
+          );
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

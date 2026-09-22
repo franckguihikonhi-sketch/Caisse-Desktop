@@ -213,6 +213,8 @@ const Articles = {
         placeholder: 'code du carton complet',
         value: article?.codeBarresCarton ?? valeursParDefaut.codeBarresCarton ?? '',
       });
+      const prixAchatPiece = champ('prixAchatPiece', "Prix d'achat TTC piece (F)", { type: 'number', min: '0', step: '1', value: article?.prixAchatPiece ?? '', placeholder: 'prix fournisseur par piece' });
+      const prixAchatCarton = champ('prixAchatCarton', "Prix d'achat TTC carton (facultatif)", { type: 'number', min: '0', step: '1', value: article?.prixAchatCarton ?? '', placeholder: 'prix fournisseur du carton' });
       const prix = champ('prixUnitaire', 'Prix de vente TTC piece (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
       const prixCarton = champ('prixCarton', 'Prix de vente TTC carton (vide = piece x quantite)', { type: 'number', min: '0', step: '1', value: article?.prixCarton ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
@@ -227,6 +229,8 @@ const Articles = {
             codeBarresCarton: codeCarton.entree.value,
             designation: designation.entree.value,
             piecesParCarton: Number(pieces.entree.value),
+            prixAchatPiece: prixAchatPiece.entree.value === '' ? null : Number(prixAchatPiece.entree.value),
+            prixAchatCarton: prixAchatCarton.entree.value === '' ? null : Number(prixAchatCarton.entree.value),
             prixUnitaire: Number(prix.entree.value),
             prixCarton: prixCarton.entree.value === '' ? null : Number(prixCarton.entree.value),
             tauxTva: Number(taux.entree.value),
@@ -246,7 +250,8 @@ const Articles = {
         creer('h3', { texte: article ? 'Modifier ' + article.designation : 'Nouvel article' }),
         erreur,
         reference.bloc, code.bloc, attribuer, verdictCode, designation.bloc,
-        pieces.bloc, codeCarton.bloc, prix.bloc, prixCarton.bloc, taux.bloc, stock.bloc, seuil.bloc,
+        pieces.bloc, codeCarton.bloc, prixAchatPiece.bloc, prixAchatCarton.bloc,
+        prix.bloc, prixCarton.bloc, taux.bloc, stock.bloc, seuil.bloc,
         creer('div', { classe: 'actions' }, [
           creer('button', {
             classe: 'bouton discret', texte: 'Annuler',
