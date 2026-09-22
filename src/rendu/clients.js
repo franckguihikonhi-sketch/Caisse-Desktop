@@ -3,6 +3,9 @@
 const Clients = {
   liste: [],
   creances: [],
+  rechercheClients: '',
+  rechercheCreances: '',
+  filtreCreances: 'toutes',
 
   async activer() {
     const actions = $('#actions-vue');
@@ -13,7 +16,66 @@ const Clients = {
         creer('button', { classe: 'bouton discret espace-gauche', texte: 'Creance anterieure', sur: { click: () => this.creanceAnterieure() } })
       );
     }
+    this.preparerFiltres();
     await this.charger();
+  },
+
+  preparerFiltres() {
+    const rechercheClients = $('#recherche-clients');
+    if (rechercheClients) {
+      rechercheClients.value = this.rechercheClients;
+      rechercheClients.oninput = () => {
+        this.rechercheClients = rechercheClients.value;
+        this.afficherClients();
+      };
+    }
+    const rechercheCreances = $('#recherche-creances-clients');
+    if (rechercheCreances) {
+      rechercheCreances.value = this.rechercheCreances;
+      rechercheCreances.oninput = () => {
+        this.rechercheCreances = rechercheCreances.value;
+        this.afficherCreances();
+      };
+    }
+    const filtreCreances = $('#filtre-creances-clients');
+    if (filtreCreances) {
+      filtreCreances.value = this.filtreCreances;
+      filtreCreances.onchange = () => {
+        this.filtreCreances = filtreCreances.value;
+        this.afficherCreances();
+      };
+    }
+  },
+
+  texteRecherche(valeur) {
+    return String(valeur ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  },
+
+  clientsFiltres() {
+    const texte = this.texteRecherche(this.rechercheClients);
+    if (!texte) return this.liste;
+    return this.liste.filter((client) => this.texteRecherche([
+      client.code,
+      client.nom,
+      client.telephone,
+      client.email,
+      client.adresse,
+    ].filter(Boolean).join(' ')).includes(texte));
+  },
+
+  creancesFiltrees() {
+    const texte = this.texteRecherche(this.rechercheCreances);
+    return this.creances.filter((creance) => {
+      if (this.filtreCreances !== 'toutes' && creance.statut !== this.filtreCreances) return false;
+      if (!texte) return true;
+      return this.texteRecherche([
+        creance.numero,
+        creance.clientNom,
+        creance.clientCode,
+        creance.libelle,
+        creance.solde,
+      ].filter(Boolean).join(' ')).includes(texte);
+    });
   },
 
   async charger() {
@@ -68,14 +130,18 @@ const Clients = {
   afficherClients() {
     const corps = $('#corps-clients');
     const compteur = $('#compteur-clients');
-    if (compteur) compteur.textContent = this.liste.length + ' client' + (this.liste.length > 1 ? 's' : '');
+    const clients = this.clientsFiltres();
+    if (compteur) {
+      const suffixe = this.rechercheClients.trim() ? ' / ' + this.liste.length : '';
+      compteur.textContent = clients.length + suffixe + ' client' + (clients.length > 1 ? 's' : '');
+    }
     vider(corps);
-    if (this.liste.length === 0) {
-      corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucun client.', attributs: { colspan: '5' } })]));
+    if (clients.length === 0) {
+      corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: this.liste.length === 0 ? 'Aucun client.' : 'Aucun client ne correspond a la recherche.', attributs: { colspan: '5' } })]));
       return;
     }
     const admin = App.utilisateur.role === 'administrateur';
-    for (const client of this.liste) {
+    for (const client of clients) {
       const actions = creer('td', { classe: 'actions-ligne' });
       actions.append(creer('button', { classe: 'bouton discret bouton-mini bouton-credit', texte: 'Credit', sur: { click: () => this.creanceAnterieure(client) } }));
       if (admin) {
@@ -100,24 +166,31 @@ const Clients = {
   afficherCreances() {
     const corps = $('#corps-creances-clients');
     const compteur = $('#compteur-creances-clients');
-    if (compteur) compteur.textContent = this.creances.length + ' creance' + (this.creances.length > 1 ? 's' : '');
+    const creances = this.creancesFiltrees();
+    if (compteur) {
+      const suffixe = (this.rechercheCreances.trim() || this.filtreCreances !== 'toutes') ? ' / ' + this.creances.length : '';
+      compteur.textContent = creances.length + suffixe + ' creance' + (creances.length > 1 ? 's' : '');
+    }
     vider(corps);
-    if (this.creances.length === 0) {
-      corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucune creance ouverte.', attributs: { colspan: '5' } })]));
+    if (creances.length === 0) {
+      corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: this.creances.length === 0 ? 'Aucune creance ouverte.' : 'Aucune facture ne correspond aux filtres.', attributs: { colspan: '5' } })]));
       return;
     }
-    for (const c of this.creances) {
+    for (const c of creances) {
       const actions = creer('td', { classe: 'actions-ligne' }, [
         creer('button', { classe: 'bouton discret bouton-mini bouton-detail', texte: 'Details', sur: { click: () => this.detailsCreance(c) } }),
         creer('button', { classe: 'bouton discret bouton-mini bouton-regler', texte: 'Regler', sur: { click: () => this.regler(c) } }),
       ]);
       const libelle = c.libelle + (c.anterieure ? ' (anterieure)' : '');
-      corps.append(creer('tr', { classe: 'creance-row ' + (c.statut === 'partielle' ? 'partiel' : '') }, [
+      corps.append(creer('tr', {
+        classe: 'creance-row ' + (c.statut === 'partielle' ? 'partiel' : 'ouverte'),
+        sur: { dblclick: () => this.detailsCreance(c) },
+      }, [
         creer('td', { classe: 'numero-creance' }, [creer('span', { classe: 'numero-document', texte: c.numero })]),
         creer('td', { classe: 'client-creance' }, [creer('strong', { texte: c.clientNom })]),
         creer('td', { classe: 'creance-libelle' }, [
           creer('strong', { texte: libelle }),
-          creer('span', { texte: c.statut === 'partielle' ? 'Reglement partiel' : 'En attente de reglement' }),
+          creer('span', { classe: 'statut-creance ' + c.statut, texte: c.statut === 'partielle' ? 'Reglement partiel' : 'En attente de reglement' }),
         ]),
         creer('td', { classe: 'nombre' }, [creer('span', { classe: 'solde-badge dette', texte: formater(c.solde) })]),
         actions,
@@ -306,6 +379,19 @@ const Clients = {
         fermer(null);
         await this.regler(creance);
       };
+      const totalFacture = Math.max(1, creance.montantInitial);
+      const valeurProgression = Math.min(totalFacture, Math.max(0, dejaRegle));
+      const progression = creer('progress', {
+        classe: 'progression-creance',
+        attributs: { value: String(valeurProgression), max: String(totalFacture) },
+      });
+      const boutonReglement = creer('button', {
+        classe: 'bouton',
+        texte: creance.solde > 0 ? 'Regler total ou partiel' : 'Deja reglee',
+        attributs: { type: 'button' },
+        sur: { click: creance.solde > 0 ? ouvrirReglement : () => {} },
+      });
+      if (creance.solde <= 0) boutonReglement.disabled = true;
 
       return creer('div', { classe: 'facture-detail' }, [
         creer('div', { classe: 'facture-detail-entete' }, [
@@ -324,6 +410,10 @@ const Clients = {
           this.ligneDetail('Date', this.dateCourte(creance.dateCreation)),
           this.ligneDetail('Echeance', creance.dateEcheance ? this.dateCourte(creance.dateEcheance) : '-'),
         ]),
+        creer('div', { classe: 'progression-facture' }, [
+          progression,
+          creer('span', { texte: 'Avancement du reglement : ' + formater(dejaRegle) + ' / ' + formater(creance.montantInitial) }),
+        ]),
         detail.vente ? creer('p', { classe: 'aide', texte: 'Ticket lie : ' + detail.vente.numero + ' — total ' + formater(detail.vente.panier.totalTtc) + (detail.vente.totalRetours > 0 ? ' — retours ' + formater(detail.vente.totalRetours) : '') }) : creer('span'),
         creer('h3', { texte: 'Articles de la facture' }),
         lignesVente,
@@ -332,7 +422,7 @@ const Clients = {
         creance.note ? creer('p', { classe: 'aide', texte: 'Note : ' + creance.note }) : creer('span'),
         creer('div', { classe: 'actions' }, [
           creer('button', { classe: 'bouton discret', texte: 'Fermer', sur: { click: () => fermer(null) } }),
-          creer('button', { classe: 'bouton', texte: creance.solde > 0 ? 'Regler total ou partiel' : 'Deja reglee', attributs: { type: 'button' }, sur: { click: creance.solde > 0 ? ouvrirReglement : () => {} } }),
+          boutonReglement,
         ]),
       ]);
     });

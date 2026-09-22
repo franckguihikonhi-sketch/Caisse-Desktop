@@ -1892,3 +1892,97 @@ td.prix-achat-article {
 }
 .facture-ligne-article > .montant,
 .facture-reglement > .montant { color: #ffd166; font-weight: 900; }
+
+/* --- Finitions portefeuille clients ------------------------------------- */
+.outils-tiers {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.065);
+  background: rgba(8,18,32,0.30);
+}
+.outils-tiers input,
+.outils-tiers select {
+  min-height: 38px;
+  margin: 0;
+}
+.outils-tiers input {
+  flex: 1;
+  min-width: 0;
+}
+.outils-tiers select {
+  width: auto;
+  min-width: 178px;
+}
+.creance-row { cursor: pointer; }
+.creance-row .actions-ligne button { cursor: pointer; }
+.creance-row:hover .numero-document {
+  border-color: rgba(32,217,197,0.42);
+  background: rgba(32,217,197,0.13);
+}
+.statut-creance {
+  display: inline-flex !important;
+  width: fit-content;
+  margin-top: 7px !important;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px !important;
+  font-weight: 850;
+}
+.statut-creance.ouverte {
+  border: 1px solid rgba(255,209,102,0.22);
+  background: rgba(255,209,102,0.09);
+  color: #ffe2a6;
+}
+.statut-creance.partielle,
+.creance-row.partiel .creance-libelle .statut-creance.partielle {
+  border: 1px solid rgba(32,217,197,0.24);
+  background: rgba(32,217,197,0.10);
+  color: #bdfcf4;
+}
+.progression-facture {
+  margin: -4px 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(32,217,197,0.13);
+  border-radius: 14px;
+  background: rgba(8,18,32,0.34);
+}
+.progression-facture span {
+  display: block;
+  margin-top: 7px;
+  color: #a9bdd6;
+  font-size: 12px;
+  font-weight: 750;
+}
+.progression-creance {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+}
+.progression-creance::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+}
+.progression-creance::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--or));
+}
+.progression-creance::-moz-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--or));
+}
+.facture-detail .actions {
+  position: sticky;
+  bottom: -22px;
+  padding-top: 14px;
+  background: linear-gradient(180deg, rgba(24,40,66,0), rgba(24,40,66,0.98) 34%);
+}
+@media (max-width: 760px) {
+  .outils-tiers,
+  .outils-creances { flex-direction: column; align-items: stretch; }
+  .outils-tiers select { width: 100%; }
+}

@@ -186,6 +186,9 @@
               </div>
               <span class="compteur-puce" id="compteur-clients">0 client</span>
             </div>
+            <div class="outils-tiers">
+              <input type="search" id="recherche-clients" placeholder="Rechercher un client, code ou telephone" autocomplete="off">
+            </div>
             <div class="table-scroll clients-table-scroll">
               <table class="clients-table">
                 <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">Solde</th><th></th></tr></thead>
@@ -200,6 +203,14 @@
                 <h3>Creances clients</h3>
               </div>
               <span class="compteur-puce alerte" id="compteur-creances-clients">0 creance</span>
+            </div>
+            <div class="outils-tiers outils-creances">
+              <input type="search" id="recherche-creances-clients" placeholder="Rechercher numero, client ou libelle" autocomplete="off">
+              <select id="filtre-creances-clients">
+                <option value="toutes">Toutes les factures</option>
+                <option value="ouverte">Ouvertes</option>
+                <option value="partielle">Reglement partiel</option>
+              </select>
             </div>
             <div class="table-scroll clients-table-scroll">
               <table class="creances-table">
