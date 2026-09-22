@@ -45,6 +45,7 @@
       <button data-vue="tableauBord" class="actif">Tableau de bord</button>
       <button data-vue="vente">Vente</button>
       <button data-vue="achats" data-admin>Achats</button>
+      <button data-vue="stock">Stock</button>
       <button data-vue="articles">Articles</button>
       <button data-vue="clients">Clients & credits</button>
       <button data-vue="fournisseurs" data-admin>Fournisseurs</button>
@@ -140,6 +141,11 @@
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- Stock -->
+    <div id="vue-stock" class="vue">
+      <div class="stock-page" id="contenu-stock"></div>
     </div>
 
     <!-- Articles -->
@@ -261,6 +267,7 @@
 <script src="tableau-bord.js"></script>
 <script src="vente.js"></script>
 <script src="achats.js"></script>
+<script src="stock.js"></script>
 <script src="articles.js"></script>
 <script src="clients.js"></script>
 <script src="fournisseurs.js"></script>
