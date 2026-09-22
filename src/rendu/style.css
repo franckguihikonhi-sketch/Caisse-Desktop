@@ -1808,3 +1808,87 @@ td.prix-achat-article {
 @media (max-width: 1180px) {
   .ligne-retour-client { grid-template-columns: 1fr; align-items: stretch; }
 }
+
+/* --- Details facture credit client -------------------------------------- */
+.bouton-detail {
+  border-color: rgba(167,184,207,0.24) !important;
+  color: #d8e7fb !important;
+}
+.boite:has(.facture-detail) { width: min(980px, calc(100vw - 32px)); }
+.facture-detail {
+  min-width: min(900px, calc(100vw - 72px));
+}
+.facture-detail-entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -2px 0 16px;
+  padding: 16px;
+  border: 1px solid rgba(255,209,102,0.16);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255,209,102,0.10), rgba(32,217,197,0.055));
+}
+.facture-detail-entete h3 { margin: 4px 0 4px; font-size: 24px; }
+.facture-resume {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.facture-detail-ligne {
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  background: rgba(8,18,32,0.46);
+}
+.facture-detail-ligne span {
+  display: block;
+  color: #a9bdd6;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.facture-detail-ligne strong {
+  display: block;
+  margin-top: 5px;
+  color: #f8fbff;
+  font-size: 16px;
+}
+.facture-detail-ligne.important {
+  border-color: rgba(255,209,102,0.25);
+  background: rgba(255,209,102,0.09);
+}
+.facture-detail-ligne.important strong { color: #ffd166; }
+.facture-lignes-vente,
+.facture-reglements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  margin: 10px 0 16px;
+  overflow-y: auto;
+}
+.facture-ligne-article,
+.facture-reglement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 13px;
+  border: 1px solid rgba(255,255,255,0.065);
+  border-radius: 13px;
+  background: rgba(255,255,255,0.025);
+}
+.facture-ligne-article strong,
+.facture-reglement strong { display: block; color: #f8fbff; }
+.facture-ligne-article span,
+.facture-reglement span { color: #a9bdd6; font-size: 12px; }
+@media (max-width: 760px) {
+  .facture-detail { min-width: 0; }
+  .facture-detail-entete { flex-direction: column; }
+  .facture-resume { grid-template-columns: 1fr; }
+}
+.facture-ligne-article > .montant,
+.facture-reglement > .montant { color: #ffd166; font-weight: 900; }

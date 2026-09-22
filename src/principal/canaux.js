@@ -94,6 +94,15 @@ function enregistrerCanaux(bd, session) {
   repondre('clients:modifier', ({ id, client }) => clients.modifier(bd, id, client), admin);
   repondre('clients:retirer', ({ id }) => clients.retirer(bd, id), admin);
   repondre('clients:creances', (options) => clients.listerCreances(bd, options ?? {}));
+  repondre('clients:creance', ({ id }) => {
+    const creance = clients.lireCreance(bd, id);
+    if (!creance) throw new Error('Creance client introuvable.');
+    return {
+      creance,
+      vente: creance.venteId ? ventes.lire(bd, creance.venteId) : null,
+      reglements: clients.listerReglements(bd, creance.id),
+    };
+  });
   repondre('clients:creanceAnterieure', (donnees) => clients.creerCreanceAnterieure(bd, donnees), admin);
   repondre('clients:regler', (donnees) =>
     clients.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }));

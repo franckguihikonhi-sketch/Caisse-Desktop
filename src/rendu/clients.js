@@ -108,6 +108,7 @@ const Clients = {
     }
     for (const c of this.creances) {
       const actions = creer('td', { classe: 'actions-ligne' }, [
+        creer('button', { classe: 'bouton discret bouton-mini bouton-detail', texte: 'Details', sur: { click: () => this.detailsCreance(c) } }),
         creer('button', { classe: 'bouton discret bouton-mini bouton-regler', texte: 'Regler', sur: { click: () => this.regler(c) } }),
       ]);
       const libelle = c.libelle + (c.anterieure ? ' (anterieure)' : '');
@@ -252,6 +253,91 @@ const Clients = {
     return cree;
   },
 
+  dateCourte(date) {
+    return String(date ?? '').slice(0, 16).replace('T', ' ');
+  },
+
+  ligneDetail(etiquette, valeur, classe = '') {
+    return creer('div', { classe: 'facture-detail-ligne ' + classe }, [
+      creer('span', { texte: etiquette }),
+      creer('strong', { texte: valeur }),
+    ]);
+  },
+
+  async detailsCreance(creanceCourte) {
+    const detail = await appeler(window.caisse.clients.creance({ id: creanceCourte.id }));
+    const creance = detail.creance;
+    await ouvrirBoite((fermer) => {
+      const dejaRegle = Math.max(0, creance.montantInitial - creance.solde);
+      const lignesVente = creer('div', { classe: 'facture-lignes-vente' });
+      if (detail.vente?.panier?.lignes?.length) {
+        for (const l of detail.vente.panier.lignes) {
+          const retour = l.quantiteRetournee > 0
+            ? ' — retourne ' + l.quantiteRetournee + ' ' + libelleUnite(l.uniteVente, l.quantiteRetournee)
+            : '';
+          lignesVente.append(creer('div', { classe: 'facture-ligne-article' }, [
+            creer('div', {}, [
+              creer('strong', { texte: l.designation }),
+              creer('span', { texte: l.quantite + ' ' + libelleUnite(l.uniteVente, l.quantite) + ' x ' + formater(l.prixUnitaire) + retour }),
+            ]),
+            creer('span', { classe: 'montant', texte: formater(l.totalTtc) }),
+          ]));
+        }
+      } else {
+        lignesVente.append(creer('p', { classe: 'vide compacte', texte: 'Creance saisie sans detail de vente dans la caisse.' }));
+      }
+
+      const reglements = creer('div', { classe: 'facture-reglements' });
+      if (detail.reglements.length === 0) {
+        reglements.append(creer('p', { classe: 'vide compacte', texte: 'Aucun reglement deja enregistre.' }));
+      } else {
+        for (const r of detail.reglements) {
+          reglements.append(creer('div', { classe: 'facture-reglement' }, [
+            creer('div', {}, [
+              creer('strong', { texte: this.dateCourte(r.date) + ' — ' + (LIBELLES_PAIEMENT[r.modePaiement] ?? r.modePaiement) }),
+              creer('span', { texte: r.reference ? 'Ref. ' + r.reference : (r.note || 'Reglement client') }),
+            ]),
+            creer('span', { classe: 'montant', texte: formater(r.montant) }),
+          ]));
+        }
+      }
+
+      const ouvrirReglement = async () => {
+        fermer(null);
+        await this.regler(creance);
+      };
+
+      return creer('div', { classe: 'facture-detail' }, [
+        creer('div', { classe: 'facture-detail-entete' }, [
+          creer('div', {}, [
+            creer('span', { classe: 'libelle-doux', texte: 'Facture credit client' }),
+            creer('h3', { texte: creance.numero }),
+            creer('p', { classe: 'aide', texte: creance.clientNom + ' — ' + creance.libelle }),
+          ]),
+          creer('span', { classe: 'solde-badge dette', texte: formater(creance.solde) }),
+        ]),
+        creer('div', { classe: 'facture-resume' }, [
+          this.ligneDetail('Montant facture', formater(creance.montantInitial)),
+          this.ligneDetail('Deja regle', formater(dejaRegle)),
+          this.ligneDetail('Reste a payer', formater(creance.solde), 'important'),
+          this.ligneDetail('Statut', creance.statut),
+          this.ligneDetail('Date', this.dateCourte(creance.dateCreation)),
+          this.ligneDetail('Echeance', creance.dateEcheance ? this.dateCourte(creance.dateEcheance) : '-'),
+        ]),
+        detail.vente ? creer('p', { classe: 'aide', texte: 'Ticket lie : ' + detail.vente.numero + ' — total ' + formater(detail.vente.panier.totalTtc) + (detail.vente.totalRetours > 0 ? ' — retours ' + formater(detail.vente.totalRetours) : '') }) : creer('span'),
+        creer('h3', { texte: 'Articles de la facture' }),
+        lignesVente,
+        creer('h3', { texte: 'Reglements deja effectues' }),
+        reglements,
+        creance.note ? creer('p', { classe: 'aide', texte: 'Note : ' + creance.note }) : creer('span'),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: creance.solde > 0 ? 'Regler total ou partiel' : 'Deja reglee', attributs: { type: 'button' }, sur: { click: creance.solde > 0 ? ouvrirReglement : () => {} } }),
+        ]),
+      ]);
+    });
+  },
+
   async regler(creance) {
     const regle = await ouvrirBoite((fermer) => {
       const montant = creer('input', { attributs: { type: 'number', min: '1', max: String(creance.solde), step: '1', value: String(creance.solde), required: 'required' } });
@@ -275,8 +361,9 @@ const Clients = {
       } } }, [
         creer('h3', { texte: 'Reglement ' + creance.numero }),
         creer('p', { texte: creance.clientNom + ' - solde ' + formater(creance.solde) }),
+        creer('p', { classe: 'aide', texte: 'Pour regler totalement, gardez le solde complet. Pour un reglement partiel, saisissez seulement le montant verse.' }),
         erreur,
-        creer('label', { texte: 'Montant' }, [montant]),
+        creer('label', { texte: 'Montant a encaisser' }, [montant]),
         creer('label', { texte: 'Mode' }, [mode]),
         creer('label', { texte: 'Reference' }, [reference]),
         creer('div', { classe: 'actions' }, [

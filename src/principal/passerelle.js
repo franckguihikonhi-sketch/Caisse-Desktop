@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('caisse', {
     modifier: appeler('clients:modifier'),
     retirer: appeler('clients:retirer'),
     creances: appeler('clients:creances'),
+    creance: appeler('clients:creance'),
     creanceAnterieure: appeler('clients:creanceAnterieure'),
     regler: appeler('clients:regler'),
   },
