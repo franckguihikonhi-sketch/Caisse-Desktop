@@ -17,7 +17,7 @@ const Vente = {
     $('#champ-recherche').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && this.articlesTrouves.length > 0) {
         e.preventDefault();
-        this.ajouter(this.articlesTrouves[0]);
+        this.choisirQuantites(this.articlesTrouves[0]);
       }
     });
 
@@ -213,14 +213,15 @@ const Vente = {
 
     const choix = await ouvrirBoite((fermer) => {
       const parCarton = piecesParCarton(article);
+      const ventePiece = article.ventePiece !== false;
       const cartonsMax = Math.floor(restant / parCarton);
-      const piecesMax = restant;
+      const piecesMax = ventePiece ? restant : 0;
       const champCartons = creer('input', {
         attributs: { type: 'number', min: '0', max: String(cartonsMax), step: '1', value: '0' },
       });
-      const champPieces = creer('input', {
-        attributs: { type: 'number', min: '0', max: String(piecesMax), step: '1', value: '0' },
-      });
+      const attributsPieces = { type: 'number', min: '0', max: String(piecesMax), step: '1', value: '0' };
+      if (!ventePiece) attributsPieces.disabled = 'disabled';
+      const champPieces = creer('input', { attributs: attributsPieces });
       const message = creer('p', { classe: 'message erreur' });
       const resume = creer('div', { classe: 'resume-conditionnement' });
 
@@ -243,6 +244,9 @@ const Vente = {
         if (!Number.isInteger(v.cartons) || !Number.isInteger(v.pieces)) {
           return afficherMessage(message, 'Les quantites doivent etre des entiers.');
         }
+        if (!ventePiece && v.pieces > 0) {
+          return afficherMessage(message, 'Cet article ne se vend pas a la piece.');
+        }
         if (v.cartons === 0 && v.pieces === 0) {
           return afficherMessage(message, 'Choisissez au moins une quantite.');
         }
@@ -257,21 +261,25 @@ const Vente = {
         champ.addEventListener('keydown', (e) => { if (e.key === 'Enter') valider(); });
       }
 
+      const boutonUnCarton = creer('button', {
+        classe: 'bouton discret', texte: '+1 carton', attributs: { type: 'button' },
+        sur: { click: () => { champCartons.value = String((Number(champCartons.value) || 0) + 1); redessiner(); } },
+      });
+      const boutonUnePiece = creer('button', {
+        classe: 'bouton discret', texte: '+1 piece', attributs: { type: 'button' },
+        sur: { click: () => { champPieces.value = String((Number(champPieces.value) || 0) + 1); redessiner(); } },
+      });
+      const boutonMaxCartons = creer('button', {
+        classe: 'bouton discret', texte: 'Max cartons', attributs: { type: 'button' },
+        sur: { click: () => { champCartons.value = String(cartonsMax); champPieces.value = '0'; redessiner(); } },
+      });
+      if (cartonsMax <= 0) boutonUnCarton.disabled = true;
+      if (!ventePiece) boutonUnePiece.disabled = true;
       const boutonsRapides = creer('div', { classe: 'choix-rapides' }, [
-        creer('button', {
-          classe: 'bouton discret', texte: '+1 carton', attributs: { type: 'button' },
-          sur: { click: () => { champCartons.value = String((Number(champCartons.value) || 0) + 1); redessiner(); } },
-        }),
-        creer('button', {
-          classe: 'bouton discret', texte: '+1 piece', attributs: { type: 'button' },
-          sur: { click: () => { champPieces.value = String((Number(champPieces.value) || 0) + 1); redessiner(); } },
-        }),
-        creer('button', {
-          classe: 'bouton discret', texte: 'Max cartons', attributs: { type: 'button' },
-          sur: { click: () => { champCartons.value = String(cartonsMax); champPieces.value = '0'; redessiner(); } },
-        }),
+        boutonUnCarton,
+        boutonUnePiece,
+        boutonMaxCartons,
       ]);
-      if (cartonsMax <= 0) boutonsRapides.firstChild.disabled = true;
 
       const boite = creer('div', { classe: 'boite-conditionnement' }, [
         creer('h3', { texte: 'Vendre ' + article.designation }),
@@ -283,7 +291,7 @@ const Vente = {
         message,
         creer('div', { classe: 'grille-conditionnement' }, [
           creer('label', { texte: 'Cartons' }, [champCartons]),
-          creer('label', { texte: 'Pieces' }, [champPieces]),
+          creer('label', { texte: ventePiece ? 'Pieces' : 'Pieces (non vendues)' }, [champPieces]),
         ]),
         creer('div', { classe: 'prix-conditionnement' }, [
           creer('span', { texte: 'Prix carton : ' + formater(prixUnite(article, 'carton')) }),
@@ -309,6 +317,12 @@ const Vente = {
     const nbPieces = Number(pieces) || 0;
     if (!Number.isInteger(nbCartons) || !Number.isInteger(nbPieces) || nbCartons < 0 || nbPieces < 0) {
       return annoncer('Quantites invalides.', 'erreur');
+    }
+    if (nbCartons > 0 && (!article.venteCarton || article.piecesParCarton <= 1)) {
+      return annoncer(article.designation + ' ne se vend pas en carton.', 'avertissement');
+    }
+    if (nbPieces > 0 && article.ventePiece === false) {
+      return annoncer(article.designation + ' ne se vend pas a la piece.', 'avertissement');
     }
     const sortie = nbCartons * facteurUnite(article, 'carton') + nbPieces;
     if (sortie <= 0) return null;
