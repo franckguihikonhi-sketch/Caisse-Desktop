@@ -1161,3 +1161,174 @@ td.prix-achat-article {
   .article-droite { min-width: 150px; }
   .modes { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* --- Tableau de bord compact et premium -------------------------------- */
+#vue-tableauBord {
+  overflow: auto;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(32, 217, 197, 0.10), transparent 22rem),
+    radial-gradient(circle at 82% 18%, rgba(124, 92, 255, 0.10), transparent 24rem);
+}
+.tableau-bord {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 18px;
+}
+.grille-tableau-bord {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.carte-tableau {
+  min-height: 106px;
+  padding: 15px 16px;
+  border-radius: 18px;
+  border-color: rgba(255,255,255,0.09);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.065), rgba(255,255,255,0.014)),
+    linear-gradient(135deg, rgba(24,40,66,0.98), rgba(23,35,61,0.94));
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.20);
+}
+.carte-tableau::after {
+  right: -22px;
+  top: -34px;
+  width: 82px;
+  height: 82px;
+  background: linear-gradient(135deg, rgba(32,217,197,0.16), rgba(124,92,255,0.10));
+}
+.carte-tableau-entete {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.carte-tableau .libelle-doux {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #bdd0e7;
+}
+.icone-carte {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border-radius: 11px;
+  background: rgba(32, 217, 197, 0.12);
+  color: #9ff4ea;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(32,217,197,0.18);
+}
+.carte-tableau strong {
+  position: relative;
+  z-index: 1;
+  margin: 9px 0 3px;
+  font-size: clamp(23px, 2.1vw, 31px);
+  letter-spacing: -0.055em;
+  white-space: nowrap;
+}
+.carte-tableau small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  color: #aebfd5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.carte-tableau.succes { border-color: rgba(32,217,197,0.35); }
+.carte-tableau.warning { border-color: rgba(255,209,102,0.38); }
+.carte-tableau.alerte { border-color: rgba(255,122,125,0.45); }
+.carte-caisse .icone-carte { background: rgba(32,217,197,0.16); }
+.carte-ventes .icone-carte { background: rgba(124,92,255,0.18); color: #d8d0ff; }
+.carte-achats .icone-carte, .carte-dettes .icone-carte { background: rgba(255,209,102,0.16); color: #ffe2a6; }
+.carte-credit .icone-carte { background: rgba(91,141,239,0.16); color: #b9d0ff; }
+.carte-stock .icone-carte { background: rgba(255,122,125,0.14); color: #ffb4b6; }
+
+.panneaux-tableau-bord {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0;
+  overflow: visible;
+}
+.panneau-dashboard {
+  min-height: 168px;
+  padding: 16px;
+  border-radius: 19px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.052), rgba(255,255,255,0.014)),
+    rgba(24,40,66,0.94);
+}
+.panneau-dashboard h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+.panneau-dashboard h3::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-clair), var(--accent-2));
+  box-shadow: 0 0 0 5px rgba(32,217,197,0.08);
+}
+.panneau-dashboard .ligne-cloture {
+  min-height: 35px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.055);
+}
+.panneau-dashboard .ligne-cloture:last-child { border-bottom: 0; }
+.panneau-dashboard .ligne-cloture span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.panneau-dashboard .montant {
+  flex: 0 0 auto;
+  color: #dce8f7;
+  font-weight: 800;
+}
+.panneau-dashboard .vide.compacte {
+  margin: 8px 0 0;
+  padding: 20px 14px;
+  border-radius: 14px;
+  background: rgba(32,217,197,0.045);
+  border: 1px dashed rgba(167,184,207,0.18);
+}
+
+@media (max-width: 1380px) {
+  .tableau-bord { padding: 16px; }
+  .grille-tableau-bord { grid-template-columns: repeat(4, minmax(150px, 1fr)); }
+  .carte-tableau { min-height: 100px; padding: 14px; }
+  .carte-tableau strong { font-size: clamp(22px, 2vw, 29px); }
+  .panneau-dashboard { min-height: 156px; }
+}
+@media (max-width: 1120px) {
+  .grille-tableau-bord { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+  .panneaux-tableau-bord { grid-template-columns: 1fr; }
+  .carte-tableau { min-height: 104px; }
+}
+@media (max-height: 780px) and (min-width: 1121px) {
+  .entete-zone { min-height: 60px; padding-top: 12px; padding-bottom: 12px; }
+  .tableau-bord { padding: 14px 18px; }
+  .grille-tableau-bord { gap: 10px; margin-bottom: 12px; }
+  .carte-tableau { min-height: 91px; padding: 12px 14px; }
+  .carte-tableau strong { margin: 6px 0 2px; font-size: 24px; }
+  .carte-tableau small { font-size: 12px; }
+  .icone-carte { width: 26px; height: 26px; flex-basis: 26px; }
+  .panneau-dashboard { min-height: 134px; padding: 13px 15px; }
+  .panneau-dashboard h3 { margin-bottom: 8px; font-size: 16px; }
+  .panneau-dashboard .ligne-cloture { min-height: 30px; padding: 5px 0; }
+  .panneau-dashboard .vide.compacte { padding: 16px 12px; }
+}
