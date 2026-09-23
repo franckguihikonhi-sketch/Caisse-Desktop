@@ -1986,3 +1986,42 @@ td.prix-achat-article {
   .outils-creances { flex-direction: column; align-items: stretch; }
   .outils-tiers select { width: 100%; }
 }
+
+.verrou-caisse {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px;
+  padding: 28px;
+  border: 1px solid rgba(245,165,36,0.32);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245,165,36,0.16), transparent 220px),
+    rgba(245,165,36,0.075);
+  color: #ffe2a6;
+  text-align: center;
+}
+.verrou-caisse strong {
+  color: #fff2cf;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.verrou-caisse p {
+  max-width: 440px;
+  margin: 0;
+  color: #d8c69c;
+  line-height: 1.45;
+}
+#vue-vente.caisse-fermee .recherche input,
+#vue-vente.caisse-fermee .totaux input,
+#vue-vente.caisse-fermee .modes button,
+#vue-vente.caisse-fermee #bouton-choisir-client {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+#vue-vente.caisse-fermee .lignes-panier {
+  background: rgba(245,165,36,0.035);
+}

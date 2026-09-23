@@ -7,9 +7,10 @@ const { ouvrir, boutique, ecrireParametres } = require('../src/donnees/base');
 const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const ventes = require('../src/donnees/ventes');
+const caisse = require('../src/donnees/caisse');
 const { jour } = require('../src/metier/horodatage');
 
-function caisseNeuve() {
+function caisseNeuve({ ouvrirCaisse = true } = {}) {
   const base = ouvrir(':memory:');
   const caissier = utilisateurs.creer(base, {
     identifiant: 'awa', nom: 'Awa Kone', role: 'caissier', motDePasse: 'secret123',
@@ -17,6 +18,7 @@ function caisseNeuve() {
   articles.creer(base, { reference: 'sav-01', designation: 'Savon', prixUnitaire: 325, stock: 100 });
   articles.creer(base, { reference: 'riz-05', designation: 'Riz 5 kg', prixUnitaire: 4500, stock: 20 });
   articles.creer(base, { reference: 'pain', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 50 });
+  if (ouvrirCaisse) caisse.ouvrir(base, { fondOuverture: 0, utilisateurId: caissier.id });
   return { base, caissier };
 }
 
@@ -44,6 +46,17 @@ test('un compte desactive ne peut plus ouvrir la caisse', () => {
   const { base, caissier } = caisseNeuve();
   utilisateurs.activer(base, caissier.id, false);
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret123'), null);
+});
+
+test('aucune vente ne passe quand la caisse journaliere est fermee', () => {
+  const { base, caissier } = caisseNeuve({ ouvrirCaisse: false });
+  assert.throws(() => ventes.enregistrer(base, {
+    lignes: [{ reference: 'PAIN', quantite: 1 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  }), /caisse n'est pas ouverte/);
+  assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
+  assert.equal(articles.lireParReference(base, 'PAIN').stock, 50);
 });
 
 test('les references sont uniques et normalisees', () => {

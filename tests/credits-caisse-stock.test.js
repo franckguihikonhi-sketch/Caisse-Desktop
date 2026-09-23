@@ -56,6 +56,13 @@ test('vente a credit, creance client et fermeture de caisse restent coherentes',
   const fermee = caisse.fermer(base, { fondFermeture: 700, utilisateurId: admin.id });
   assert.equal(fermee.totalTheorique, 700, 'fond 500 + reglement client especes 200, vente credit exclue');
   assert.equal(fermee.ecart, 0);
+
+  assert.throws(() => ventes.enregistrer(base, {
+    lignes: [{ reference: 'EAU', quantite: 1 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: admin.id,
+  }), /caisse n'est pas ouverte/);
+  assert.equal(articles.lireParReference(base, 'EAU').stock, 3);
 });
 
 test('stock journalise et dettes fournisseurs se reglent strictement', () => {

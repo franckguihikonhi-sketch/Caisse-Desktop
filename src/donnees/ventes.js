@@ -30,10 +30,11 @@ function numeroRetourClientSuivant(base, horodatage) {
 }
 
 /**
- * Enregistre une vente. Le panier envoye par l'interface n'est pas cru sur
- * parole : prix, taux et stock sont relus dans la base, et le total est
- * recalcule ici. L'ecriture, le decompte du stock et la numerotation tiennent
- * dans une seule transaction, pour qu'une vente soit entiere ou inexistante.
+ * Enregistre une vente. La caisse journaliere doit etre ouverte avant toute
+ * vente. Le panier envoye par l'interface n'est pas cru sur parole : prix, taux
+ * et stock sont relus dans la base, et le total est recalcule ici. L'ecriture,
+ * le decompte du stock et la numerotation tiennent dans une seule transaction,
+ * pour qu'une vente soit entiere ou inexistante.
  */
 function enregistrer(base, {
   lignes,
@@ -41,7 +42,6 @@ function enregistrer(base, {
   paiement,
   utilisateurId,
   clientId = null,
-  exigerCaisse = false,
 }) {
   if (!Array.isArray(lignes) || lignes.length === 0) {
     throw new RangeError('Le panier est vide.');
@@ -55,7 +55,7 @@ function enregistrer(base, {
   }
 
   const transaction = base.transaction(() => {
-    const sessionCaisse = exigerCaisse ? caisse.exigerOuverte(base) : caisse.ouverte(base);
+    const sessionCaisse = caisse.exigerOuverte(base);
     const lignesVerifiees = lignes.map((l) => {
       const article = articles.lireParReference(base, l.reference);
       if (!article) throw new RangeError('Article inconnu : ' + l.reference + '.');

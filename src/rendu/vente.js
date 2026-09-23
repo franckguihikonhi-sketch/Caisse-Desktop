@@ -60,7 +60,7 @@ const Vente = {
       texte: this.caisseOuverte ? 'Caisse ouverte' : 'Ouvrir la caisse',
       sur: { click: () => this.ouvrirCaisseRapide() },
     }));
-    $('#champ-recherche').focus();
+    if (this.caisseOuverte) $('#champ-recherche').focus();
     await this.rechercher('');
   },
 
@@ -68,12 +68,29 @@ const Vente = {
     try {
       const etat = await appeler(window.caisse.caisseJournee.etat());
       this.caisseOuverte = Boolean(etat.ouverte);
+      this.appliquerEtatCaisse();
       this.rafraichirTotaux();
       return etat;
     } catch (_erreur) {
       this.caisseOuverte = false;
+      this.appliquerEtatCaisse();
+      this.rafraichirTotaux();
       return null;
     }
+  },
+
+  appliquerEtatCaisse() {
+    const fermee = !this.caisseOuverte;
+    $('#vue-vente')?.classList.toggle('caisse-fermee', fermee);
+    const recherche = $('#champ-recherche');
+    if (recherche) recherche.disabled = fermee;
+    const remise = $('#remise-globale');
+    if (remise) remise.disabled = fermee;
+    const recu = $('#montant-recu');
+    if (recu) recu.disabled = fermee;
+    const client = $('#bouton-choisir-client');
+    if (client) client.disabled = fermee;
+    for (const bouton of $$('#modes-paiement button')) bouton.disabled = fermee;
   },
 
   async ouvrirCaisseRapide() {
@@ -91,6 +108,11 @@ const Vente = {
   },
 
   async rechercher(texte) {
+    if (!this.caisseOuverte) {
+      this.articlesTrouves = [];
+      this.afficherResultats();
+      return;
+    }
     try {
       this.articlesTrouves = await appeler(window.caisse.articles.chercher({ texte }));
     } catch (erreur) {
@@ -102,6 +124,15 @@ const Vente = {
   afficherResultats() {
     const zone = $('#resultats-articles');
     vider(zone);
+
+    if (!this.caisseOuverte) {
+      zone.append(creer('div', { classe: 'verrou-caisse' }, [
+        creer('strong', { texte: 'Caisse fermee' }),
+        creer('p', { texte: "Aucune vente ne peut etre preparee ni encaissee tant que la caisse journaliere n'est pas ouverte." }),
+        creer('button', { classe: 'bouton', texte: 'Ouvrir la caisse', sur: { click: () => this.ouvrirCaisseRapide() } }),
+      ]));
+      return;
+    }
 
     if (this.articlesTrouves.length === 0) {
       zone.append(creer('p', { classe: 'vide', texte: 'Aucun article ne correspond.' }));
@@ -185,6 +216,11 @@ const Vente = {
    */
   async surCodeLu(code) {
     $('#champ-recherche').value = '';
+    const etat = await this.actualiserCaisse();
+    if (!etat?.ouverte) {
+      this.afficherResultats();
+      return annoncer('Caisse fermee : ouvrez la caisse avant de scanner des articles.', 'erreur');
+    }
 
     let article = null;
     try {
@@ -219,6 +255,9 @@ const Vente = {
   },
 
   async choisirQuantites(article) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : ouvrez la caisse avant de vendre.', 'erreur');
+    }
     if (!article.venteCarton || article.piecesParCarton <= 1) {
       return this.ajouter(article, article.ventePiece === false ? 'carton' : 'piece');
     }
@@ -328,6 +367,9 @@ const Vente = {
   },
 
   ajouterConditionnement(article, { cartons = 0, pieces = 0 }) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : vente refusee.', 'erreur');
+    }
     const nbCartons = Number(cartons) || 0;
     const nbPieces = Number(pieces) || 0;
     if (!Number.isInteger(nbCartons) || !Number.isInteger(nbPieces) || nbCartons < 0 || nbPieces < 0) {
@@ -353,6 +395,9 @@ const Vente = {
   },
 
   ajouter(article, unite = 'piece', quantite = 1, options = {}) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : vente refusee.', 'erreur');
+    }
     const uniteVente = unite === 'carton' ? 'carton' : 'piece';
     const facteurStock = facteurUnite(article, uniteVente);
     if (uniteVente === 'carton' && (!article.venteCarton || article.piecesParCarton <= 1)) {

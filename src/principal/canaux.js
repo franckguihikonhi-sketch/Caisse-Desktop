@@ -133,7 +133,6 @@ function enregistrerCanaux(bd, session) {
     ventes.lire(bd, ventes.enregistrer(bd, {
       ...commande,
       utilisateurId: session.utilisateur.id,
-      exigerCaisse: true,
     }).id));
   repondre('ventes:lire', ({ id }) => ventes.lire(bd, id));
   repondre('ventes:journal', ({ jour: j } = {}) => ventes.journal(bd, j ?? jour()));
