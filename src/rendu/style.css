@@ -2041,3 +2041,232 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
   filter: invert(78%) sepia(58%) saturate(781%) hue-rotate(118deg) brightness(106%) contrast(101%);
 }
+
+/* Theme Ivoire-Gestion : drapeau ivoirien Orange - Blanc - Vert ---------- */
+:root {
+  --ivoire-orange: #f77f00;
+  --ivoire-orange-clair: #ff9f32;
+  --ivoire-blanc: #fffaf0;
+  --ivoire-vert: #009e60;
+  --ivoire-vert-clair: #18c77b;
+  --fond: #08190f;
+  --fond-panneau: #142719;
+  --fond-panneau-2: #203b28;
+  --fond-champ: #07140b;
+  --bord: rgba(247, 127, 0, 0.34);
+  --bord-doux: rgba(255, 250, 240, 0.12);
+  --texte: #fffaf0;
+  --texte-doux: #e7dac6;
+  --accent: var(--ivoire-orange);
+  --accent-clair: var(--ivoire-orange-clair);
+  --accent-2: var(--ivoire-vert);
+  --or: var(--ivoire-blanc);
+  --avertissement: var(--ivoire-orange);
+}
+
+html { scrollbar-color: rgba(247, 127, 0, 0.68) rgba(6, 24, 13, 0.78); }
+body {
+  background:
+    radial-gradient(circle at 7% 0%, rgba(247,127,0,0.26), transparent 27rem),
+    radial-gradient(circle at 48% 0%, rgba(255,250,240,0.13), transparent 24rem),
+    radial-gradient(circle at 94% 8%, rgba(0,158,96,0.28), transparent 30rem),
+    linear-gradient(135deg, #1c1107 0%, #07170e 48%, #052216 100%);
+}
+::selection { background: rgba(247, 127, 0, 0.34); color: #fff; }
+*::-webkit-scrollbar-track { background: rgba(6, 24, 13, 0.72); }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--ivoire-orange), var(--ivoire-blanc), var(--ivoire-vert));
+  border-color: rgba(6, 24, 13, 0.86);
+}
+
+.carte-accueil,
+.panneau,
+.carte-indicateur,
+.boite,
+.tableau-zone > table,
+.carte-tableau,
+.panneau-dashboard,
+.client-kpi,
+.facture-detail-ligne,
+.facture-ligne-article,
+.facture-reglement,
+.ligne-panier,
+.article {
+  border-color: rgba(255, 250, 240, 0.13);
+  background:
+    linear-gradient(135deg, rgba(247,127,0,0.095), rgba(255,250,240,0.035) 48%, rgba(0,158,96,0.095)),
+    rgba(18, 39, 25, 0.96);
+}
+
+.barre-laterale {
+  border-right-color: rgba(255, 250, 240, 0.14);
+  background:
+    linear-gradient(90deg, var(--ivoire-orange) 0 8px, var(--ivoire-blanc) 8px 16px, var(--ivoire-vert) 16px 24px, transparent 24px),
+    radial-gradient(circle at 70% 0%, rgba(247,127,0,0.18), transparent 18rem),
+    linear-gradient(180deg, rgba(30, 49, 32, 0.99), rgba(6, 23, 14, 0.99));
+}
+.marque { color: var(--ivoire-blanc); }
+.marque::before {
+  content: 'IG';
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 33%, var(--ivoire-blanc) 33% 66%, var(--ivoire-vert) 66% 100%);
+  color: #07170e;
+  border: 1px solid rgba(255, 250, 240, 0.72);
+  box-shadow: 0 16px 32px rgba(247,127,0,0.22), 0 0 0 4px rgba(0,158,96,0.10);
+}
+.marque small { color: rgba(255, 250, 240, 0.72); }
+
+.navigation button { color: rgba(255, 250, 240, 0.78); }
+.navigation button:hover {
+  border-color: rgba(255, 250, 240, 0.16);
+  background: rgba(255, 250, 240, 0.075);
+}
+.navigation button.actif {
+  color: #07170e;
+  border-color: rgba(255, 250, 240, 0.55);
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 34%, var(--ivoire-blanc) 34% 66%, var(--ivoire-vert) 66% 100%);
+  box-shadow: 0 14px 32px rgba(247,127,0,0.23), 0 8px 22px rgba(0,158,96,0.18);
+}
+.navigation button.actif::before {
+  background: linear-gradient(180deg, var(--ivoire-orange), var(--ivoire-blanc), var(--ivoire-vert));
+}
+.navigation button.actif::after {
+  background: rgba(7, 23, 14, 0.14);
+  color: #07170e;
+}
+
+.entete-zone {
+  border-bottom-color: rgba(255, 250, 240, 0.13);
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.15), rgba(255,250,240,0.035), rgba(0,158,96,0.14)),
+    rgba(7, 23, 14, 0.78);
+}
+.entete-zone h2::before,
+.panneau-dashboard h3::before {
+  background: linear-gradient(180deg, var(--ivoire-orange), var(--ivoire-blanc), var(--ivoire-vert));
+  box-shadow: 0 0 0 5px rgba(247,127,0,0.08);
+}
+
+.bouton,
+.navigation button.actif,
+.carte-accueil::before {
+  background: linear-gradient(135deg, var(--ivoire-orange), var(--ivoire-vert));
+}
+.bouton {
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.24);
+  box-shadow: 0 12px 28px rgba(247,127,0,0.20), 0 8px 22px rgba(0,158,96,0.15);
+}
+.bouton:hover { box-shadow: 0 16px 34px rgba(247,127,0,0.26), 0 10px 26px rgba(0,158,96,0.18); }
+.bouton.discret {
+  border-color: rgba(255, 250, 240, 0.24);
+  background: rgba(255,250,240,0.045);
+  color: var(--ivoire-blanc);
+  text-shadow: none;
+}
+.bouton.discret:hover {
+  border-color: rgba(247,127,0,0.62);
+  background: rgba(247,127,0,0.13);
+}
+
+input,
+select {
+  border-color: rgba(255, 250, 240, 0.17);
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.055), rgba(255,250,240,0.025), rgba(0,158,96,0.055)),
+    var(--fond-champ);
+}
+input:focus,
+select:focus {
+  border-color: var(--ivoire-orange-clair);
+  box-shadow: 0 0 0 3px rgba(247,127,0,0.16), 0 0 0 6px rgba(0,158,96,0.08);
+}
+.recherche input {
+  border-color: rgba(247,127,0,0.58);
+  box-shadow: 0 0 0 4px rgba(247,127,0,0.08), 0 16px 34px rgba(0,0,0,0.16);
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.12), rgba(255,250,240,0.045), rgba(0,158,96,0.10)),
+    var(--fond-champ);
+}
+
+th { background: rgba(8, 25, 15, 0.96); color: var(--ivoire-blanc); }
+tbody tr:hover { background: rgba(247,127,0,0.07); }
+.article:hover,
+.choix-ligne:hover { border-color: rgba(247,127,0,0.70); background: rgba(247,127,0,0.10); }
+.article.conditionne { border-left-color: var(--ivoire-orange); }
+.article .prix-carton,
+.verdict.bon,
+.carte-tableau.succes strong { color: #79f2b4; }
+.article .prix-achat,
+td.prix-achat-article,
+.facture-detail-ligne.important strong,
+.facture-ligne-article > .montant,
+.facture-reglement > .montant { color: var(--ivoire-blanc); }
+
+.modes button.actif,
+.badge-session.ouvert,
+.message.succes,
+.annonce.succes,
+.solde-badge.neutre,
+.compteur-puce {
+  border-color: rgba(0,158,96,0.48);
+  background: rgba(0,158,96,0.16);
+  color: #bff8d9;
+}
+.compteur-puce.alerte,
+.solde-badge.dette,
+.message.avertissement,
+.annonce.avertissement {
+  border-color: rgba(247,127,0,0.48);
+  background: rgba(247,127,0,0.15);
+  color: #ffd7aa;
+}
+.jauge-stock span,
+.progression-creance::-webkit-progress-value,
+.progression-creance::-moz-progress-bar {
+  background: linear-gradient(90deg, var(--ivoire-orange), var(--ivoire-blanc), var(--ivoire-vert));
+}
+.jauge-stock.moyen span { background: linear-gradient(90deg, var(--ivoire-orange), var(--ivoire-vert)); }
+.jauge-stock.alerte span { background: linear-gradient(90deg, #e5484d, var(--ivoire-orange)); }
+
+.clients-hero,
+.achats-entete,
+.stock-hero,
+.stock-entete,
+.progression-facture,
+.verrou-caisse {
+  border-color: rgba(255,250,240,0.14);
+  background:
+    linear-gradient(135deg, rgba(247,127,0,0.13), rgba(255,250,240,0.045) 47%, rgba(0,158,96,0.13)),
+    rgba(18, 39, 25, 0.91);
+}
+.numero-document,
+.badge-code {
+  border-color: rgba(247,127,0,0.30);
+  background: rgba(247,127,0,0.10);
+  color: var(--ivoire-blanc);
+}
+.creance-row:hover .numero-document {
+  border-color: rgba(0,158,96,0.58);
+  background: rgba(0,158,96,0.16);
+}
+.statut-creance.ouverte { color: #ffd7aa; }
+.statut-creance.partielle,
+.creance-row.partiel .creance-libelle .statut-creance.partielle { color: #bff8d9; }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(67%) sepia(85%) saturate(2254%) hue-rotate(2deg) brightness(102%) contrast(104%);
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(45%) sepia(80%) saturate(708%) hue-rotate(105deg) brightness(95%) contrast(102%);
+}
+
+/* Garder le bouton actif vraiment tricolore apres les styles de boutons. */
+.navigation button.actif {
+  color: #07170e;
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 34%, var(--ivoire-blanc) 34% 66%, var(--ivoire-vert) 66% 100%);
+}
+.carte-accueil::before {
+  content: 'IG';
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 33%, var(--ivoire-blanc) 33% 66%, var(--ivoire-vert) 66% 100%);
+  color: #07170e;
+}
