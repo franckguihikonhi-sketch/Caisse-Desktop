@@ -2025,3 +2025,19 @@ td.prix-achat-article {
 #vue-vente.caisse-fermee .lignes-panier {
   background: rgba(245,165,36,0.035);
 }
+
+/* Calendrier natif visible sur les champs date sombres -------------------- */
+input[type="date"] {
+  color-scheme: dark;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 8px;
+  opacity: 1;
+  cursor: pointer;
+  filter: invert(88%) sepia(34%) saturate(725%) hue-rotate(119deg) brightness(105%) contrast(96%);
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(78%) sepia(58%) saturate(781%) hue-rotate(118deg) brightness(106%) contrast(101%);
+}
