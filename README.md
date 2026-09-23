@@ -1,4 +1,4 @@
-# Caisse
+# Ivoire-Gestion
 
 Logiciel de caisse de boutique, pour poste de vente. Application de bureau
 Electron : **tout se passe sur le poste**, sans serveur ni connexion. Les

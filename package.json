@@ -2,7 +2,7 @@
   "name": "caisse-desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Logiciel de caisse de boutique, hors ligne, pour poste de vente.",
+  "description": "Ivoire-Gestion, logiciel de caisse de boutique hors ligne pour poste de vente.",
   "main": "src/principal/principal.js",
   "engines": {
     "node": ">=22.12"

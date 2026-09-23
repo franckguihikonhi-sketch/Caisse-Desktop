@@ -72,7 +72,7 @@ async function demarrer() {
     montrerEcran('accueil');
     return;
   }
-  $('#titre-connexion').textContent = etat.boutique.nom;
+  $('#titre-connexion').textContent = 'Ivoire-Gestion';
   montrerEcran('connexion');
 }
 

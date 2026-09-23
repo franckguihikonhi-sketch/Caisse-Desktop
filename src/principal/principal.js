@@ -10,6 +10,7 @@ const impression = require('./impression');
 
 // L'utilisateur connecte est tenu ici, dans le processus principal. Le rendu ne
 // fait que l'afficher : il ne peut ni le fabriquer ni s'attribuer un role.
+const NOM_APPLICATION = 'Ivoire-Gestion';
 const session = { utilisateur: null };
 
 let fenetre = null;
@@ -28,7 +29,7 @@ function creerFenetre() {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#0f1b2a',
-    title: 'Caisse',
+    title: NOM_APPLICATION,
     webPreferences: {
       preload: path.join(__dirname, 'passerelle.js'),
       contextIsolation: true,
@@ -71,7 +72,7 @@ function canauxImpression() {
     impression.imprimerEtiquettes({ ...demande, boutique: boutique(bd) }));
 
   repondre('etiquettes:pdf', async (demande) => {
-    const dossier = path.join(app.getPath('documents'), 'Caisse', 'etiquettes');
+    const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'etiquettes');
     const resultat = await impression.exporterEtiquettesPdf(
       { ...demande, boutique: boutique(bd) }, dossier
     );
@@ -82,7 +83,7 @@ function canauxImpression() {
   repondre('ticket:pdf', async ({ id }) => {
     const vente = ventes.lire(bd, id);
     if (!vente) throw new Error('Vente introuvable.');
-    const dossier = path.join(app.getPath('documents'), 'Caisse', 'tickets');
+    const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'tickets');
     const chemin = await impression.exporterPdf(vente, boutique(bd), dossier);
     shell.showItemInFolder(chemin);
     return chemin;
