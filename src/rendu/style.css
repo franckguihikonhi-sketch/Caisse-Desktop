@@ -2271,325 +2271,286 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #07170e;
 }
 
-/* Vente prioritaire : contraste fort pour le poste d'encaissement ---------- */
+/* Vente sobre : clarté par les couleurs, sans encombrer l'ecran ----------- */
 #vue-vente {
-  gap: 18px;
-  padding: 18px;
+  gap: 12px;
+  padding: 12px;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055) 48%, rgba(0,158,96,0.18)),
-    radial-gradient(circle at 18% 0%, rgba(247,127,0,0.20), transparent 28rem),
-    radial-gradient(circle at 88% 8%, rgba(0,158,96,0.22), transparent 28rem),
+    linear-gradient(90deg, rgba(247,127,0,0.10), rgba(255,250,240,0.035) 50%, rgba(0,158,96,0.11)),
     #07170e;
 }
 #vue-vente .colonne-catalogue,
 #vue-vente .colonne-panier {
   min-height: 0;
   overflow: hidden;
-  border: 2px solid rgba(255,250,240,0.18);
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255,250,240,0.09), rgba(255,250,240,0.025)),
-    rgba(10, 29, 16, 0.96);
-  box-shadow: 0 24px 55px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,250,240,0.10);
+  border: 1px solid rgba(255,250,240,0.16);
+  border-radius: 18px;
+  background: rgba(10, 29, 16, 0.94);
+  box-shadow: 0 16px 34px rgba(0,0,0,0.22);
 }
 #vue-vente .colonne-catalogue {
-  flex: 1.08 1 0;
+  flex: 1.05 1 0;
   width: auto;
-  min-width: 460px;
-  border-right: 2px solid rgba(255,250,240,0.18);
+  min-width: 420px;
+  border-left: 5px solid var(--ivoire-orange);
+  border-right: 1px solid rgba(255,250,240,0.16);
 }
 #vue-vente .colonne-panier {
-  flex: 0.92 1 0;
-  background:
-    linear-gradient(180deg, rgba(0,158,96,0.12), rgba(255,250,240,0.025)),
-    rgba(8, 26, 14, 0.98);
+  flex: 0.95 1 0;
+  border-left: 5px solid var(--ivoire-vert);
+  background: rgba(7, 25, 14, 0.96);
 }
-.vente-zone-entete {
-  position: relative;
-  padding: 18px 20px 16px;
-  overflow: hidden;
-  border-bottom: 1px solid rgba(255,250,240,0.14);
-  background:
-    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055), rgba(0,158,96,0.16));
-}
-.vente-zone-entete::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 5px;
-  background: linear-gradient(90deg, var(--ivoire-orange) 0 33.333%, var(--ivoire-blanc) 33.333% 66.666%, var(--ivoire-vert) 66.666% 100%);
-}
-.vente-zone-entete .libelle-doux {
-  display: inline-flex;
-  margin-bottom: 5px;
-  padding: 4px 9px;
-  border: 1px solid rgba(255,250,240,0.20);
-  border-radius: 999px;
-  background: rgba(255,250,240,0.08);
-  color: #ffe5c7;
-  font-size: 11px;
-  font-weight: 950;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-.vente-zone-entete h3 {
-  margin: 0;
-  color: var(--ivoire-blanc);
-  font-size: clamp(23px, 2vw, 31px);
-  line-height: 1;
-  letter-spacing: -0.045em;
-}
-.vente-zone-entete p {
-  max-width: 620px;
-  margin: 8px 0 0;
-  color: #f0dfc8;
-  font-weight: 650;
-}
+.vente-zone-entete { display: none; }
 #vue-vente .recherche {
-  padding: 18px 20px;
+  padding: 12px;
   border-bottom: 1px solid rgba(255,250,240,0.10);
-  background: rgba(255,250,240,0.035);
+  background: rgba(247,127,0,0.055);
 }
 #vue-vente .recherche::before {
-  left: 38px;
+  left: 28px;
   color: var(--ivoire-orange-clair);
-  font-size: 26px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 850;
 }
-#vue-vente .recherche::after {
-  content: 'F3';
-  position: absolute;
-  right: 36px;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 5px 9px;
-  border: 1px solid rgba(255,250,240,0.22);
-  border-radius: 999px;
-  background: rgba(255,250,240,0.10);
-  color: var(--ivoire-blanc);
-  font-size: 11px;
-  font-weight: 950;
-}
+#vue-vente .recherche::after { display: none; }
 #vue-vente .recherche input {
-  min-height: 64px;
-  padding: 0 58px 0 54px;
-  border: 2px solid rgba(247,127,0,0.78);
-  border-radius: 20px;
+  min-height: 50px;
+  padding: 0 14px 0 44px;
+  border: 2px solid rgba(247,127,0,0.72);
+  border-radius: 14px;
   color: #fffdf7;
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
   background:
-    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055), rgba(0,158,96,0.16)),
+    linear-gradient(90deg, rgba(247,127,0,0.13), rgba(255,250,240,0.035), rgba(0,158,96,0.08)),
     #06130b;
-  box-shadow: 0 0 0 5px rgba(247,127,0,0.10), 0 18px 38px rgba(0,0,0,0.24);
+  box-shadow: 0 0 0 3px rgba(247,127,0,0.08);
 }
-#vue-vente .recherche input::placeholder { color: rgba(255,250,240,0.68); }
+#vue-vente .recherche input::placeholder { color: rgba(255,250,240,0.66); }
 #vue-vente .resultats {
-  padding: 16px 18px 18px;
-  background: rgba(255,250,240,0.018);
+  padding: 10px 12px;
+  background: rgba(255,250,240,0.012);
 }
 #vue-vente .article {
-  min-height: 132px;
-  margin-bottom: 13px;
-  padding: 16px 18px;
-  border: 2px solid rgba(255,250,240,0.15);
-  border-left: 7px solid var(--ivoire-orange);
-  border-radius: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(138px, 176px);
+  min-height: 92px;
+  margin-bottom: 8px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,250,240,0.15);
+  border-left: 6px solid var(--ivoire-orange);
+  border-radius: 14px;
   background:
-    linear-gradient(135deg, rgba(255,250,240,0.12), rgba(255,250,240,0.035)),
+    linear-gradient(135deg, rgba(255,250,240,0.075), rgba(0,158,96,0.055)),
     #102818;
-  box-shadow: 0 16px 34px rgba(0,0,0,0.23);
+  box-shadow: none;
 }
 #vue-vente .article:hover,
 #vue-vente .article.survole {
-  transform: translateY(-2px);
-  border-color: rgba(247,127,0,0.82);
+  transform: translateY(-1px);
+  border-color: rgba(247,127,0,0.72);
   background:
-    linear-gradient(135deg, rgba(247,127,0,0.18), rgba(255,250,240,0.06), rgba(0,158,96,0.13)),
+    linear-gradient(135deg, rgba(247,127,0,0.12), rgba(255,250,240,0.045), rgba(0,158,96,0.10)),
     #12301d;
 }
+#vue-vente .article.conditionne { border-left-color: var(--ivoire-orange); }
 #vue-vente .article .designation {
+  margin-bottom: 3px;
   color: #fffdf7;
-  font-size: 18px;
-  font-weight: 950;
+  font-size: 15.5px;
+  font-weight: 850;
+  line-height: 1.18;
+}
+#vue-vente .article.conditionne .designation::after {
+  padding: 1px 6px;
+  font-size: 10px;
 }
 #vue-vente .article .reference {
-  color: #f0dfc8;
-  font-size: 13px;
+  color: #eadac5;
+  font-size: 12px;
   font-weight: 650;
 }
+#vue-vente .article-droite { gap: 4px; }
 #vue-vente .article .prix {
-  padding: 9px 12px;
-  border-radius: 14px;
-  background: rgba(247,127,0,0.17);
+  padding: 5px 9px;
+  border-radius: 11px;
+  background: rgba(247,127,0,0.16);
   color: #ffd7aa;
-  font-size: 22px;
-  font-weight: 1000;
+  font-size: 18px;
+  font-weight: 900;
 }
 #vue-vente .article .prix-carton,
 #vue-vente .article .stock {
-  border: 1px solid rgba(255,250,240,0.18);
+  padding: 3px 8px;
+  border: 1px solid rgba(0,158,96,0.38);
   border-radius: 999px;
-  background: rgba(0,158,96,0.14);
+  background: rgba(0,158,96,0.13);
   color: #bff8d9;
-  font-weight: 850;
-}
-#vue-vente .article .prix-achat {
-  border-color: rgba(255,250,240,0.18);
-  background: rgba(255,250,240,0.10);
-  color: var(--ivoire-blanc);
-}
-#vue-vente .mini-action {
-  border-color: rgba(247,127,0,0.60);
-  background: rgba(247,127,0,0.17);
-  color: #fff2e0;
-}
-#vue-vente .annonce {
-  margin: 12px 16px 0;
-  border: 1px solid rgba(255,250,240,0.18);
-  border-radius: 14px;
-  font-weight: 850;
-}
-#vue-vente .lignes-panier {
-  padding: 16px;
-  background: rgba(255,250,240,0.02);
-}
-#vue-vente .lignes-panier .vide {
-  margin: 6px 0;
-  border: 1px dashed rgba(255,250,240,0.20);
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(247,127,0,0.10), rgba(255,250,240,0.04), rgba(0,158,96,0.10));
-  color: #f0dfc8;
-  font-size: 16px;
+  font-size: 11.5px;
   font-weight: 800;
 }
+#vue-vente .article .prix-achat {
+  padding: 3px 8px;
+  border-color: rgba(255,250,240,0.16);
+  background: rgba(255,250,240,0.08);
+  color: var(--ivoire-blanc);
+  font-size: 10.8px;
+  font-weight: 780;
+}
+#vue-vente .mini-action {
+  width: min(100%, 176px);
+  padding: 6px 9px;
+  border-color: rgba(247,127,0,0.54);
+  border-radius: 10px;
+  background: rgba(247,127,0,0.13);
+  color: #fff2e0;
+  font-size: 12px;
+  font-weight: 780;
+}
+#vue-vente .annonce {
+  margin: 8px 12px 0;
+  border-radius: 10px;
+  font-weight: 750;
+}
+#vue-vente .lignes-panier {
+  padding: 12px;
+  background: rgba(0,158,96,0.030);
+}
+#vue-vente .lignes-panier .vide {
+  margin: 4px 0;
+  border: 1px dashed rgba(255,250,240,0.18);
+  border-radius: 13px;
+  background: rgba(255,250,240,0.035);
+  color: #eadac5;
+  font-size: 14px;
+  font-weight: 650;
+}
 #vue-vente .ligne-panier {
-  margin-bottom: 10px;
-  padding: 13px 14px;
-  border: 1px solid rgba(255,250,240,0.16);
-  border-left: 5px solid var(--ivoire-vert);
-  border-radius: 16px;
-  background: rgba(255,250,240,0.075);
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,250,240,0.15);
+  border-left: 4px solid var(--ivoire-vert);
+  border-radius: 13px;
+  background: rgba(255,250,240,0.060);
 }
 #vue-vente .ligne-panier .designation {
   color: #fffdf7;
-  font-size: 16px;
-  font-weight: 950;
+  font-size: 14.5px;
+  font-weight: 850;
 }
 #vue-vente .ligne-panier .detail {
-  color: #ecdcc6;
-  font-weight: 700;
+  color: #dfcfbc;
+  font-weight: 650;
 }
 #vue-vente .ligne-panier .total {
   color: #ffd7aa;
-  font-size: 17px;
-  font-weight: 950;
+  font-size: 15px;
+  font-weight: 850;
 }
 #vue-vente .ligne-panier .quantite button {
-  border-color: rgba(255,250,240,0.22);
-  background: rgba(255,250,240,0.10);
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255,250,240,0.20);
+  background: rgba(255,250,240,0.08);
   color: #fffdf7;
-  font-weight: 950;
+  font-weight: 850;
 }
 #vue-vente .totaux {
-  padding: 18px 20px 20px;
-  border-top: 3px solid rgba(247,127,0,0.62);
+  padding: 13px 16px 16px;
+  border-top: 2px solid rgba(247,127,0,0.58);
   background:
-    linear-gradient(135deg, rgba(247,127,0,0.16), rgba(255,250,240,0.055), rgba(0,158,96,0.16)),
+    linear-gradient(90deg, rgba(247,127,0,0.12), rgba(255,250,240,0.035), rgba(0,158,96,0.12)),
     #06130b;
-  box-shadow: 0 -18px 38px rgba(0,0,0,0.22);
+  box-shadow: none;
 }
 #vue-vente .totaux .ligne {
-  min-height: 34px;
-  color: #f0dfc8;
-  font-size: 15px;
-  font-weight: 800;
+  min-height: 28px;
+  color: #eadac5;
+  font-size: 14px;
+  font-weight: 700;
 }
-#vue-vente .totaux .ligne .montant { color: #fffdf7; font-weight: 950; }
+#vue-vente .totaux .ligne .montant { color: #fffdf7; font-weight: 850; }
 #vue-vente .totaux .ligne.total {
   align-items: center;
-  margin: 12px 0 16px;
-  padding: 15px 16px;
-  border: 2px solid rgba(255,250,240,0.22);
-  border-radius: 20px;
-  background: linear-gradient(90deg, rgba(247,127,0,0.28), rgba(255,250,240,0.10), rgba(0,158,96,0.22));
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,250,240,0.20);
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055), rgba(0,158,96,0.16));
   color: var(--ivoire-blanc);
-  font-size: 19px;
-  text-transform: uppercase;
-  letter-spacing: 0.055em;
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: 0.015em;
 }
 #vue-vente .totaux .ligne.total .montant {
   color: #fffdf7;
-  font-size: clamp(34px, 3.3vw, 48px);
+  font-size: clamp(28px, 2.4vw, 36px);
   line-height: 1;
-  text-shadow: 0 3px 18px rgba(247,127,0,0.32);
+  text-shadow: none;
 }
 #vue-vente .modes {
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 #vue-vente .modes button {
-  min-height: 48px;
-  border: 1px solid rgba(255,250,240,0.20);
-  border-radius: 15px;
-  background: rgba(255,250,240,0.075);
-  color: #f0dfc8;
-  font-size: 13px;
-  font-weight: 950;
+  min-height: 40px;
+  border: 1px solid rgba(255,250,240,0.18);
+  border-radius: 10px;
+  background: rgba(255,250,240,0.060);
+  color: #eadac5;
+  font-size: 12.5px;
+  font-weight: 800;
 }
 #vue-vente .modes button.actif {
   color: #07170e;
-  border-color: rgba(255,250,240,0.70);
+  border-color: rgba(255,250,240,0.62);
   background: linear-gradient(90deg, var(--ivoire-orange) 0 36%, var(--ivoire-blanc) 36% 65%, var(--ivoire-vert) 65% 100%);
 }
 #vue-vente .client-credit,
 #vue-vente .encaissement {
-  border-radius: 16px;
-  border-color: rgba(255,250,240,0.18);
-  background: rgba(255,250,240,0.075);
+  margin-bottom: 10px;
+  border-radius: 12px;
+  border-color: rgba(255,250,240,0.16);
+  background: rgba(255,250,240,0.055);
 }
 #vue-vente .encaissement label,
 #vue-vente .rendu {
-  color: #f0dfc8;
-  font-weight: 850;
+  color: #eadac5;
+  font-weight: 750;
 }
 #vue-vente #montant-recu {
-  min-height: 52px;
-  font-size: 19px;
-  font-weight: 950;
+  min-height: 42px;
+  font-size: 15px;
+  font-weight: 800;
 }
 #vue-vente #monnaie-rendue {
   color: #bff8d9;
-  font-size: 24px;
-  font-weight: 1000;
+  font-size: 20px;
+  font-weight: 900;
 }
 #vue-vente #bouton-encaisser {
-  min-height: 64px;
-  border-radius: 20px;
-  border: 2px solid rgba(255,250,240,0.18);
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,250,240,0.18);
   background: linear-gradient(135deg, var(--ivoire-orange), var(--ivoire-vert));
   color: #fffdf7;
-  font-size: 20px;
-  font-weight: 1000;
-  text-transform: uppercase;
-  letter-spacing: 0.035em;
+  font-size: 16px;
+  font-weight: 900;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 #vue-vente #bouton-encaisser:disabled {
-  background: rgba(255,250,240,0.12);
+  background: rgba(255,250,240,0.10);
   color: rgba(255,250,240,0.58);
   text-shadow: none;
 }
 @media (max-width: 1180px) {
-  #vue-vente { padding: 14px; gap: 14px; }
-  #vue-vente .colonne-catalogue { min-width: 410px; }
+  #vue-vente { padding: 10px; gap: 10px; }
+  #vue-vente .colonne-catalogue { min-width: 390px; }
   #vue-vente .article { grid-template-columns: 1fr; }
   #vue-vente .article-droite { align-items: flex-start; }
 }
 @media (max-width: 900px) {
   #vue-vente { overflow-y: auto; }
   #vue-vente .colonne-catalogue { min-width: 0; }
-  .vente-zone-entete h3 { font-size: 23px; }
 }
