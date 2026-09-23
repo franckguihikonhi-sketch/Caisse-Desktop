@@ -73,6 +73,11 @@
     <!-- Vente -->
     <div id="vue-vente" class="vue">
       <div class="colonne-catalogue">
+        <div class="vente-zone-entete catalogue">
+          <span class="libelle-doux">Point de vente</span>
+          <h3>Catalogue articles</h3>
+          <p>Scannez ou recherchez clairement l'article a ajouter au panier.</p>
+        </div>
         <div class="recherche">
           <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
                  autocomplete="off" spellcheck="false">
@@ -81,6 +86,11 @@
       </div>
 
       <div class="colonne-panier">
+        <div class="vente-zone-entete panier">
+          <span class="libelle-doux">Encaissement</span>
+          <h3>Panier de vente</h3>
+          <p>Controlez les quantites, le total et le mode de paiement avant validation.</p>
+        </div>
         <div class="annonce" id="annonce" role="status" aria-live="polite"></div>
         <div class="lignes-panier" id="lignes-panier"></div>
         <div class="totaux">

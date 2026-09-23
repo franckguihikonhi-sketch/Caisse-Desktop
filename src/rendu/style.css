@@ -2270,3 +2270,326 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: linear-gradient(90deg, var(--ivoire-orange) 0 33%, var(--ivoire-blanc) 33% 66%, var(--ivoire-vert) 66% 100%);
   color: #07170e;
 }
+
+/* Vente prioritaire : contraste fort pour le poste d'encaissement ---------- */
+#vue-vente {
+  gap: 18px;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055) 48%, rgba(0,158,96,0.18)),
+    radial-gradient(circle at 18% 0%, rgba(247,127,0,0.20), transparent 28rem),
+    radial-gradient(circle at 88% 8%, rgba(0,158,96,0.22), transparent 28rem),
+    #07170e;
+}
+#vue-vente .colonne-catalogue,
+#vue-vente .colonne-panier {
+  min-height: 0;
+  overflow: hidden;
+  border: 2px solid rgba(255,250,240,0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255,250,240,0.09), rgba(255,250,240,0.025)),
+    rgba(10, 29, 16, 0.96);
+  box-shadow: 0 24px 55px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,250,240,0.10);
+}
+#vue-vente .colonne-catalogue {
+  flex: 1.08 1 0;
+  width: auto;
+  min-width: 460px;
+  border-right: 2px solid rgba(255,250,240,0.18);
+}
+#vue-vente .colonne-panier {
+  flex: 0.92 1 0;
+  background:
+    linear-gradient(180deg, rgba(0,158,96,0.12), rgba(255,250,240,0.025)),
+    rgba(8, 26, 14, 0.98);
+}
+.vente-zone-entete {
+  position: relative;
+  padding: 18px 20px 16px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,250,240,0.14);
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055), rgba(0,158,96,0.16));
+}
+.vente-zone-entete::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 33.333%, var(--ivoire-blanc) 33.333% 66.666%, var(--ivoire-vert) 66.666% 100%);
+}
+.vente-zone-entete .libelle-doux {
+  display: inline-flex;
+  margin-bottom: 5px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255,250,240,0.20);
+  border-radius: 999px;
+  background: rgba(255,250,240,0.08);
+  color: #ffe5c7;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.vente-zone-entete h3 {
+  margin: 0;
+  color: var(--ivoire-blanc);
+  font-size: clamp(23px, 2vw, 31px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+.vente-zone-entete p {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: #f0dfc8;
+  font-weight: 650;
+}
+#vue-vente .recherche {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255,250,240,0.10);
+  background: rgba(255,250,240,0.035);
+}
+#vue-vente .recherche::before {
+  left: 38px;
+  color: var(--ivoire-orange-clair);
+  font-size: 26px;
+  font-weight: 900;
+}
+#vue-vente .recherche::after {
+  content: 'F3';
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 9px;
+  border: 1px solid rgba(255,250,240,0.22);
+  border-radius: 999px;
+  background: rgba(255,250,240,0.10);
+  color: var(--ivoire-blanc);
+  font-size: 11px;
+  font-weight: 950;
+}
+#vue-vente .recherche input {
+  min-height: 64px;
+  padding: 0 58px 0 54px;
+  border: 2px solid rgba(247,127,0,0.78);
+  border-radius: 20px;
+  color: #fffdf7;
+  font-size: 17px;
+  font-weight: 800;
+  background:
+    linear-gradient(90deg, rgba(247,127,0,0.18), rgba(255,250,240,0.055), rgba(0,158,96,0.16)),
+    #06130b;
+  box-shadow: 0 0 0 5px rgba(247,127,0,0.10), 0 18px 38px rgba(0,0,0,0.24);
+}
+#vue-vente .recherche input::placeholder { color: rgba(255,250,240,0.68); }
+#vue-vente .resultats {
+  padding: 16px 18px 18px;
+  background: rgba(255,250,240,0.018);
+}
+#vue-vente .article {
+  min-height: 132px;
+  margin-bottom: 13px;
+  padding: 16px 18px;
+  border: 2px solid rgba(255,250,240,0.15);
+  border-left: 7px solid var(--ivoire-orange);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255,250,240,0.12), rgba(255,250,240,0.035)),
+    #102818;
+  box-shadow: 0 16px 34px rgba(0,0,0,0.23);
+}
+#vue-vente .article:hover,
+#vue-vente .article.survole {
+  transform: translateY(-2px);
+  border-color: rgba(247,127,0,0.82);
+  background:
+    linear-gradient(135deg, rgba(247,127,0,0.18), rgba(255,250,240,0.06), rgba(0,158,96,0.13)),
+    #12301d;
+}
+#vue-vente .article .designation {
+  color: #fffdf7;
+  font-size: 18px;
+  font-weight: 950;
+}
+#vue-vente .article .reference {
+  color: #f0dfc8;
+  font-size: 13px;
+  font-weight: 650;
+}
+#vue-vente .article .prix {
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(247,127,0,0.17);
+  color: #ffd7aa;
+  font-size: 22px;
+  font-weight: 1000;
+}
+#vue-vente .article .prix-carton,
+#vue-vente .article .stock {
+  border: 1px solid rgba(255,250,240,0.18);
+  border-radius: 999px;
+  background: rgba(0,158,96,0.14);
+  color: #bff8d9;
+  font-weight: 850;
+}
+#vue-vente .article .prix-achat {
+  border-color: rgba(255,250,240,0.18);
+  background: rgba(255,250,240,0.10);
+  color: var(--ivoire-blanc);
+}
+#vue-vente .mini-action {
+  border-color: rgba(247,127,0,0.60);
+  background: rgba(247,127,0,0.17);
+  color: #fff2e0;
+}
+#vue-vente .annonce {
+  margin: 12px 16px 0;
+  border: 1px solid rgba(255,250,240,0.18);
+  border-radius: 14px;
+  font-weight: 850;
+}
+#vue-vente .lignes-panier {
+  padding: 16px;
+  background: rgba(255,250,240,0.02);
+}
+#vue-vente .lignes-panier .vide {
+  margin: 6px 0;
+  border: 1px dashed rgba(255,250,240,0.20);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(247,127,0,0.10), rgba(255,250,240,0.04), rgba(0,158,96,0.10));
+  color: #f0dfc8;
+  font-size: 16px;
+  font-weight: 800;
+}
+#vue-vente .ligne-panier {
+  margin-bottom: 10px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255,250,240,0.16);
+  border-left: 5px solid var(--ivoire-vert);
+  border-radius: 16px;
+  background: rgba(255,250,240,0.075);
+}
+#vue-vente .ligne-panier .designation {
+  color: #fffdf7;
+  font-size: 16px;
+  font-weight: 950;
+}
+#vue-vente .ligne-panier .detail {
+  color: #ecdcc6;
+  font-weight: 700;
+}
+#vue-vente .ligne-panier .total {
+  color: #ffd7aa;
+  font-size: 17px;
+  font-weight: 950;
+}
+#vue-vente .ligne-panier .quantite button {
+  border-color: rgba(255,250,240,0.22);
+  background: rgba(255,250,240,0.10);
+  color: #fffdf7;
+  font-weight: 950;
+}
+#vue-vente .totaux {
+  padding: 18px 20px 20px;
+  border-top: 3px solid rgba(247,127,0,0.62);
+  background:
+    linear-gradient(135deg, rgba(247,127,0,0.16), rgba(255,250,240,0.055), rgba(0,158,96,0.16)),
+    #06130b;
+  box-shadow: 0 -18px 38px rgba(0,0,0,0.22);
+}
+#vue-vente .totaux .ligne {
+  min-height: 34px;
+  color: #f0dfc8;
+  font-size: 15px;
+  font-weight: 800;
+}
+#vue-vente .totaux .ligne .montant { color: #fffdf7; font-weight: 950; }
+#vue-vente .totaux .ligne.total {
+  align-items: center;
+  margin: 12px 0 16px;
+  padding: 15px 16px;
+  border: 2px solid rgba(255,250,240,0.22);
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(247,127,0,0.28), rgba(255,250,240,0.10), rgba(0,158,96,0.22));
+  color: var(--ivoire-blanc);
+  font-size: 19px;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+#vue-vente .totaux .ligne.total .montant {
+  color: #fffdf7;
+  font-size: clamp(34px, 3.3vw, 48px);
+  line-height: 1;
+  text-shadow: 0 3px 18px rgba(247,127,0,0.32);
+}
+#vue-vente .modes {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+#vue-vente .modes button {
+  min-height: 48px;
+  border: 1px solid rgba(255,250,240,0.20);
+  border-radius: 15px;
+  background: rgba(255,250,240,0.075);
+  color: #f0dfc8;
+  font-size: 13px;
+  font-weight: 950;
+}
+#vue-vente .modes button.actif {
+  color: #07170e;
+  border-color: rgba(255,250,240,0.70);
+  background: linear-gradient(90deg, var(--ivoire-orange) 0 36%, var(--ivoire-blanc) 36% 65%, var(--ivoire-vert) 65% 100%);
+}
+#vue-vente .client-credit,
+#vue-vente .encaissement {
+  border-radius: 16px;
+  border-color: rgba(255,250,240,0.18);
+  background: rgba(255,250,240,0.075);
+}
+#vue-vente .encaissement label,
+#vue-vente .rendu {
+  color: #f0dfc8;
+  font-weight: 850;
+}
+#vue-vente #montant-recu {
+  min-height: 52px;
+  font-size: 19px;
+  font-weight: 950;
+}
+#vue-vente #monnaie-rendue {
+  color: #bff8d9;
+  font-size: 24px;
+  font-weight: 1000;
+}
+#vue-vente #bouton-encaisser {
+  min-height: 64px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,250,240,0.18);
+  background: linear-gradient(135deg, var(--ivoire-orange), var(--ivoire-vert));
+  color: #fffdf7;
+  font-size: 20px;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+}
+#vue-vente #bouton-encaisser:disabled {
+  background: rgba(255,250,240,0.12);
+  color: rgba(255,250,240,0.58);
+  text-shadow: none;
+}
+@media (max-width: 1180px) {
+  #vue-vente { padding: 14px; gap: 14px; }
+  #vue-vente .colonne-catalogue { min-width: 410px; }
+  #vue-vente .article { grid-template-columns: 1fr; }
+  #vue-vente .article-droite { align-items: flex-start; }
+}
+@media (max-width: 900px) {
+  #vue-vente { overflow-y: auto; }
+  #vue-vente .colonne-catalogue { min-width: 0; }
+  .vente-zone-entete h3 { font-size: 23px; }
+}
