@@ -102,9 +102,33 @@ function enregistrer(base, {
         uniteVente,
         facteurStock,
         quantiteStock,
+        stockDisponible: article.stock,
+        piecesParCarton: article.piecesParCarton,
         remisePourcent: l.remisePourcent ?? 0,
       };
     });
+
+    const sortiesParArticle = new Map();
+    for (const ligne of lignesVerifiees) {
+      const cumul = sortiesParArticle.get(ligne.articleId) ?? {
+        designation: ligne.designation,
+        stockDisponible: ligne.stockDisponible,
+        piecesParCarton: ligne.piecesParCarton,
+        quantiteStock: 0,
+      };
+      cumul.quantiteStock += ligne.quantiteStock;
+      sortiesParArticle.set(ligne.articleId, cumul);
+    }
+    for (const cumul of sortiesParArticle.values()) {
+      if (cumul.quantiteStock > cumul.stockDisponible) {
+        throw new RangeError(
+          'Stock insuffisant pour ' + cumul.designation +
+            ' : ' + conditionnement.decrireStock(cumul.stockDisponible, cumul) +
+            ' en stock, ' + conditionnement.decrireStock(cumul.quantiteStock, cumul) +
+            ' demandes dans le panier.'
+        );
+      }
+    }
 
     const panier = calculer(lignesVerifiees, { remiseGlobalePourcent });
 

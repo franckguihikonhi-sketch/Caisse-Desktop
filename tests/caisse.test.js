@@ -181,6 +181,26 @@ test('un stock insuffisant annule toute la vente', () => {
   assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
 });
 
+test('un meme article cumule dans le panier ne peut pas depasser le stock', () => {
+  const { base, caissier } = caisseNeuve();
+  assert.throws(() => ventes.enregistrer(base, {
+    lignes: [{ reference: 'RIZ-05', quantite: 15 }, { reference: 'RIZ-05', quantite: 10 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  }), /Stock insuffisant/);
+
+  assert.equal(articles.lireParReference(base, 'RIZ-05').stock, 20);
+  assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
+});
+
+test('la base refuse directement tout stock negatif', () => {
+  const { base } = caisseNeuve();
+  assert.throws(() => {
+    base.prepare('UPDATE articles SET stock = -1 WHERE reference = ?').run('PAIN');
+  }, /Stock negatif interdit/);
+  assert.equal(articles.lireParReference(base, 'PAIN').stock, 50);
+});
+
 test('un article inconnu ou un paiement inconnu est refuse', () => {
   const { base, caissier } = caisseNeuve();
   const commande = { paiement: { mode: 'carte' }, utilisateurId: caissier.id };

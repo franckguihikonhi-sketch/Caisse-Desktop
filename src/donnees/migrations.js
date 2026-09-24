@@ -456,6 +456,27 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 10,
+    intitule: 'Verrou base contre stock negatif',
+    appliquer(base) {
+      base.exec(`
+        CREATE TRIGGER IF NOT EXISTS trg_articles_stock_non_negatif_insert
+        BEFORE INSERT ON articles
+        WHEN NEW.stock < 0
+        BEGIN
+          SELECT RAISE(ABORT, 'Stock negatif interdit.');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS trg_articles_stock_non_negatif_update
+        BEFORE UPDATE OF stock ON articles
+        WHEN NEW.stock < 0
+        BEGIN
+          SELECT RAISE(ABORT, 'Stock negatif interdit.');
+        END;
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */
