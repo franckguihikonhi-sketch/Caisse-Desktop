@@ -2565,3 +2565,404 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     max-width: none;
   }
 }
+
+/* Design clair type tableau de bord professionnel ------------------------- */
+:root {
+  --ui-fond: #f3f7f4;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #f8faf7;
+  --ui-sidebar: #063d2c;
+  --ui-sidebar-2: #052f23;
+  --ui-vert: #0b7f4d;
+  --ui-vert-clair: #18a463;
+  --ui-orange: #f58220;
+  --ui-or: #d5a326;
+  --ui-rouge: #c9434c;
+  --ui-texte: #16231d;
+  --ui-muted: #66756f;
+  --ui-bord: #dfe8e2;
+  --fond: var(--ui-fond);
+  --fond-panneau: var(--ui-surface);
+  --fond-panneau-2: var(--ui-surface-2);
+  --fond-champ: #ffffff;
+  --bord: var(--ui-bord);
+  --texte: var(--ui-texte);
+  --texte-doux: var(--ui-muted);
+  --accent: var(--ui-vert);
+  --accent-clair: var(--ui-vert-clair);
+  --accent-2: var(--ui-orange);
+  --or: var(--ui-or);
+  --ombre-douce: 0 10px 24px rgba(21, 56, 39, 0.08);
+  --ombre-forte: 0 24px 50px rgba(21, 56, 39, 0.16);
+}
+html { scrollbar-color: rgba(6, 61, 44, 0.35) #e6eee8; }
+body {
+  background: var(--ui-fond);
+  color: var(--ui-texte);
+}
+*::-webkit-scrollbar-track { background: #e6eee8; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(6, 61, 44, 0.38);
+  border-color: #e6eee8;
+}
+#ecran-application { background: var(--ui-fond); }
+.zone {
+  background: var(--ui-fond);
+}
+.entete-zone {
+  min-height: 66px;
+  border-bottom: 1px solid var(--ui-bord);
+  background: var(--ui-surface);
+  box-shadow: 0 4px 16px rgba(21,56,39,0.05);
+}
+.entete-zone h2 {
+  color: var(--ui-texte);
+  font-size: 22px;
+  font-weight: 850;
+}
+.entete-zone h2::before {
+  background: linear-gradient(180deg, var(--ui-orange), var(--ui-vert));
+  box-shadow: none;
+}
+
+.barre-laterale {
+  width: 232px;
+  flex-basis: 232px;
+  border-right: 0;
+  background: linear-gradient(180deg, var(--ui-sidebar), var(--ui-sidebar-2));
+  box-shadow: 8px 0 24px rgba(6,61,44,0.18);
+}
+.marque {
+  min-height: 82px;
+  color: #ffffff;
+}
+.marque::before {
+  content: 'IG';
+  border: 0;
+  background: linear-gradient(135deg, var(--ui-or), #f7c957);
+  color: #063d2c;
+  box-shadow: none;
+}
+.marque small { color: rgba(255,255,255,0.70); }
+.navigation button {
+  color: rgba(255,255,255,0.78);
+  font-weight: 750;
+}
+.navigation button::after {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.72);
+}
+.navigation button:hover {
+  transform: none;
+  border-color: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+}
+.navigation button.actif {
+  color: #133018;
+  border-color: transparent;
+  background: linear-gradient(135deg, #d8aa2a, #e6b936);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+}
+.navigation button.actif::before { background: #ffffff; }
+.navigation button.actif::after {
+  background: rgba(19,48,24,0.12);
+  color: #133018;
+}
+.pied-laterale {
+  border-color: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+.pied-laterale .role { color: rgba(255,255,255,0.64); }
+
+.bouton {
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--ui-vert), var(--ui-vert-clair));
+  color: #ffffff;
+  text-shadow: none;
+  box-shadow: 0 8px 18px rgba(11,127,77,0.18);
+}
+.bouton:hover { box-shadow: 0 10px 22px rgba(11,127,77,0.22); }
+.bouton.discret {
+  border-color: var(--ui-bord);
+  background: #ffffff;
+  color: var(--ui-texte);
+}
+.bouton.discret:hover {
+  border-color: rgba(11,127,77,0.32);
+  background: #f3faf6;
+}
+.bouton.danger { background: linear-gradient(135deg, #c9434c, #e05b63); }
+input,
+select,
+textarea {
+  color: var(--ui-texte);
+  border-color: var(--ui-bord);
+  background: #ffffff;
+  box-shadow: none;
+}
+input::placeholder { color: #99a6a0; }
+input:focus,
+select:focus {
+  border-color: var(--ui-vert-clair);
+  box-shadow: 0 0 0 3px rgba(24,164,99,0.14);
+}
+label { color: var(--ui-muted); }
+
+.panneau,
+.boite,
+.tableau-zone > table,
+.clients-panneau,
+.achats-historique,
+.stock-entete,
+.stock-hero,
+.clients-hero,
+.facture-detail-ligne,
+.facture-ligne-article,
+.facture-reglement,
+.client-kpi,
+.panneau-dashboard,
+.carte-indicateur {
+  border: 1px solid var(--ui-bord);
+  background: var(--ui-surface);
+  color: var(--ui-texte);
+  box-shadow: var(--ombre-douce);
+}
+th {
+  color: #53635d;
+  background: #eef4f0;
+}
+td { color: var(--ui-texte); border-bottom-color: #edf2ee; }
+tbody tr:hover { background: #f6faf7; }
+.vide {
+  color: var(--ui-muted);
+  background: #f8faf7;
+}
+.libelle-doux,
+.aide,
+small { color: var(--ui-muted); }
+.montant { color: var(--ui-texte); }
+
+/* Tableau de bord comme la reference : fond clair, cartes nettes. */
+.tableau-bord {
+  padding: 22px;
+  background: var(--ui-fond);
+}
+.grille-tableau-bord {
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.carte-tableau {
+  min-height: 108px;
+  padding: 16px 17px;
+  border: 0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--ui-texte);
+  box-shadow: 0 8px 22px rgba(23, 56, 41, 0.08);
+}
+.carte-tableau::after { display: none; }
+.carte-tableau .libelle-doux { color: #6c7b75; }
+.carte-tableau strong {
+  color: var(--ui-texte);
+  font-size: clamp(24px, 2.1vw, 32px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.carte-tableau small { color: #6c7b75; }
+.icone-carte {
+  background: #e8f4ec;
+  color: var(--ui-vert);
+  box-shadow: none;
+}
+.carte-tableau.succes,
+.carte-ventes,
+.carte-encaisse {
+  background: linear-gradient(135deg, #047447, #17a463);
+  color: #ffffff;
+}
+.carte-achats,
+.carte-tableau.warning {
+  background: linear-gradient(135deg, #bc3542, #db5660);
+  color: #ffffff;
+}
+.carte-dettes,
+.carte-stock {
+  background: linear-gradient(135deg, #385449, #233b33);
+  color: #ffffff;
+}
+.carte-tableau.succes strong,
+.carte-ventes strong,
+.carte-encaisse strong,
+.carte-achats strong,
+.carte-tableau.warning strong,
+.carte-dettes strong,
+.carte-stock strong,
+.carte-tableau.succes small,
+.carte-ventes small,
+.carte-encaisse small,
+.carte-achats small,
+.carte-tableau.warning small,
+.carte-dettes small,
+.carte-stock small,
+.carte-tableau.succes .libelle-doux,
+.carte-ventes .libelle-doux,
+.carte-encaisse .libelle-doux,
+.carte-achats .libelle-doux,
+.carte-tableau.warning .libelle-doux,
+.carte-dettes .libelle-doux,
+.carte-stock .libelle-doux {
+  color: #ffffff;
+}
+.carte-tableau.succes .icone-carte,
+.carte-ventes .icone-carte,
+.carte-encaisse .icone-carte,
+.carte-achats .icone-carte,
+.carte-tableau.warning .icone-carte,
+.carte-dettes .icone-carte,
+.carte-stock .icone-carte {
+  background: rgba(255,255,255,0.18);
+  color: #ffffff;
+}
+.panneaux-tableau-bord {
+  gap: 14px;
+}
+.panneau-dashboard {
+  border-radius: 10px;
+  background: #ffffff;
+}
+.panneau-dashboard h3 {
+  color: var(--ui-texte);
+  font-weight: 850;
+}
+.panneau-dashboard h3::before {
+  background: var(--ui-vert);
+  box-shadow: none;
+}
+.panneau-dashboard .ligne-cloture {
+  color: var(--ui-texte);
+  border-bottom-color: #edf2ee;
+}
+.panneau-dashboard .montant { color: var(--ui-vert); }
+
+/* Ecran vente : clair, moins surcharge, avec repere orange/vert. */
+#vue-vente {
+  gap: 14px;
+  padding: 14px;
+  background: var(--ui-fond);
+}
+#vue-vente .colonne-catalogue,
+#vue-vente .colonne-panier {
+  border: 1px solid var(--ui-bord);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--ombre-douce);
+}
+#vue-vente .colonne-catalogue {
+  flex: 0 0 clamp(330px, 35vw, 500px);
+  width: clamp(330px, 35vw, 500px);
+  min-width: 330px;
+  max-width: 500px;
+  border-left: 5px solid var(--ui-orange);
+}
+#vue-vente .colonne-panier {
+  flex: 1 1 0;
+  border-left: 5px solid var(--ui-vert);
+}
+#vue-vente .recherche {
+  padding: 12px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--ui-bord);
+}
+#vue-vente .recherche::before { color: var(--ui-orange); }
+#vue-vente .recherche input {
+  color: var(--ui-texte);
+  border-color: rgba(245,130,32,0.55);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(245,130,32,0.08);
+}
+#vue-vente .resultats,
+#vue-vente .lignes-panier { background: #fbfdfb; }
+#vue-vente .article,
+#vue-vente .ligne-panier {
+  border: 1px solid var(--ui-bord);
+  background: #ffffff;
+  color: var(--ui-texte);
+  box-shadow: none;
+}
+#vue-vente .article { border-left: 5px solid var(--ui-orange); }
+#vue-vente .ligne-panier { border-left: 4px solid var(--ui-vert); }
+#vue-vente .article:hover,
+#vue-vente .article.survole {
+  border-color: rgba(245,130,32,0.50);
+  background: #fffaf4;
+}
+#vue-vente .article .designation,
+#vue-vente .ligne-panier .designation { color: var(--ui-texte); }
+#vue-vente .article .reference,
+#vue-vente .ligne-panier .detail { color: var(--ui-muted); }
+#vue-vente .article .prix,
+#vue-vente .ligne-panier .total {
+  background: #fff3e5;
+  color: #b85f07;
+}
+#vue-vente .article .prix-carton,
+#vue-vente .article .stock,
+#vue-vente .article .prix-achat {
+  color: var(--ui-vert);
+  border-color: #dbece2;
+  background: #edf8f1;
+}
+#vue-vente .mini-action {
+  border-color: rgba(245,130,32,0.36);
+  background: #fff8ef;
+  color: #934d07;
+}
+#vue-vente .totaux {
+  border-top: 2px solid rgba(11,127,77,0.24);
+  background: #ffffff;
+}
+#vue-vente .totaux .ligne { color: var(--ui-muted); }
+#vue-vente .totaux .ligne .montant { color: var(--ui-texte); }
+#vue-vente .totaux .ligne.total {
+  border-color: #cfe9d9;
+  background: #eef9f2;
+  color: var(--ui-texte);
+}
+#vue-vente .totaux .ligne.total .montant { color: var(--ui-vert); }
+#vue-vente .modes button {
+  color: var(--ui-muted);
+  border-color: var(--ui-bord);
+  background: #ffffff;
+}
+#vue-vente .modes button.actif {
+  color: #ffffff;
+  border-color: var(--ui-vert);
+  background: var(--ui-vert);
+}
+#vue-vente .client-credit,
+#vue-vente .encaissement {
+  border-color: var(--ui-bord);
+  background: #fbfdfb;
+}
+#vue-vente .encaissement label,
+#vue-vente .rendu { color: var(--ui-muted); }
+#vue-vente #monnaie-rendue { color: var(--ui-vert); }
+@media (max-width: 1180px) {
+  #vue-vente .colonne-catalogue {
+    flex-basis: clamp(315px, 35vw, 440px);
+    width: clamp(315px, 35vw, 440px);
+    min-width: 315px;
+    max-width: 440px;
+  }
+}
+@media (max-width: 900px) {
+  #vue-vente .colonne-catalogue {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
