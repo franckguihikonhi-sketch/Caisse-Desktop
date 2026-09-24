@@ -61,6 +61,21 @@ Le dossier technique des donnees reste volontairement `caisse-desktop` afin de
 conserver les bases deja installees, meme si le nom visible de l'application est
 `Ivoire-Gestion`.
 
+## Installation dans plusieurs entreprises
+
+L'installateur ne contient pas une base commune et ne se connecte a aucun serveur
+central. Par defaut, chaque installation utilise sa propre base locale sur le
+poste Windows ou l'application est installee :
+
+```text
+%APPDATA%\\caisse-desktop\\donnees\\caisse.db
+```
+
+Donc deux entreprises differentes n'ont aucun conflit de donnees : chacune garde
+ses articles, ventes, clients, stocks, achats, dettes et reglages sur ses propres
+postes. La base n'est partagee que si l'administrateur choisit volontairement un
+dossier reseau dans les reglages.
+
 ## Travailler en reseau local, sans Internet
 
 Pour partager la meme base entre plusieurs postes :
