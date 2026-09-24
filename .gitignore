@@ -4,3 +4,10 @@ node_modules/
 verification-*.png
 
 release/
+# Bases locales generees chez les entreprises : ne jamais les embarquer.
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3

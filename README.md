@@ -56,6 +56,8 @@ npm run build:windows
 Les fichiers sortent dans le dossier `release/` sous le nom
 `Ivoire-Gestion-...`. Une fois installee sur Windows, l'application n'a pas
 besoin d'Internet pour vendre, acheter, imprimer ou travailler sur sa base.
+L'executable n'embarque aucune base commerciale : aucun article, client,
+fournisseur, vente, achat, stock ou dette n'est precharge.
 
 Le dossier technique des donnees reste volontairement `caisse-desktop` afin de
 conserver les bases deja installees, meme si le nom visible de l'application est

@@ -28,6 +28,34 @@ test('la premiere ouverture ne cree aucun compte', () => {
   assert.equal(boutique(base).nom, 'Ma boutique');
 });
 
+test('une installation neuve ne contient aucune donnee commerciale', () => {
+  const base = ouvrir(':memory:');
+  const tablesVides = [
+    'utilisateurs',
+    'articles',
+    'ventes',
+    'lignes_vente',
+    'clients',
+    'fournisseurs',
+    'sessions_caisse',
+    'creances_clients',
+    'reglements_clients',
+    'dettes_fournisseurs',
+    'reglements_fournisseurs',
+    'mouvements_stock',
+    'achats',
+    'lignes_achat',
+    'retours_fournisseurs',
+    'lignes_retour_fournisseur',
+    'retours_clients',
+    'lignes_retour_client',
+  ];
+
+  for (const table of tablesVides) {
+    assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ' + table).get().n, 0, table);
+  }
+});
+
 test('un mot de passe ne se retrouve pas dans la base', () => {
   const { base } = caisseNeuve();
   const brut = JSON.stringify(base.prepare('SELECT * FROM utilisateurs').all());

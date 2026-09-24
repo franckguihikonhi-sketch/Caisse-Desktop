@@ -27,7 +27,14 @@
     "files": [
       "src/**/*",
       "package.json",
-      "README.md"
+      "README.md",
+      "!**/*.db",
+      "!**/*.db-journal",
+      "!**/*.db-shm",
+      "!**/*.db-wal",
+      "!**/*.sqlite",
+      "!**/*.sqlite3",
+      "!release/**"
     ],
     "win": {
       "target": [
