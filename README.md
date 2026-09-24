@@ -16,6 +16,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, la marge commerciale, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
 | **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
+| **Benefices** | Mettre en evidence, facture d'achat par facture d'achat, le benefice obtenu sur chaque article uniquement lorsque cet article a ete vendu |
 | **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil et les mouvements par article |
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |

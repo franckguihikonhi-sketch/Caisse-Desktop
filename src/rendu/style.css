@@ -4302,3 +4302,160 @@ table strong {
     align-items: flex-start;
   }
 }
+
+/* Benefices par facture d'achat ------------------------------------------ */
+.benefices-page {
+  width: 100%;
+  max-width: 1480px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 18px;
+  overflow: auto;
+}
+
+.benefices-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid #dce8e1;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(245,130,32,0.11), transparent 18rem),
+    linear-gradient(135deg, #ffffff, #f8fbf8);
+  box-shadow: 0 14px 34px rgba(21,56,39,0.08);
+}
+
+.benefices-hero h3 {
+  margin: 5px 0 6px;
+  color: #10231a;
+  font-size: clamp(22px, 2vw, 31px);
+  letter-spacing: -0.04em;
+}
+
+.benefices-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.benefice-kpi {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #dce8e1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(21,56,39,0.07);
+}
+
+.benefice-kpi span,
+.facture-benefice-total span {
+  display: block;
+  color: #66756f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.benefice-kpi strong,
+.facture-benefice-total strong {
+  display: block;
+  margin-top: 5px;
+  color: #10231a;
+  font-size: clamp(20px, 2vw, 29px);
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.benefice-kpi small,
+.facture-benefice-total small {
+  color: #60736a;
+  font-weight: 850;
+}
+
+.benefice-kpi.gain {
+  border-color: #bfe6ce;
+  background: linear-gradient(135deg, #ecfdf3, #ffffff);
+}
+
+.benefice-kpi.perte {
+  border-color: #ffd3d7;
+  background: linear-gradient(135deg, #fff1f2, #ffffff);
+}
+
+.facture-benefice {
+  margin-bottom: 14px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.facture-benefice-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #edf2ee;
+  background: linear-gradient(90deg, #ffffff, #f8fbf8);
+}
+
+.facture-benefice-entete h3 {
+  margin: 3px 0 2px;
+  color: #10231a;
+  font-weight: 950;
+}
+
+.facture-benefice-total {
+  min-width: 190px;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0b7f4d, #18a463);
+  color: #ffffff;
+  text-align: right;
+}
+
+.facture-benefice-total span,
+.facture-benefice-total strong,
+.facture-benefice-total small {
+  color: #ffffff;
+}
+
+.benefices-table {
+  min-width: 900px;
+}
+
+.benefices-table .sous-ligne {
+  display: block;
+  margin-top: 3px;
+  color: #66756f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.benefice-valeur.positif { color: #0b7f4d !important; }
+.benefice-valeur.negatif { color: #c9434c !important; }
+.benefices-vide { padding: 22px; }
+
+.navigation button[data-vue="benefices"]::after { content: '📈'; }
+
+@media (max-width: 1180px) {
+  .benefices-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .benefices-kpis {
+    grid-template-columns: 1fr;
+  }
+  .facture-benefice-entete {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .facture-benefice-total {
+    text-align: left;
+  }
+}

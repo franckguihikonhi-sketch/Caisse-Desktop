@@ -12,6 +12,7 @@ const achats = require('../donnees/achats');
 const caisse = require('../donnees/caisse');
 const stocks = require('../donnees/stocks');
 const tableauDeBord = require('../donnees/tableau-de-bord');
+const benefices = require('../donnees/benefices');
 const { jour } = require('../metier/horodatage');
 
 /**
@@ -71,6 +72,7 @@ function enregistrerCanaux(bd, session) {
 
   // --- Tableau de bord et caisse --------------------------------------------
   repondre('tableauDeBord:lire', (options) => tableauDeBord.lire(bd, options ?? {}));
+  repondre('benefices:lister', (options) => benefices.lister(bd, options ?? {}), admin);
   repondre('caisse:etat', () => caisse.etat(bd));
   repondre('caisse:ouvrir', (donnees) => caisse.ouvrir(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
   repondre('caisse:fermer', (donnees) => caisse.fermer(bd, { ...donnees, utilisateurId: session.utilisateur.id }));

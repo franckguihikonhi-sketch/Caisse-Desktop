@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('caisse', {
   tableauDeBord: {
     lire: appeler('tableauDeBord:lire'),
   },
+  benefices: {
+    lister: appeler('benefices:lister'),
+  },
   caisseJournee: {
     etat: appeler('caisse:etat'),
     ouvrir: appeler('caisse:ouvrir'),
