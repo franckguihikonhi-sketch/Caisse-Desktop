@@ -3887,3 +3887,19 @@ table strong {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Menu lateral : remplacer les initiales par de vraies icones. */
+.navigation button::after {
+  font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1;
+}
+.navigation button[data-vue="tableauBord"]::after { content: '▦'; }
+.navigation button[data-vue="vente"]::after { content: '🛒'; }
+.navigation button[data-vue="achats"]::after { content: '📥'; }
+.navigation button[data-vue="stock"]::after { content: '📦'; }
+.navigation button[data-vue="articles"]::after { content: '🏷'; }
+.navigation button[data-vue="clients"]::after { content: '👥'; }
+.navigation button[data-vue="fournisseurs"]::after { content: '🚚'; }
+.navigation button[data-vue="journal"]::after { content: '💵'; }
+.navigation button[data-vue="reglages"]::after { content: '⚙'; }
