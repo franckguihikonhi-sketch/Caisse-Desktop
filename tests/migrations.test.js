@@ -64,6 +64,20 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
   assert.equal(savon.codeBarres, null);
 
   base.close();
+
+  const dossierSauvegardes = path.join(dossier, 'sauvegardes-auto');
+  const sauvegardes = fs.readdirSync(dossierSauvegardes).filter((nom) => nom.endsWith('.db'));
+  assert.equal(sauvegardes.length, 1, 'une sauvegarde automatique doit preceder la migration');
+  const sauvegarde = new BaseSqlite(path.join(dossierSauvegardes, sauvegardes[0]));
+  assert.equal(sauvegarde.pragma('user_version', { simple: true }), 1);
+  assert.ok(!sauvegarde.pragma('table_info(articles)').map((c) => c.name).includes('code_barres'));
+  assert.equal(sauvegarde.prepare('SELECT stock FROM articles WHERE reference = ?').get('SAV-01').stock, 40);
+  sauvegarde.close();
+
+  const dejaAJour = ouvrir(chemin);
+  dejaAJour.close();
+  assert.equal(fs.readdirSync(dossierSauvegardes).filter((nom) => nom.endsWith('.db')).length, 1);
+
   fs.rmSync(dossier, { recursive: true, force: true });
 });
 

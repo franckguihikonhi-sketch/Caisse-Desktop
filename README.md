@@ -153,12 +153,14 @@ des references et des quantites. Prix, taux de TVA, stock et total sont relus
 et recalcules dans le processus principal. Une vente s'ecrit dans une seule
 transaction : elle est entiere ou elle n'existe pas.
 
-**La base se met a jour toute seule.** Le schema evolue par migrations
-numerotees (`src/donnees/migrations.js`), et la base retient dans
-`PRAGMA user_version` celle qu'elle a atteinte. Une caisse deja installee chez
-un commerçant rattrape les etapes qui lui manquent a l'ouverture, sans perdre
-ses ventes. Une migration publiee ne se modifie plus : un changement de schema
-est une migration de plus.
+**La base se met a jour toute seule, avec sauvegarde de securite.** Le schema
+evolue par migrations numerotees (`src/donnees/migrations.js`), et la base
+retient dans `PRAGMA user_version` celle qu'elle a atteinte. Une caisse deja
+installee chez un commerçant rattrape les etapes qui lui manquent a l'ouverture,
+sans perdre ses ventes. Avant de migrer une base existante, Ivoire-Gestion cree
+automatiquement une copie coherente dans `sauvegardes-auto`, puis controle
+l'integrite SQLite. Une migration publiee ne se modifie plus : un changement de
+schema est une migration de plus.
 
 **La caisse est stricte.** Une vente lancee depuis l'interface exige une session
 de caisse ouverte. Les ventes a credit creent automatiquement une creance client
