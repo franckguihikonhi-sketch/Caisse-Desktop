@@ -174,12 +174,7 @@ const Vente = {
       }, [
         creer('div', { classe: 'article-infos' }, [
           creer('div', { classe: 'designation', texte: article.designation }),
-          creer('div', {
-            classe: 'reference',
-            texte: [article.reference, article.codeBarres, article.codeBarresCarton ? 'carton ' + article.codeBarresCarton : '']
-              .filter(Boolean).join('  -  '),
-          }),
-          creer('div', { classe: 'reference', texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
+          creer('div', { classe: 'conditionnement-vente', texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
         ]),
         creer('div', { classe: 'article-droite' }, [
           creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) + ' / piece' }),

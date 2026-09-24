@@ -3870,3 +3870,20 @@ table strong {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Vente : les cartes article gardent l'espace pour l'information utile. */
+#vue-vente .article .conditionnement-vente {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #edf8f1;
+  color: #0b7f4d;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
