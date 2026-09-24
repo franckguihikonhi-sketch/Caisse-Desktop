@@ -2966,3 +2966,296 @@ small { color: var(--ui-muted); }
     max-width: none;
   }
 }
+
+/* Finition globale : lisibilite et tenue parfaite des onglets ------------- */
+body, .zone, .vue {
+  color: var(--ui-texte);
+}
+.vue {
+  min-width: 0;
+  overflow: auto;
+}
+.tableau-zone,
+.deux-colonnes,
+.fournisseur-bloc-unique,
+.tableau-bord,
+.stock-page,
+.achats-page,
+.clients-page {
+  max-width: 100%;
+  min-width: 0;
+  padding: 18px;
+}
+.panneau,
+.clients-panneau,
+.achats-historique,
+.boite {
+  min-width: 0;
+  overflow: hidden;
+}
+.table-scroll,
+.clients-table-scroll,
+.tableau-zone,
+.panneau-fournisseurs-unique,
+.achats-historique {
+  max-width: 100%;
+  overflow: auto;
+}
+table {
+  color: var(--ui-texte);
+}
+th {
+  color: #ffffff;
+  background: #132235;
+}
+td,
+td.nombre,
+.panneau td,
+.tableau-zone td {
+  color: var(--ui-texte);
+}
+.panneau h3,
+.boite h3,
+.section-fournisseurs h3,
+.achats-entete h3,
+.stock-hero h3,
+.clients-hero h3,
+.panneau-entete-tiers h3 {
+  color: var(--ui-texte);
+}
+.panneau strong,
+.boite strong,
+table strong {
+  color: var(--ui-texte);
+}
+.aide,
+.libelle-doux,
+.telephone-client,
+.client-identite span,
+.creance-libelle span,
+.facture-ligne-article span,
+.facture-reglement span {
+  color: var(--ui-muted);
+}
+.numero-document,
+.badge-code {
+  border-color: rgba(245,130,32,0.28);
+  background: #fff4e6;
+  color: #9a5107;
+}
+.solde-badge.dette,
+.compteur-puce.alerte {
+  border-color: rgba(245,130,32,0.32);
+  background: #fff2df;
+  color: #b85f07;
+}
+.solde-badge.neutre,
+.compteur-puce {
+  border-color: rgba(11,127,77,0.26);
+  background: #eaf8f0;
+  color: var(--ui-vert);
+}
+.bouton-mini {
+  white-space: nowrap;
+}
+
+/* Clients et credits : textes sombres, panneaux adaptes, pas de coupe. */
+#vue-clients {
+  overflow: auto;
+  background: var(--ui-fond);
+}
+.clients-page {
+  width: 100%;
+  max-width: none;
+  overflow: visible;
+}
+.clients-hero {
+  grid-template-columns: minmax(260px, 0.95fr) minmax(420px, 1.05fr);
+  gap: 16px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(24,164,99,0.12), transparent 16rem),
+    #ffffff;
+}
+.clients-hero .aide { color: #72827b; }
+.clients-kpis { gap: 12px; }
+.client-kpi {
+  min-width: 0;
+  min-height: 104px;
+  background: #ffffff;
+  border-color: var(--ui-bord);
+}
+.client-kpi span {
+  color: #8ca09a;
+}
+.client-kpi strong {
+  color: var(--ui-texte);
+}
+.client-kpi small {
+  color: var(--ui-muted);
+}
+.client-kpi.dette strong,
+.client-kpi.alerte small {
+  color: #d59618;
+}
+.client-kpi.sain strong {
+  color: var(--ui-vert);
+}
+.clients-grille {
+  grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+  gap: 18px;
+}
+.clients-panneau {
+  border-radius: 18px;
+  background: #ffffff;
+}
+.panneau-entete-tiers {
+  background: #ffffff;
+  border-bottom-color: var(--ui-bord);
+}
+.outils-tiers {
+  border-bottom-color: var(--ui-bord);
+  background: #f7faf8;
+}
+.clients-table,
+.creances-table {
+  width: 100%;
+}
+.clients-table { min-width: 500px; }
+.creances-table { min-width: 680px; }
+#vue-clients th,
+#vue-clients td {
+  color: var(--ui-texte);
+}
+#vue-clients th {
+  background: #132235;
+  color: #ffffff;
+}
+#vue-clients tbody tr {
+  background: #ffffff;
+}
+#vue-clients tbody tr:hover {
+  background: #f8fbf9;
+}
+.client-identite strong,
+.client-creance strong,
+.creance-libelle strong {
+  color: var(--ui-texte) !important;
+}
+.client-identite span,
+.creance-libelle span,
+.telephone-client {
+  color: var(--ui-muted) !important;
+}
+.client-row.debiteur .client-identite span {
+  color: #b85f07 !important;
+}
+.creance-row.partiel .creance-libelle span:not(.statut-creance) {
+  color: var(--ui-muted) !important;
+}
+.statut-creance {
+  border-color: transparent;
+  font-weight: 850;
+}
+.statut-creance.ouverte {
+  background: #fff2df;
+  color: #b85f07 !important;
+}
+.statut-creance.partielle,
+.creance-row.partiel .creance-libelle .statut-creance.partielle {
+  background: #eaf8f0;
+  color: var(--ui-vert) !important;
+}
+.facture-detail,
+.facture-detail-entete,
+.facture-resume,
+.progression-facture {
+  color: var(--ui-texte);
+}
+.facture-detail-ligne strong,
+.facture-ligne-article strong,
+.facture-reglement strong {
+  color: var(--ui-texte);
+}
+.facture-ligne-article > .montant,
+.facture-reglement > .montant,
+.facture-detail-ligne.important strong {
+  color: #b85f07;
+}
+
+/* Achats, fournisseurs, journal, reglages : grilles respirantes et lisibles. */
+.achats-page,
+.stock-page,
+.clients-page {
+  gap: 16px;
+}
+.achats-entete,
+.stock-hero,
+.stock-entete {
+  background: #ffffff;
+  color: var(--ui-texte);
+}
+.resume-achats,
+.resume-stock,
+.stock-resume,
+.clients-kpis {
+  min-width: 0;
+}
+.deux-colonnes,
+.clients-grille {
+  align-items: start;
+}
+#vue-fournisseurs table,
+#vue-journal table,
+#vue-reglages table,
+#vue-achats table {
+  min-width: 720px;
+}
+#vue-articles .tableau-zone > table {
+  min-width: 1080px;
+}
+#vue-stock .stock-page,
+#vue-achats .achats-page,
+#vue-clients .clients-page,
+#vue-journal .deux-colonnes,
+#vue-reglages .deux-colonnes,
+#vue-fournisseurs .fournisseur-bloc-unique {
+  width: 100%;
+}
+
+@media (max-width: 1320px) {
+  .clients-grille {
+    grid-template-columns: 1fr;
+  }
+  .clients-table { min-width: 560px; }
+  .creances-table { min-width: 760px; }
+}
+@media (max-width: 1180px) {
+  .clients-hero {
+    grid-template-columns: 1fr;
+  }
+  .clients-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .deux-colonnes {
+    grid-template-columns: 1fr;
+  }
+  .grille-tableau-bord {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .clients-kpis,
+  .grille-tableau-bord {
+    grid-template-columns: 1fr;
+  }
+  .tableau-zone,
+  .deux-colonnes,
+  .fournisseur-bloc-unique,
+  .tableau-bord,
+  .stock-page,
+  .achats-page,
+  .clients-page {
+    padding: 12px;
+  }
+}
