@@ -4063,3 +4063,242 @@ table strong {
   flex: 1 1 220px;
   margin: 0;
 }
+
+/* Vente : catalogue articles plus authentique, type poste de supermarche. */
+#vue-vente .recherche {
+  padding: 12px 14px;
+  background:
+    linear-gradient(135deg, rgba(245,130,32,0.10), rgba(255,255,255,0.96) 46%, rgba(11,127,77,0.08));
+}
+
+#vue-vente .recherche::before {
+  content: '▦';
+  left: 31px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #f58220;
+  font-size: 24px;
+  letter-spacing: 0;
+  opacity: 0.95;
+}
+
+#vue-vente .recherche input {
+  min-height: 58px;
+  padding-left: 64px;
+  padding-right: 18px;
+  border: 2px solid #ffd0a3;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(245,130,32,0.12), inset 0 0 0 1px rgba(255,255,255,0.84);
+}
+
+#vue-vente .recherche input:focus {
+  border-color: #f58220;
+  box-shadow: 0 0 0 4px rgba(245,130,32,0.14), 0 14px 32px rgba(11,127,77,0.10);
+}
+
+#vue-vente .resultats {
+  padding: 14px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(245,130,32,0.08), transparent 16rem),
+    radial-gradient(circle at 94% 28%, rgba(11,127,77,0.09), transparent 18rem),
+    #f3f8f5;
+}
+
+#vue-vente .article {
+  position: relative;
+  grid-template-columns: 50px minmax(0, 1fr) minmax(142px, 176px);
+  gap: 12px;
+  min-height: 124px;
+  padding: 13px 14px;
+  overflow: hidden;
+  border: 1px solid #d7e7de;
+  border-left: 0;
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, rgba(11,127,77,0.075), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fbfdfb);
+  box-shadow: 0 12px 28px rgba(21,56,39,0.09);
+  cursor: pointer;
+}
+
+#vue-vente .article::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 7px;
+  background: linear-gradient(180deg, #0b7f4d, #20b878);
+}
+
+#vue-vente .article.conditionne::before {
+  background: linear-gradient(180deg, #0b7f4d, #ffffff 49%, #f58220);
+}
+
+#vue-vente .article::after {
+  content: '';
+  position: absolute;
+  right: -28px;
+  top: -34px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: rgba(245,130,32,0.075);
+  pointer-events: none;
+}
+
+#vue-vente .article:hover,
+#vue-vente .article.survole {
+  transform: translateY(-2px);
+  border-color: #bfe2cd;
+  background:
+    linear-gradient(90deg, rgba(11,127,77,0.10), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fffaf4);
+  box-shadow: 0 18px 36px rgba(21,56,39,0.14);
+}
+
+#vue-vente .article-vignette {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  box-shadow: 0 10px 20px rgba(11,127,77,0.18);
+}
+
+#vue-vente .article-infos,
+#vue-vente .article-droite {
+  position: relative;
+  z-index: 1;
+}
+
+#vue-vente .article .designation {
+  display: block;
+  margin: 0 0 9px;
+  color: #07170e;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+#vue-vente .article.conditionne .designation::after {
+  content: none;
+}
+
+#vue-vente .article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#vue-vente .article .conditionnement-vente {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 5px 10px;
+  border: 1px solid #d7efe2;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #087046;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#vue-vente .article .conditionnement-vente.ratio {
+  border-color: #ffe1bf;
+  background: #fff6ea;
+  color: #a85500;
+}
+
+#vue-vente .article-droite {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+#vue-vente .article .prix-principal {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  min-width: 132px;
+  padding: 9px 12px;
+  border: 1px solid #ffe1bf;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff6ea, #fffdf8);
+  color: #b85f07;
+}
+
+#vue-vente .article .prix-principal span {
+  color: #9a5a13;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#vue-vente .article .prix-principal strong {
+  color: #b85f07;
+  font-size: clamp(19px, 2.1vw, 25px);
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#vue-vente .article .prix-principal em {
+  color: #8a4d0b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+#vue-vente .article .prix-carton,
+#vue-vente .article .stock,
+#vue-vente .article .prix-achat {
+  border-color: #d7efe2;
+  background: #f0fbf4;
+  color: #087046;
+  font-weight: 950;
+}
+
+#vue-vente .article .prix-achats {
+  justify-content: flex-end;
+}
+
+#vue-vente .mini-action {
+  min-height: 38px;
+  border-color: rgba(11,127,77,0.26);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, #eefaf3);
+  box-shadow: 0 8px 16px rgba(11,127,77,0.08);
+}
+
+#vue-vente .mini-action:hover {
+  border-color: #0b7f4d;
+  background: #0b7f4d;
+  color: #ffffff;
+}
+
+#vue-vente .article.epuise {
+  opacity: 0.68;
+  filter: grayscale(0.18);
+}
+
+@media (max-width: 1180px) {
+  #vue-vente .article {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  #vue-vente .article-droite {
+    grid-column: 2;
+    align-items: flex-start;
+  }
+}

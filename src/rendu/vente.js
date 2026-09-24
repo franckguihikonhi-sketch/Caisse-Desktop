@@ -172,12 +172,25 @@ const Vente = {
         classe: 'article' + (epuise ? ' epuise' : '') + (article.venteCarton ? ' conditionne' : ''),
         sur: { click: () => (epuise ? null : this.choisirQuantites(article)) },
       }, [
+        creer('div', { classe: 'article-vignette', texte: this.initialesArticle(article) }),
         creer('div', { classe: 'article-infos' }, [
           creer('div', { classe: 'designation', texte: article.designation }),
-          creer('div', { classe: 'conditionnement-vente', texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
+          creer('div', { classe: 'article-tags' }, [
+            creer('span', {
+              classe: 'conditionnement-vente',
+              texte: article.conditionnement ?? (article.venteCarton ? 'carton / piece' : 'piece'),
+            }),
+            article.venteCarton && piecesParCarton(article) > 1
+              ? creer('span', { classe: 'conditionnement-vente ratio', texte: '1 carton = ' + piecesParCarton(article) + ' pieces' })
+              : creer('span', { classe: 'conditionnement-vente ratio', texte: 'Vente a la piece' }),
+          ]),
         ]),
         creer('div', { classe: 'article-droite' }, [
-          creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) + ' / piece' }),
+          creer('div', { classe: 'prix montant prix-principal' }, [
+            creer('span', { texte: 'Prix vente' }),
+            creer('strong', { texte: formater(article.prixUnitaire) }),
+            creer('em', { texte: '/ piece' }),
+          ]),
           article.venteCarton ? creer('div', {
             classe: 'prix-carton montant',
             texte: formater(prixUnite(article, 'carton')) + ' / carton',
@@ -191,6 +204,16 @@ const Vente = {
         ]),
       ]));
     }
+  },
+
+  initialesArticle(article) {
+    const mots = String(article?.designation ?? '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (mots.length === 0) return 'IG';
+    if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+    return (mots[0][0] + mots[1][0]).toUpperCase();
   },
 
   affichagePrixAchat(article) {
