@@ -3912,3 +3912,31 @@ table strong {
 #vue-vente .totaux .ligne.total .montant {
   margin-left: auto;
 }
+
+/* Stock : badges tres lisibles sur fond clair. */
+#vue-stock .badge-stock,
+.badge-stock {
+  text-shadow: none;
+  font-weight: 950;
+}
+
+#vue-stock .badge-stock.ok,
+.badge-stock.ok {
+  border-color: #0f9d63;
+  background: #dcfce7;
+  color: #064e3b;
+}
+
+#vue-stock .badge-stock.alerte,
+.badge-stock.alerte {
+  border-color: #f59e0b;
+  background: #fff3d8;
+  color: #8a3a00;
+}
+
+#vue-stock .badge-stock.rupture,
+.badge-stock.rupture {
+  border-color: #dc2626;
+  background: #fee2e2;
+  color: #7f1d1d;
+}
