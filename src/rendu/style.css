@@ -3904,13 +3904,10 @@ table strong {
 .navigation button[data-vue="journal"]::after { content: '💵'; }
 .navigation button[data-vue="reglages"]::after { content: '⚙'; }
 
-/* Vente : le grand total du bas n'a plus de libelle, seul le montant compte. */
+/* Vente : le grand afficheur du bas est retire pour garder l'ecran moins encombre.
+   Le total principal reste visible en haut du panier. */
 #vue-vente .totaux .ligne.total {
-  justify-content: flex-end;
-}
-
-#vue-vente .totaux .ligne.total .montant {
-  margin-left: auto;
+  display: none;
 }
 
 /* Stock : badges tres lisibles sur fond clair. */
