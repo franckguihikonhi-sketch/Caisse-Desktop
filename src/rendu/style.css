@@ -3903,3 +3903,12 @@ table strong {
 .navigation button[data-vue="fournisseurs"]::after { content: '🚚'; }
 .navigation button[data-vue="journal"]::after { content: '💵'; }
 .navigation button[data-vue="reglages"]::after { content: '⚙'; }
+
+/* Vente : le grand total du bas n'a plus de libelle, seul le montant compte. */
+#vue-vente .totaux .ligne.total {
+  justify-content: flex-end;
+}
+
+#vue-vente .totaux .ligne.total .montant {
+  margin-left: auto;
+}
