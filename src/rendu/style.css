@@ -4024,3 +4024,14 @@ table strong {
 #vue-clients .client-kpi.sain strong {
   color: #13251c;
 }
+
+/* Tableau de bord : les 3 panneaux du bas restent parfaitement alignes.
+   Annule le decalage global `.panneau + .panneau` prevu pour les panneaux empiles. */
+.panneaux-tableau-bord {
+  align-items: stretch;
+}
+
+.panneaux-tableau-bord > .panneau-dashboard,
+.panneaux-tableau-bord > .panneau-dashboard + .panneau-dashboard {
+  margin-top: 0;
+}
