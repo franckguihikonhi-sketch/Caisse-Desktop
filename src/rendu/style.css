@@ -3940,3 +3940,87 @@ table strong {
   background: #fee2e2;
   color: #7f1d1d;
 }
+
+/* Clients & credits : cartes KPI plus sobres et professionnelles. */
+#vue-clients .clients-hero {
+  border: 1px solid #dce8e1;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(11,127,77,0.10), transparent 18rem),
+    linear-gradient(135deg, #ffffff 0%, #f8fbf8 100%);
+  box-shadow: 0 14px 34px rgba(21, 56, 39, 0.08);
+}
+
+#vue-clients .clients-kpis {
+  gap: 14px;
+}
+
+#vue-clients .client-kpi {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 118px;
+  padding: 17px 18px 16px 20px;
+  overflow: hidden;
+  border: 1px solid #dce8e1;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #fbfdfb);
+  box-shadow: 0 10px 24px rgba(21, 56, 39, 0.075);
+}
+
+#vue-clients .client-kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: #0b7f4d;
+}
+
+#vue-clients .client-kpi.clients::before { background: #2563eb; }
+#vue-clients .client-kpi.dette::before,
+#vue-clients .client-kpi.alerte::before { background: #d48a00; }
+#vue-clients .client-kpi.sain::before { background: #0b7f4d; }
+
+#vue-clients .client-kpi span {
+  color: #66756f;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.075em;
+}
+
+#vue-clients .client-kpi strong {
+  margin: 4px 0 0;
+  overflow: visible;
+  color: #13251c;
+  font-size: clamp(25px, 2.05vw, 34px);
+  font-weight: 950;
+  line-height: 1.05;
+  text-overflow: clip;
+  white-space: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+#vue-clients .client-kpi small {
+  display: block;
+  overflow: hidden;
+  color: #5e7068;
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#vue-clients .client-kpi.dette strong,
+#vue-clients .client-kpi.alerte strong {
+  color: #c57a00;
+}
+
+#vue-clients .client-kpi.alerte small {
+  color: #13251c;
+}
+
+#vue-clients .client-kpi.clients strong,
+#vue-clients .client-kpi.sain strong {
+  color: #13251c;
+}

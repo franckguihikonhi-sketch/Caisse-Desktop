@@ -113,8 +113,8 @@ const Clients = {
       },
       {
         etiquette: 'Plus gros solde',
-        valeur: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? plusGrosDebiteur.nom : 'Aucun',
-        detail: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? formater(plusGrosDebiteur.solde) : 'Portefeuille sain',
+        valeur: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? formater(plusGrosDebiteur.solde) : 'Aucun',
+        detail: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? plusGrosDebiteur.nom : 'Portefeuille sain',
         classe: plusGrosDebiteur && plusGrosDebiteur.solde > 0 ? 'alerte' : 'sain',
       },
     ];
