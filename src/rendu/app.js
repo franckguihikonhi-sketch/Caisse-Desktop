@@ -123,6 +123,9 @@ for (const bouton of $$('.navigation button')) {
 
 $('#formulaire-boutique').addEventListener('submit', (e) => Reglages.enregistrerBoutique(e));
 $('#bouton-nouvel-utilisateur').addEventListener('click', () => Reglages.nouveauCompte());
+$('#bouton-choisir-base-reseau').addEventListener('click', () => Reglages.choisirBaseReseau());
+$('#bouton-base-locale').addEventListener('click', () => Reglages.retablirBaseLocale());
+$('#bouton-redemarrer-base').addEventListener('click', () => Reglages.redemarrerApplication());
 
 Vente.initialiser();
 demarrer();

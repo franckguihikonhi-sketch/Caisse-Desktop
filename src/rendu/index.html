@@ -282,6 +282,18 @@
             </label>
             <button type="submit" class="bouton">Enregistrer</button>
           </form>
+
+          <div class="panneau panneau-base-reseau">
+            <h3>Base de donnees et reseau local</h3>
+            <p class="aide">Pour plusieurs postes Windows, choisissez un dossier partage du reseau local. Tous les postes utiliseront le meme fichier <strong>caisse.db</strong>, sans connexion Internet.</p>
+            <div class="infos-base" id="infos-base-donnees"></div>
+            <p class="message succes" id="message-base-reseau"></p>
+            <div class="actions empilees-mobile">
+              <button class="bouton" id="bouton-choisir-base-reseau" type="button">Utiliser un dossier partage</button>
+              <button class="bouton discret" id="bouton-base-locale" type="button">Revenir a la base locale</button>
+              <button class="bouton danger" id="bouton-redemarrer-base" type="button" hidden>Redemarrer</button>
+            </div>
+          </div>
         </div>
         <div>
           <div class="panneau">

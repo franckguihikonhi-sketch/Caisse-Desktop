@@ -1,9 +1,11 @@
 # Ivoire-Gestion
 
 Logiciel de caisse de boutique, pour poste de vente. Application de bureau
-Electron : **tout se passe sur le poste**, sans serveur ni connexion. Les
-donnees vivent dans un fichier SQLite, la ou le systeme range les donnees
-d'application de l'utilisateur.
+Electron : **tout fonctionne sans Internet**. Par defaut les donnees vivent dans
+un fichier SQLite local, la ou Windows range les donnees d'application de
+l'utilisateur. En mode reseau local, plusieurs postes Windows peuvent aussi
+pointer vers le meme fichier `caisse.db` place dans un dossier partage/NAS de la
+boutique.
 
 Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 
@@ -19,7 +21,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
-| **Reglages** | Identite de la boutique (elle figure sur le ticket) et comptes utilisateurs |
+| **Reglages** | Identite de la boutique, comptes utilisateurs, choix de la base locale ou partagee en reseau local |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les
@@ -40,6 +42,47 @@ Visual Studio Build Tools a installer sous Windows.
 A la premiere ouverture, la caisse demande de creer le compte administrateur.
 **Il n'y a pas de mot de passe par defaut** : rien n'est ouvert tant que ce
 compte n'existe pas.
+
+## Creer un executable Windows installable
+
+Depuis un poste de developpement connecte a Internet, creez l'installateur et la
+version portable Windows avec :
+
+```sh
+npm install
+npm run build:windows
+```
+
+Les fichiers sortent dans le dossier `release/` sous le nom
+`Ivoire-Gestion-...`. Une fois installee sur Windows, l'application n'a pas
+besoin d'Internet pour vendre, acheter, imprimer ou travailler sur sa base.
+
+Le dossier technique des donnees reste volontairement `caisse-desktop` afin de
+conserver les bases deja installees, meme si le nom visible de l'application est
+`Ivoire-Gestion`.
+
+## Travailler en reseau local, sans Internet
+
+Pour partager la meme base entre plusieurs postes :
+
+1. Creer un dossier partage sur un poste principal ou un NAS, par exemple
+   `\\SERVEUR\\Ivoire-Gestion`.
+2. Donner aux postes de caisse le droit de lecture/ecriture sur ce dossier.
+3. Dans Ivoire-Gestion, ouvrir **Reglages > Base de donnees et reseau local**.
+4. Cliquer **Utiliser un dossier partage**, choisir le dossier, puis redemarrer
+   l'application.
+5. Refaire l'operation sur chaque poste : tous utiliseront le meme fichier
+   `caisse.db`.
+
+Si `caisse.db` n'existe pas encore dans le dossier partage, la base actuelle du
+poste est copiee automatiquement. Si le fichier existe deja, le poste se branche
+sur cette base existante. En mode reseau local, le journal SQLite passe en mode
+classique et un delai d'attente de verrou est applique pour que deux caisses qui
+ecrivent en meme temps patientent au lieu de corrompre les donnees.
+
+Ce mode n'utilise pas Internet. Il exige seulement que les postes voient le meme
+partage Windows local ; si le reseau local ou le poste qui partage le dossier est
+eteint, les autres postes ne peuvent pas acceder a cette base partagee.
 
 ## Verifier
 

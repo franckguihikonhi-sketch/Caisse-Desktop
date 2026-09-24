@@ -13,6 +13,75 @@ const Reglages = {
       champ.value = App.parametres[champ.name] ?? '';
     }
     await this.chargerComptes();
+    await this.chargerBase();
+  },
+
+  async chargerBase() {
+    const infos = await appeler(window.caisse.base.infos());
+    const bloc = $('#infos-base-donnees');
+    vider(bloc);
+    bloc.append(
+      creer('div', { classe: 'ligne-info-base' }, [
+        creer('span', { texte: 'Mode' }),
+        creer('strong', { texte: infos.reseau ? 'Reseau local partage' : 'Local sur ce poste' }),
+      ]),
+      creer('div', { classe: 'ligne-info-base' }, [
+        creer('span', { texte: 'Fichier' }),
+        creer('strong', { texte: infos.chemin }),
+      ])
+    );
+  },
+
+  async choisirBaseReseau() {
+    const confirme = await confirmer(
+      'Utiliser une base partagee ?',
+      "Choisissez un dossier partage du reseau local. Si le fichier caisse.db n'existe pas, la base actuelle y sera copiee. Si le fichier existe deja, ce poste utilisera cette base apres redemarrage.",
+      'Choisir le dossier'
+    );
+    if (!confirme) return;
+
+    try {
+      const resultat = await appeler(window.caisse.base.choisirDossier());
+      if (resultat.annule) return;
+      if (resultat.dejaActive) {
+        afficherMessage($('#message-base-reseau'), 'Ce dossier est deja la base active.', 'succes');
+        return;
+      }
+      $('#bouton-redemarrer-base').hidden = false;
+      const detail = resultat.copieCreee
+        ? 'La base actuelle a ete copiee dans le dossier partage.'
+        : (resultat.dejaPresente
+            ? 'Une base existante a ete detectee dans ce dossier.'
+            : 'Le dossier partage est configure.');
+      afficherMessage(
+        $('#message-base-reseau'),
+        detail + ' Redemarrez Ivoire-Gestion pour l utiliser.',
+        'succes'
+      );
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
+  },
+
+  async retablirBaseLocale() {
+    const confirme = await confirmer(
+      'Revenir a la base locale ?',
+      'Ce poste reviendra a sa base locale apres redemarrage. La base partagee ne sera pas supprimee.',
+      'Revenir en local'
+    );
+    if (!confirme) return;
+
+    try {
+      await appeler(window.caisse.base.retablirLocale());
+      $('#bouton-redemarrer-base').hidden = false;
+      afficherMessage($('#message-base-reseau'), 'Configuration locale enregistree. Redemarrez Ivoire-Gestion.', 'succes');
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
+  },
+
+  async redemarrerApplication() {
+    await appeler(window.caisse.base.redemarrer());
   },
 
   async enregistrerBoutique(evenement) {

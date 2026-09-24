@@ -20,12 +20,13 @@ const PARAMETRES_PAR_DEFAUT = {
  * Ouvre la base et lui applique les migrations qui lui manquent. Passer
  * ':memory:' donne une base jetable, ce dont les tests se servent.
  */
-function ouvrir(chemin) {
+function ouvrir(chemin, options = {}) {
   if (chemin !== ':memory:') {
     fs.mkdirSync(path.dirname(chemin), { recursive: true });
   }
   const base = new BaseSqlite(chemin);
-  base.pragma('journal_mode = WAL');
+  base.pragma('busy_timeout = ' + (options.attenteVerrouMs ?? 15000));
+  base.pragma(options.reseau ? 'journal_mode = DELETE' : 'journal_mode = WAL');
   base.pragma('foreign_keys = ON');
 
   migrer(base);

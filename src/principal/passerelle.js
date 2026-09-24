@@ -97,6 +97,12 @@ contextBridge.exposeInMainWorld('caisse', {
     lire: appeler('parametres:lire'),
     ecrire: appeler('parametres:ecrire'),
   },
+  base: {
+    infos: appeler('base:infos'),
+    choisirDossier: appeler('base:choisirDossier'),
+    retablirLocale: appeler('base:retablirLocale'),
+    redemarrer: appeler('base:redemarrer'),
+  },
   ticket: {
     imprimer: appeler('ticket:imprimer'),
     pdf: appeler('ticket:pdf'),
