@@ -82,6 +82,11 @@ const Vente = {
   appliquerEtatCaisse() {
     const fermee = !this.caisseOuverte;
     $('#vue-vente')?.classList.toggle('caisse-fermee', fermee);
+    const statut = $('#statut-caisse-vente');
+    if (statut) {
+      statut.textContent = fermee ? 'Caisse fermee' : 'Caisse ouverte';
+      statut.className = 'pos-statut ' + (fermee ? 'fermee' : 'ouverte');
+    }
     const recherche = $('#champ-recherche');
     if (recherche) recherche.disabled = fermee;
     const remise = $('#remise-globale');
@@ -91,6 +96,17 @@ const Vente = {
     const client = $('#bouton-choisir-client');
     if (client) client.disabled = fermee;
     for (const bouton of $$('#modes-paiement button')) bouton.disabled = fermee;
+  },
+
+  mettreAJourAfficheur() {
+    const quantite = this.panier.reduce((somme, ligne) => somme + ligne.quantite, 0);
+    const compteur = $('#compteur-panier');
+    if (compteur) {
+      compteur.textContent = quantite + ' article' + (quantite > 1 ? 's' : '');
+      compteur.classList.toggle('actif', quantite > 0);
+    }
+    const afficheur = $('#afficheur-total-vente');
+    if (afficheur) afficheur.textContent = formater(this.totaux?.totalTtc ?? 0);
   },
 
   async ouvrirCaisseRapide() {
@@ -546,6 +562,7 @@ const Vente = {
     $('#total-brut').textContent = formater(this.totaux?.totalBrut ?? 0);
     $('#total-tva').textContent = formater(this.totaux?.totalTva ?? 0);
     $('#total-ttc').textContent = formater(total);
+    this.mettreAJourAfficheur();
     const manqueClient = this.mode === 'credit' && !this.clientCredit;
     $('#bouton-encaisser').disabled = this.panier.length === 0 || !this.caisseOuverte || manqueClient;
     $('#bouton-encaisser').textContent = this.panier.length === 0

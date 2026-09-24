@@ -73,14 +73,32 @@
     <!-- Vente -->
     <div id="vue-vente" class="vue">
       <div class="colonne-catalogue">
+        <div class="pos-entete-colonne pos-entete-catalogue">
+          <div>
+            <span class="libelle-doux">Poste de caisse</span>
+            <h3>Scanner / rechercher</h3>
+          </div>
+          <span class="pos-statut" id="statut-caisse-vente">Caisse</span>
+        </div>
         <div class="recherche">
-          <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
+          <input type="search" id="champ-recherche" placeholder="Scanner un code-barres ou taper une reference"
                  autocomplete="off" spellcheck="false">
         </div>
         <div class="resultats" id="resultats-articles"></div>
       </div>
 
       <div class="colonne-panier">
+        <div class="pos-entete-colonne pos-entete-panier">
+          <div>
+            <span class="libelle-doux">Ticket client</span>
+            <h3>Panier en cours</h3>
+          </div>
+          <div class="pos-afficheur-total">
+            <span>Total a payer</span>
+            <strong id="afficheur-total-vente">0 F</strong>
+          </div>
+          <span class="pos-badge" id="compteur-panier">0 article</span>
+        </div>
         <div class="annonce" id="annonce" role="status" aria-live="polite"></div>
         <div class="lignes-panier" id="lignes-panier"></div>
         <div class="totaux">

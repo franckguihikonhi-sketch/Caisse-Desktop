@@ -3308,3 +3308,565 @@ table strong {
     grid-template-columns: 1fr;
   }
 }
+
+/* Ecran de vente type supermarche ---------------------------------------- */
+#vue-vente.actif {
+  display: grid;
+  grid-template-columns: minmax(340px, 430px) minmax(520px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  padding: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(245, 130, 32, 0.10), transparent 28%),
+    radial-gradient(circle at 88% 6%, rgba(11, 127, 77, 0.12), transparent 24rem),
+    #edf4ef;
+}
+
+#vue-vente .colonne-catalogue,
+#vue-vente .colonne-panier {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #d5e2da;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(21, 56, 39, 0.13);
+}
+
+#vue-vente .colonne-catalogue {
+  border-left: 0;
+}
+
+#vue-vente .colonne-panier {
+  border-left: 0;
+}
+
+#vue-vente .pos-entete-colonne {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+#vue-vente .pos-entete-colonne h3 {
+  margin: 2px 0 0;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+#vue-vente .pos-entete-colonne .libelle-doux {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 900;
+}
+
+#vue-vente .pos-entete-catalogue {
+  background: linear-gradient(135deg, #083c2d, #0b7f4d 58%, #f58220 170%);
+}
+
+#vue-vente .pos-entete-panier {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) auto;
+  background: linear-gradient(135deg, #082e24, #064d38 62%, #0b7f4d);
+}
+
+#vue-vente .pos-statut,
+#vue-vente .pos-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 31px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+#vue-vente .pos-statut.ouverte,
+#vue-vente .pos-badge.actif {
+  background: #ecfdf3;
+  color: #07623f;
+  border-color: rgba(236, 253, 243, 0.72);
+}
+
+#vue-vente .pos-statut.fermee {
+  background: #fff4e7;
+  color: #9a4d00;
+  border-color: rgba(255, 244, 231, 0.72);
+}
+
+#vue-vente .pos-afficheur-total {
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(116, 255, 184, 0.30);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(5, 20, 14, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+#vue-vente .pos-afficheur-total span {
+  display: block;
+  margin-bottom: 2px;
+  color: rgba(210, 255, 229, 0.68);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#vue-vente .pos-afficheur-total strong {
+  display: block;
+  overflow: hidden;
+  color: #b9ffd5;
+  font-size: clamp(24px, 2.35vw, 36px);
+  font-weight: 950;
+  line-height: 1;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#vue-vente .recherche {
+  position: relative;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #e2ebe5;
+  background: #fffaf4;
+}
+
+#vue-vente .recherche::before {
+  content: '▮▮▮';
+  position: absolute;
+  left: 29px;
+  top: 31px;
+  color: #f58220;
+  font-size: 17px;
+  letter-spacing: -4px;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+#vue-vente .recherche input {
+  min-height: 54px;
+  margin-top: 0;
+  padding-left: 52px;
+  border: 2px solid rgba(245, 130, 32, 0.42);
+  border-radius: 14px;
+  background: #ffffff;
+  color: #10231a;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(245, 130, 32, 0.10);
+}
+
+#vue-vente .recherche input::placeholder {
+  color: #7b8a83;
+  font-weight: 700;
+}
+
+#vue-vente .resultats {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+  background: #f7faf7;
+}
+
+#vue-vente .article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(136px, 174px);
+  gap: 12px;
+  align-items: center;
+  min-height: 112px;
+  margin-bottom: 9px;
+  padding: 13px 13px 13px 15px;
+  border: 1px solid #dce8e1;
+  border-left: 6px solid #f58220;
+  border-radius: 15px;
+  background: #ffffff;
+  color: #13251c;
+  box-shadow: 0 7px 18px rgba(21, 56, 39, 0.06);
+}
+
+#vue-vente .article:hover,
+#vue-vente .article.survole {
+  transform: translateY(-1px);
+  border-color: rgba(245, 130, 32, 0.62);
+  background: #fffaf4;
+  box-shadow: 0 13px 28px rgba(245, 130, 32, 0.14);
+}
+
+#vue-vente .article.conditionne {
+  border-left-color: #0b7f4d;
+}
+
+#vue-vente .article .designation {
+  margin: 0 0 5px;
+  color: #13251c;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+#vue-vente .article.conditionne .designation::after {
+  content: 'carton / piece';
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #eaf8ef;
+  color: #0b7f4d;
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#vue-vente .article .reference {
+  color: #60736a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#vue-vente .article-droite {
+  align-items: flex-end;
+  gap: 5px;
+}
+
+#vue-vente .article .prix,
+#vue-vente .article .prix-carton,
+#vue-vente .article .stock,
+#vue-vente .article .prix-achat {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#vue-vente .article .prix {
+  padding: 6px 10px;
+  border-radius: 11px;
+  background: #fff2df;
+  color: #b85f07;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+#vue-vente .article .prix-carton,
+#vue-vente .article .stock,
+#vue-vente .article .prix-achat {
+  padding: 4px 9px;
+  border: 1px solid #d6eadf;
+  border-radius: 999px;
+  background: #edf8f1;
+  color: #0b7f4d;
+  font-size: 11.5px;
+  font-weight: 850;
+}
+
+#vue-vente .article .stock.bas {
+  border-color: #ffd9ad;
+  background: #fff5e8;
+  color: #b85f07;
+}
+
+#vue-vente .mini-action {
+  width: min(100%, 164px);
+  padding: 7px 9px;
+  border: 1px solid rgba(11, 127, 77, 0.28);
+  border-radius: 10px;
+  background: #f3fbf6;
+  color: #07623f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#vue-vente .annonce {
+  margin: 10px 12px 0;
+  border-radius: 12px;
+  font-weight: 850;
+}
+
+#vue-vente .lignes-panier {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  overflow-y: auto;
+  background:
+    linear-gradient(180deg, rgba(11, 127, 77, 0.045), transparent 9rem),
+    #f8fbf8;
+}
+
+#vue-vente .lignes-panier .vide {
+  margin: 0;
+  padding: 42px 18px;
+  border: 2px dashed #d5e2da;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #60736a;
+  font-weight: 850;
+}
+
+#vue-vente .ligne-panier {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(102px, auto) 32px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 10px 10px 10px 12px;
+  border: 1px solid #dce8e1;
+  border-left: 5px solid #0b7f4d;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #13251c;
+  box-shadow: 0 5px 14px rgba(21, 56, 39, 0.05);
+}
+
+#vue-vente .ligne-panier .designation {
+  overflow: hidden;
+  color: #13251c;
+  font-size: 14.5px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#vue-vente .ligne-panier .detail {
+  color: #60736a;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+#vue-vente .ligne-panier .quantite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #eef7f1;
+}
+
+#vue-vente .ligne-panier .quantite button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #0b7f4d;
+  color: #ffffff;
+  font-weight: 950;
+}
+
+#vue-vente .ligne-panier .quantite span {
+  min-width: 25px;
+  color: #13251c;
+  font-weight: 950;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+#vue-vente .ligne-panier .total {
+  justify-self: end;
+  padding: 6px 9px;
+  border-radius: 10px;
+  background: #fff2df;
+  color: #b85f07;
+  font-size: 14px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+#vue-vente .ligne-panier .retirer {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: #f4e8e8;
+  color: #b5343e;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+#vue-vente .totaux {
+  flex: 0 0 auto;
+  padding: 12px 16px 15px;
+  border-top: 1px solid #d5e2da;
+  background: #ffffff;
+  box-shadow: 0 -12px 28px rgba(21, 56, 39, 0.08);
+}
+
+#vue-vente .totaux .ligne {
+  min-height: 28px;
+  color: #60736a;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+#vue-vente .totaux .ligne .montant {
+  color: #13251c;
+  font-weight: 950;
+  font-variant-numeric: tabular-nums;
+}
+
+#vue-vente .totaux .ligne.total {
+  margin: 8px 0 12px;
+  padding: 11px 12px;
+  border: 2px solid #cbe8d7;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #edfbf2, #ffffff 56%, #fff5e8);
+  color: #13251c;
+  font-size: 15px;
+}
+
+#vue-vente .totaux .ligne.total .montant {
+  color: #0b7f4d;
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 950;
+}
+
+#vue-vente .modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#vue-vente .modes button {
+  min-height: 42px;
+  border: 1px solid #d8e5de;
+  border-radius: 11px;
+  background: #f8fbf8;
+  color: #365047;
+  font-size: 12.5px;
+  font-weight: 900;
+}
+
+#vue-vente .modes button.actif {
+  color: #ffffff;
+  border-color: #0b7f4d;
+  background: linear-gradient(135deg, #0b7f4d, #18a463);
+  box-shadow: 0 8px 16px rgba(11, 127, 77, 0.20);
+}
+
+#vue-vente .client-credit,
+#vue-vente .encaissement {
+  margin-bottom: 10px;
+  border: 1px solid #dce8e1;
+  border-radius: 13px;
+  background: #f8fbf8;
+}
+
+#vue-vente .encaissement label,
+#vue-vente .rendu {
+  color: #60736a;
+  font-weight: 850;
+}
+
+#vue-vente #montant-recu {
+  min-height: 42px;
+  color: #13251c;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+#vue-vente #monnaie-rendue {
+  color: #0b7f4d;
+  font-size: 21px;
+  font-weight: 950;
+}
+
+#vue-vente #bouton-encaisser {
+  min-height: 54px;
+  border: 0;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: 0.01em;
+  box-shadow: 0 12px 24px rgba(11, 127, 77, 0.22);
+}
+
+#vue-vente #bouton-encaisser:disabled {
+  background: #d8e5de;
+  color: #789087;
+  box-shadow: none;
+}
+
+@media (max-width: 1180px) {
+  #vue-vente.actif {
+    grid-template-columns: minmax(315px, 390px) minmax(430px, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  #vue-vente .pos-entete-panier {
+    grid-template-columns: minmax(0, 1fr) minmax(165px, 220px);
+  }
+
+  #vue-vente .pos-entete-panier .pos-badge {
+    display: none;
+  }
+
+  #vue-vente .article {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  #vue-vente .article-droite {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 960px) {
+  #vue-vente.actif {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  #vue-vente .colonne-catalogue,
+  #vue-vente .colonne-panier {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 720px) {
+  #vue-vente .pos-entete-panier,
+  #vue-vente .pos-entete-colonne {
+    grid-template-columns: 1fr;
+  }
+
+  #vue-vente .pos-afficheur-total strong {
+    text-align: left;
+  }
+
+  #vue-vente .ligne-panier {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  #vue-vente .ligne-panier .total,
+  #vue-vente .ligne-panier .retirer {
+    justify-self: stretch;
+  }
+
+  #vue-vente .modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
