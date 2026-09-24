@@ -19,6 +19,8 @@ const TableauBord = {
   afficher(d) {
     const zone = $('#contenu-tableau-bord');
     vider(zone);
+    const pourcentage = (valeur) =>
+      new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(valeur) || 0) + ' %';
 
     const carte = (titre, valeur, detail, classe = '', icone = '•') => creer('div', { classe: 'carte-indicateur carte-tableau ' + classe }, [
       creer('div', { classe: 'carte-tableau-entete' }, [
@@ -37,6 +39,9 @@ const TableauBord = {
     zone.append(creer('div', { classe: 'grille-indicateurs grille-tableau-bord' }, [
       carte('Caisse', etatCaisse, detailCaisse, d.caisse.ouverte ? 'succes carte-caisse' : 'alerte carte-caisse', '₣'),
       carte('Ventes du jour', formater(d.ventes.total), d.ventes.nombre + ' ticket(s)', 'carte-ventes', 'V'),
+      carte('Marge du jour', formater(d.rentabilite?.margeNette ?? 0),
+        'Taux ' + pourcentage(d.rentabilite?.tauxMarge ?? 0),
+        (d.rentabilite?.margeNette ?? 0) < 0 ? 'alerte carte-marge' : 'carte-marge', 'M'),
       carte('Encaisse', formater(d.ventes.encaisse), 'Hors ventes a credit', 'carte-encaisse', 'E'),
       carte('Achats du jour', formater(d.achats?.total ?? 0), (d.achats?.nombre ?? 0) + ' reception(s)', 'carte-achats', 'A'),
       carte('Credit clients', formater(d.clients.solde), d.clients.nombre + ' creance(s)', 'carte-credit', 'C'),

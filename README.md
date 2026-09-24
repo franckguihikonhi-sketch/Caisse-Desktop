@@ -13,7 +13,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 
 | Ecran | Ce qu'on y fait |
 | --- | --- |
-| **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
+| **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, la marge commerciale, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
 | **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
 | **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil et les mouvements par article |
@@ -21,7 +21,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
-| **Reglages** | Identite de la boutique, comptes utilisateurs, choix de la base locale ou partagee en reseau local |
+| **Reglages** | Identite de la boutique, comptes utilisateurs, sauvegarde de la base, choix de la base locale ou partagee en reseau local |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les
@@ -77,6 +77,13 @@ Donc deux entreprises differentes n'ont aucun conflit de donnees : chacune garde
 ses articles, ventes, clients, stocks, achats, dettes et reglages sur ses propres
 postes. La base n'est partagee que si l'administrateur choisit volontairement un
 dossier reseau dans les reglages.
+
+## Sauvegarder les donnees
+
+Dans **Reglages > Base de donnees et reseau local**, le bouton **Sauvegarder la
+base** cree une copie complete du fichier `caisse.db` dans le dossier choisi
+(par defaut `Documents\\Ivoire-Gestion\\sauvegardes`). Faites une sauvegarde
+avant une mise a jour, un changement de poste ou le passage en base partagee.
 
 ## Travailler en reseau local, sans Internet
 

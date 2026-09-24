@@ -42,6 +42,27 @@ function copierBaseSiNecessaire(cible) {
   return true;
 }
 
+function estampilleSauvegarde() {
+  const maintenant = new Date();
+  const deux = (n) => String(n).padStart(2, '0');
+  return String(maintenant.getFullYear()) + deux(maintenant.getMonth() + 1) + deux(maintenant.getDate()) +
+    '-' + deux(maintenant.getHours()) + deux(maintenant.getMinutes()) + deux(maintenant.getSeconds());
+}
+
+function dossierSauvegardes() {
+  return path.join(app.getPath('documents'), NOM_APPLICATION, 'sauvegardes');
+}
+
+function sauvegarderBaseVers(cible) {
+  if (!baseActive || !fs.existsSync(baseActive.chemin)) {
+    throw new Error('Base active introuvable.');
+  }
+  consoliderBaseAvantCopie();
+  fs.mkdirSync(path.dirname(cible), { recursive: true });
+  fs.copyFileSync(baseActive.chemin, cible);
+  return cible;
+}
+
 function creerFenetre() {
   fenetre = new BrowserWindow({
     width: 1280,
@@ -161,6 +182,24 @@ function canauxBaseDeDonnees() {
       chemin: configurationBase.cheminBaseLocale(app),
       mode: 'local',
     };
+  }, { exigeAdmin: true });
+
+  repondreIpc('base:sauvegarder', async () => {
+    const dossier = dossierSauvegardes();
+    fs.mkdirSync(dossier, { recursive: true });
+    const choix = await dialog.showSaveDialog(fenetre, {
+      title: 'Sauvegarder la base Ivoire-Gestion',
+      buttonLabel: 'Sauvegarder',
+      defaultPath: path.join(dossier, 'ivoire-gestion-sauvegarde-' + estampilleSauvegarde() + '.db'),
+      filters: [
+        { name: 'Base SQLite', extensions: ['db'] },
+        { name: 'Tous les fichiers', extensions: ['*'] },
+      ],
+    });
+    if (choix.canceled || !choix.filePath) return { annule: true };
+    const chemin = sauvegarderBaseVers(choix.filePath);
+    shell.showItemInFolder(chemin);
+    return { annule: false, chemin, date: new Date().toISOString() };
   }, { exigeAdmin: true });
 
   repondreIpc('base:redemarrer', async () => {

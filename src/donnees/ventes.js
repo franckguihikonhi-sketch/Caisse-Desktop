@@ -29,6 +29,24 @@ function numeroRetourClientSuivant(base, horodatage) {
   return 'RC-' + jour + '-' + String(rang).padStart(4, '0');
 }
 
+function montantRenseigne(valeur) {
+  return valeur !== null && valeur !== undefined;
+}
+
+function prixAchatPourUnite(article, uniteVente) {
+  const piecesParCarton = Math.max(1, Number(article.piecesParCarton ?? 1));
+  if (uniteVente === 'carton') {
+    if (montantRenseigne(article.prixAchatCarton)) return Number(article.prixAchatCarton);
+    if (montantRenseigne(article.prixAchatPiece)) return Number(article.prixAchatPiece) * piecesParCarton;
+    return 0;
+  }
+  if (montantRenseigne(article.prixAchatPiece)) return Number(article.prixAchatPiece);
+  if (montantRenseigne(article.prixAchatCarton)) {
+    return Math.round(Number(article.prixAchatCarton) / piecesParCarton);
+  }
+  return 0;
+}
+
 /**
  * Enregistre une vente. La caisse journaliere doit etre ouverte avant toute
  * vente. Le panier envoye par l'interface n'est pas cru sur parole : prix, taux
@@ -78,6 +96,7 @@ function enregistrer(base, {
         reference: article.reference,
         designation: article.designation,
         prixUnitaire: conditionnement.prixPourUnite(article, uniteVente),
+        prixAchatUnitaire: prixAchatPourUnite(article, uniteVente),
         tauxTva: article.tauxTva,
         quantite: l.quantite,
         uniteVente,
@@ -122,15 +141,17 @@ function enregistrer(base, {
 
     const poserLigne = base.prepare(
       'INSERT INTO lignes_vente (vente_id, article_id, reference, designation, prix_unitaire, ' +
-        'quantite, taux_tva, remise_pourcent, total_ttc, unite_vente, facteur_stock) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'quantite, taux_tva, remise_pourcent, total_ttc, unite_vente, facteur_stock, ' +
+        'prix_achat_unitaire, marge_totale) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
 
     panier.lignes.forEach((l, i) => {
       const source = lignesVerifiees[i];
+      const margeTotale = l.totalTtc - (source.prixAchatUnitaire * l.quantite);
       poserLigne.run(vente.lastInsertRowid, source.articleId, l.reference, l.designation,
         l.prixUnitaire, l.quantite, l.tauxTva, l.remisePourcent, l.totalTtc,
-        source.uniteVente, source.facteurStock);
+        source.uniteVente, source.facteurStock, source.prixAchatUnitaire, margeTotale);
       stocks.mouvement(base, {
         articleId: source.articleId,
         type: 'sortie',
@@ -230,6 +251,8 @@ function lignesVente(base, venteId) {
         tauxTva: l.taux_tva,
         remisePourcent: l.remise_pourcent,
         totalTtc: l.total_ttc,
+        prixAchatUnitaire: l.prix_achat_unitaire ?? 0,
+        margeTotale: l.marge_totale ?? (l.total_ttc - ((l.prix_achat_unitaire ?? 0) * l.quantite)),
         uniteVente: l.unite_vente ?? 'piece',
         facteurStock: l.facteur_stock ?? 1,
         piecesParCarton,

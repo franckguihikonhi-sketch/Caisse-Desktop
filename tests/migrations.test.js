@@ -54,6 +54,9 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
   assert.ok(colonnesApres.includes('code_barres'));
   assert.ok(colonnesApres.includes('prix_achat_piece'));
   assert.ok(colonnesApres.includes('prix_achat_carton'));
+  const colonnesVente = base.pragma('table_info(lignes_vente)').map((c) => c.name);
+  assert.ok(colonnesVente.includes('prix_achat_unitaire'));
+  assert.ok(colonnesVente.includes('marge_totale'));
 
   const savon = articles.lireParReference(base, 'SAV-01');
   assert.equal(savon.designation, 'Savon');

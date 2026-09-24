@@ -8,6 +8,7 @@ const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const ventes = require('../src/donnees/ventes');
 const caisse = require('../src/donnees/caisse');
+const tableauDeBord = require('../src/donnees/tableau-de-bord');
 const { jour } = require('../src/metier/horodatage');
 
 function caisseNeuve({ ouvrirCaisse = true } = {}) {
@@ -142,6 +143,30 @@ test('le prix vient de la base, pas du panier envoye', () => {
     utilisateurId: caissier.id,
   });
   assert.equal(vendue.panier.totalTtc, 200);
+});
+
+test('la marge commerciale est enregistree au moment de la vente', () => {
+  const { base, caissier } = caisseNeuve();
+  articles.creer(base, {
+    reference: 'MARGE',
+    designation: 'Article rentable',
+    prixUnitaire: 1000,
+    prixAchatPiece: 650,
+    stock: 10,
+  });
+
+  const vendue = ventes.enregistrer(base, {
+    lignes: [{ reference: 'MARGE', quantite: 2 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  });
+  const relue = ventes.lire(base, vendue.id);
+  assert.equal(relue.panier.lignes[0].prixAchatUnitaire, 650);
+  assert.equal(relue.panier.lignes[0].margeTotale, 700);
+
+  const tableau = tableauDeBord.lire(base, { date: jour() });
+  assert.equal(tableau.rentabilite.margeNette, 700);
+  assert.equal(tableau.rentabilite.tauxMarge, 35);
 });
 
 test('un stock insuffisant annule toute la vente', () => {

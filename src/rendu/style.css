@@ -4035,3 +4035,34 @@ table strong {
 .panneaux-tableau-bord > .panneau-dashboard + .panneau-dashboard {
   margin-top: 0;
 }
+
+/* Rentabilite : carte marge visible avec les couleurs Ivoire-Gestion. */
+.carte-marge {
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+  color: #ffffff;
+}
+.carte-marge strong,
+.carte-marge small,
+.carte-marge .libelle-doux {
+  color: #ffffff;
+}
+.carte-marge .icone-carte {
+  background: rgba(255,255,255,0.20);
+  color: #ffffff;
+}
+
+.actions-sauvegarde {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #dce8e1;
+  border-radius: 14px;
+  background: #f8fbf8;
+}
+.aide-sauvegarde {
+  flex: 1 1 220px;
+  margin: 0;
+}

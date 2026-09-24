@@ -418,6 +418,44 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 9,
+    intitule: 'Marge commerciale par ligne de vente',
+    appliquer(base) {
+      base.exec(`
+        ALTER TABLE lignes_vente ADD COLUMN prix_achat_unitaire INTEGER NOT NULL DEFAULT 0
+          CHECK (prix_achat_unitaire >= 0);
+        ALTER TABLE lignes_vente ADD COLUMN marge_totale INTEGER NOT NULL DEFAULT 0;
+
+        -- Les ventes deja presentes recoivent une marge estimee depuis les prix
+        -- d'achat actuels de l'article. Les nouvelles ventes enregistrent le cout
+        -- au moment exact du passage en caisse.
+        UPDATE lignes_vente
+           SET prix_achat_unitaire = COALESCE((
+             SELECT CASE
+               WHEN COALESCE(lignes_vente.unite_vente, 'piece') = 'carton' THEN
+                 COALESCE(
+                   articles.prix_achat_carton,
+                   articles.prix_achat_piece * COALESCE(lignes_vente.facteur_stock, articles.pieces_par_carton, 1)
+                 )
+               ELSE
+                 COALESCE(
+                   articles.prix_achat_piece,
+                   CASE
+                     WHEN articles.prix_achat_carton IS NOT NULL
+                      AND COALESCE(articles.pieces_par_carton, 1) > 0
+                     THEN CAST(ROUND(1.0 * articles.prix_achat_carton / articles.pieces_par_carton) AS INTEGER)
+                   END
+                 )
+             END
+             FROM articles WHERE articles.id = lignes_vente.article_id
+           ), 0);
+
+        UPDATE lignes_vente
+           SET marge_totale = total_ttc - (prix_achat_unitaire * quantite);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

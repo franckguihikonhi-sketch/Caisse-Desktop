@@ -101,6 +101,7 @@ contextBridge.exposeInMainWorld('caisse', {
     infos: appeler('base:infos'),
     choisirDossier: appeler('base:choisirDossier'),
     retablirLocale: appeler('base:retablirLocale'),
+    sauvegarder: appeler('base:sauvegarder'),
     redemarrer: appeler('base:redemarrer'),
   },
   ticket: {

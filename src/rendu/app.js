@@ -125,6 +125,7 @@ $('#formulaire-boutique').addEventListener('submit', (e) => Reglages.enregistrer
 $('#bouton-nouvel-utilisateur').addEventListener('click', () => Reglages.nouveauCompte());
 $('#bouton-choisir-base-reseau').addEventListener('click', () => Reglages.choisirBaseReseau());
 $('#bouton-base-locale').addEventListener('click', () => Reglages.retablirBaseLocale());
+$('#bouton-sauvegarder-base').addEventListener('click', () => Reglages.sauvegarderBase());
 $('#bouton-redemarrer-base').addEventListener('click', () => Reglages.redemarrerApplication());
 
 Vente.initialiser();

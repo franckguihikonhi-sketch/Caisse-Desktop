@@ -80,6 +80,20 @@ const Reglages = {
     }
   },
 
+  async sauvegarderBase() {
+    try {
+      const resultat = await appeler(window.caisse.base.sauvegarder());
+      if (resultat.annule) return;
+      afficherMessage(
+        $('#message-base-reseau'),
+        'Sauvegarde creee : ' + resultat.chemin,
+        'succes'
+      );
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
+  },
+
   async redemarrerApplication() {
     await appeler(window.caisse.base.redemarrer());
   },
