@@ -63,6 +63,11 @@ function sauvegarderBaseVers(cible) {
   return cible;
 }
 
+function afficherFenetreSiPrete() {
+  if (!fenetre || fenetre.isDestroyed() || fenetre.isVisible()) return;
+  fenetre.show();
+}
+
 function creerFenetre() {
   fenetre = new BrowserWindow({
     width: 1280,
@@ -82,8 +87,14 @@ function creerFenetre() {
   });
 
   fenetre.setMenuBarVisibility(false);
-  fenetre.once('ready-to-show', () => fenetre.show());
-  fenetre.loadFile(path.join(__dirname, '..', 'rendu', 'index.html'));
+  fenetre.once('ready-to-show', afficherFenetreSiPrete);
+  fenetre.webContents.once('did-finish-load', afficherFenetreSiPrete);
+  fenetre.loadFile(path.join(__dirname, '..', 'rendu', 'index.html'))
+    .catch((erreur) => {
+      dialog.showErrorBox('Interface indisponible', "Ivoire-Gestion n'a pas pu afficher l'ecran :\n\n" + erreur.message);
+      afficherFenetreSiPrete();
+    });
+  setTimeout(afficherFenetreSiPrete, 3000);
 
   // Rien de ce qui est externe ne s'ouvre dans l'application elle-meme.
   fenetre.webContents.setWindowOpenHandler(({ url }) => {
