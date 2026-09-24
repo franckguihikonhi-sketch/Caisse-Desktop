@@ -109,6 +109,10 @@ $('#formulaire-connexion').addEventListener('submit', async (evenement) => {
   }
 });
 
+$('#bouton-changer-mot-de-passe').addEventListener('click', () => {
+  if (App.utilisateur) Reglages.changerMotDePasse(App.utilisateur);
+});
+
 $('#bouton-deconnexion').addEventListener('click', async () => {
   await appeler(window.caisse.session.deconnexion());
   App.utilisateur = null;

@@ -153,7 +153,7 @@ const Reglages = {
     const cree = await ouvrirBoite((fermer) => {
       const nom = creer('input', { attributs: { type: 'text', required: 'required' } });
       const identifiant = creer('input', { attributs: { type: 'text', required: 'required', autocomplete: 'off' } });
-      const motDePasse = creer('input', { attributs: { type: 'password', required: 'required', minlength: '6' } });
+      const motDePasse = creer('input', { attributs: { type: 'password', required: 'required', minlength: '3' } });
       const role = creer('select', {}, [
         creer('option', { texte: 'caissier', attributs: { value: 'caissier' } }),
         creer('option', { texte: 'administrateur', attributs: { value: 'administrateur' } }),
@@ -179,7 +179,7 @@ const Reglages = {
         erreur,
         creer('label', { texte: 'Nom complet' }, [nom]),
         creer('label', { texte: 'Identifiant' }, [identifiant]),
-        creer('label', { texte: 'Mot de passe (6 caracteres minimum)' }, [motDePasse]),
+        creer('label', { texte: 'Mot de passe (3 caracteres minimum)' }, [motDePasse]),
         creer('label', { texte: 'Role' }, [role]),
         creer('div', { classe: 'actions' }, [
           creer('button', {
@@ -196,7 +196,7 @@ const Reglages = {
 
   async changerMotDePasse(compte) {
     await ouvrirBoite((fermer) => {
-      const motDePasse = creer('input', { attributs: { type: 'password', required: 'required', minlength: '6' } });
+      const motDePasse = creer('input', { attributs: { type: 'password', required: 'required', minlength: '3' } });
       const erreur = creer('p', { classe: 'message erreur' });
 
       return creer('form', {

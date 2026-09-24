@@ -7,6 +7,13 @@ const crypto = require('node:crypto');
  * scrypt correspondante, et on compare en temps constant.
  */
 const LONGUEUR_EMPREINTE = 64;
+const LONGUEUR_MIN_MOT_DE_PASSE = 3;
+const ACCES_STANDARD = Object.freeze({
+  identifiant: 'CIV',
+  motDePasse: 'CIV',
+  nom: 'Administrateur',
+  role: 'administrateur',
+});
 
 function empreinter(motDePasse, sel) {
   return crypto.scryptSync(motDePasse, sel, LONGUEUR_EMPREINTE).toString('hex');
@@ -27,8 +34,8 @@ function creer(base, { identifiant, nom, role, motDePasse }) {
   if (id.length < 3) throw new RangeError("L'identifiant doit faire au moins 3 caracteres.");
   if (!nom || !String(nom).trim()) throw new RangeError('Le nom est obligatoire.');
   if (!['administrateur', 'caissier'].includes(role)) throw new RangeError('Role inconnu.');
-  if (typeof motDePasse !== 'string' || motDePasse.length < 6) {
-    throw new RangeError('Le mot de passe doit faire au moins 6 caracteres.');
+  if (typeof motDePasse !== 'string' || motDePasse.length < LONGUEUR_MIN_MOT_DE_PASSE) {
+    throw new RangeError('Le mot de passe doit faire au moins ' + LONGUEUR_MIN_MOT_DE_PASSE + ' caracteres.');
   }
   const sel = crypto.randomBytes(16).toString('hex');
   try {
@@ -56,6 +63,11 @@ function authentifier(base, identifiant, motDePasse) {
   return { id: ligne.id, identifiant: ligne.identifiant, nom: ligne.nom, role: ligne.role };
 }
 
+function assurerAccesStandard(base) {
+  if (!aucunCompte(base)) return null;
+  return creer(base, ACCES_STANDARD);
+}
+
 function lister(base) {
   return base
     .prepare('SELECT id, identifiant, nom, role, actif FROM utilisateurs ORDER BY nom')
@@ -63,8 +75,8 @@ function lister(base) {
 }
 
 function changerMotDePasse(base, id, motDePasse) {
-  if (typeof motDePasse !== 'string' || motDePasse.length < 6) {
-    throw new RangeError('Le mot de passe doit faire au moins 6 caracteres.');
+  if (typeof motDePasse !== 'string' || motDePasse.length < LONGUEUR_MIN_MOT_DE_PASSE) {
+    throw new RangeError('Le mot de passe doit faire au moins ' + LONGUEUR_MIN_MOT_DE_PASSE + ' caracteres.');
   }
   const sel = crypto.randomBytes(16).toString('hex');
   base
@@ -76,4 +88,14 @@ function activer(base, id, actif) {
   base.prepare('UPDATE utilisateurs SET actif = ? WHERE id = ?').run(actif ? 1 : 0, id);
 }
 
-module.exports = { aucunCompte, creer, authentifier, lister, changerMotDePasse, activer };
+module.exports = {
+  ACCES_STANDARD,
+  LONGUEUR_MIN_MOT_DE_PASSE,
+  aucunCompte,
+  assurerAccesStandard,
+  creer,
+  authentifier,
+  lister,
+  changerMotDePasse,
+  activer,
+};

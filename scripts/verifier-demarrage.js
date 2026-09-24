@@ -24,7 +24,6 @@ const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'caisse-verification-'));
 app.setPath('userData', dossier);
 
 const { ouvrir } = require('../src/donnees/base');
-const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const { enregistrerCanaux } = require('../src/principal/canaux');
 const impression = require('../src/principal/impression');
@@ -50,9 +49,6 @@ async function capturer(fenetre, nom) {
 
 async function verifier() {
   const bd = ouvrir(path.join(dossier, 'caisse.db'));
-  utilisateurs.creer(bd, {
-    identifiant: 'demo', nom: 'Awa Kone', role: 'administrateur', motDePasse: 'demo1234',
-  });
   articles.creer(bd, { reference: 'sav-01', designation: 'Savon de Marseille', prixUnitaire: 325, stock: 120, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'riz-05', designation: 'Riz parfume 5 kg', prixUnitaire: 4500, stock: 18, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'pain', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 60 });
@@ -106,8 +102,8 @@ async function verifier() {
   }
 
   await executer(`
-    document.querySelector('#formulaire-connexion [name=identifiant]').value = 'demo';
-    document.querySelector('#formulaire-connexion [name=motDePasse]').value = 'demo1234';
+    document.querySelector('#formulaire-connexion [name=identifiant]').value = 'CIV';
+    document.querySelector('#formulaire-connexion [name=motDePasse]').value = 'CIV';
     document.querySelector('#formulaire-connexion').requestSubmit();
   `);
   await patienter(600);

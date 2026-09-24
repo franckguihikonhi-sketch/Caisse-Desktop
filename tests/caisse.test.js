@@ -23,16 +23,18 @@ function caisseNeuve({ ouvrirCaisse = true } = {}) {
   return { base, caissier };
 }
 
-test('la premiere ouverture ne cree aucun compte', () => {
+test('la premiere ouverture propose l acces standard CIV', () => {
   const base = ouvrir(':memory:');
-  assert.equal(utilisateurs.aucunCompte(base), true);
+  assert.equal(utilisateurs.aucunCompte(base), false);
   assert.equal(boutique(base).nom, 'Ma boutique');
+  const standard = utilisateurs.authentifier(base, 'CIV', 'CIV');
+  assert.equal(standard.identifiant, 'civ');
+  assert.equal(standard.role, 'administrateur');
 });
 
 test('une installation neuve ne contient aucune donnee commerciale', () => {
   const base = ouvrir(':memory:');
   const tablesVides = [
-    'utilisateurs',
     'articles',
     'ventes',
     'lignes_vente',
@@ -61,14 +63,25 @@ test('un mot de passe ne se retrouve pas dans la base', () => {
   const { base } = caisseNeuve();
   const brut = JSON.stringify(base.prepare('SELECT * FROM utilisateurs').all());
   assert.ok(!brut.includes('secret123'));
+  assert.ok(!brut.includes('CIV'));
 });
 
 test('seul le bon mot de passe ouvre la caisse', () => {
   const { base } = caisseNeuve();
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV').role, 'administrateur');
+  assert.equal(utilisateurs.authentifier(base, 'civ', 'CIV').role, 'administrateur');
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret123').nom, 'Awa Kone');
   assert.equal(utilisateurs.authentifier(base, 'AWA', 'secret123').nom, 'Awa Kone');
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret124'), null);
   assert.equal(utilisateurs.authentifier(base, 'inconnu', 'secret123'), null);
+});
+
+test('chaque utilisateur peut changer son mot de passe', () => {
+  const base = ouvrir(':memory:');
+  const standard = utilisateurs.authentifier(base, 'CIV', 'CIV');
+  utilisateurs.changerMotDePasse(base, standard.id, 'NOUVEAU');
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV'), null);
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'NOUVEAU').id, standard.id);
 });
 
 test('un compte desactive ne peut plus ouvrir la caisse', () => {

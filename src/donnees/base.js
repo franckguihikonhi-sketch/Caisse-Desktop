@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { BaseSqlite } = require('./sqlite');
 
+const utilisateurs = require('./utilisateurs');
 const { migrer, DERNIERE_VERSION } = require('./migrations');
 
 const PARAMETRES_PAR_DEFAUT = {
@@ -77,6 +78,7 @@ function ouvrir(chemin, options = {}) {
   );
   const semer = base.transaction(() => {
     for (const [cle, valeur] of Object.entries(PARAMETRES_PAR_DEFAUT)) poser.run(cle, valeur);
+    utilisateurs.assurerAccesStandard(base);
   });
   semer();
 

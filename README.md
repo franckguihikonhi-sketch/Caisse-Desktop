@@ -21,7 +21,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
-| **Reglages** | Identite de la boutique, comptes utilisateurs, sauvegarde de la base, choix de la base locale ou partagee en reseau local |
+| **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde de la base, choix de la base locale ou partagee en reseau local |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les
@@ -39,9 +39,16 @@ Aucune compilation native n'est necessaire : la base SQLite passe par
 `node:sqlite`, fourni par Node et Electron. Il n'y a donc ni node-gyp, ni
 Visual Studio Build Tools a installer sous Windows.
 
-A la premiere ouverture, la caisse demande de creer le compte administrateur.
-**Il n'y a pas de mot de passe par defaut** : rien n'est ouvert tant que ce
-compte n'existe pas.
+A la premiere ouverture, connectez-vous avec l'acces standard :
+
+```text
+Nom d'utilisateur : CIV
+Mot de passe      : CIV
+```
+
+Cet acces est un compte administrateur technique de depart. Chaque entreprise
+doit ensuite changer ce mot de passe dans l'application, puis creer ses propres
+utilisateurs si necessaire. Les mots de passe ne sont jamais stockes en clair.
 
 ## Creer un executable Windows installable
 
