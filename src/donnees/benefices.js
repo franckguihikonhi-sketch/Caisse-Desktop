@@ -11,6 +11,11 @@ function arrondir(valeur) {
   return Math.round(nombre(valeur));
 }
 
+function identifiantFacture(valeur) {
+  const id = Number(valeur ?? 0);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 function margePourcent(benefice, chiffreAffaires) {
   const ca = nombre(chiffreAffaires);
   if (ca <= 0) return 0;
@@ -29,6 +34,54 @@ function conditionsDates(prefixe, { depuis = null, jusqua = null } = {}) {
     params.push(jusqua);
   }
   return { conditions, params };
+}
+
+function dateCourte(valeur) {
+  return String(valeur ?? '').slice(0, 10);
+}
+
+function ligneDansSelection(ligne, options = {}) {
+  const achatId = identifiantFacture(options.achatId ?? options.factureId);
+  if (achatId && Number(ligne.achatId) !== achatId) return false;
+  const dateAchat = dateCourte(ligne.dateAchat);
+  if (options.depuis && dateAchat < options.depuis) return false;
+  if (options.jusqua && dateAchat > options.jusqua) return false;
+  return true;
+}
+
+function libelleFacture(facture) {
+  return [
+    facture.numero,
+    dateCourte(facture.dateAchat),
+    facture.fournisseurNom,
+    facture.referenceDocument ? 'Doc ' + facture.referenceDocument : null,
+  ].filter(Boolean).join(' — ');
+}
+
+function lireFacturesDisponibles(base, options = {}) {
+  const dates = conditionsDates('achats.date_achat', options);
+  const where = ["achats.statut = 'valide'", ...dates.conditions].join(' AND ');
+  return base.prepare(
+    'SELECT achats.id AS achat_id, achats.numero AS achat_numero, achats.date_achat, ' +
+      'achats.reference_document, achats.total_ttc, fournisseurs.nom AS fournisseur_nom ' +
+      'FROM achats ' +
+      'JOIN fournisseurs ON fournisseurs.id = achats.fournisseur_id ' +
+      'WHERE ' + where + ' ' +
+      'ORDER BY achats.date_achat DESC, achats.id DESC'
+  ).all(...dates.params).map((f) => ({
+    id: f.achat_id,
+    numero: f.achat_numero,
+    dateAchat: f.date_achat,
+    fournisseurNom: f.fournisseur_nom,
+    referenceDocument: f.reference_document,
+    totalTtc: f.total_ttc,
+    libelle: libelleFacture({
+      numero: f.achat_numero,
+      dateAchat: f.date_achat,
+      fournisseurNom: f.fournisseur_nom,
+      referenceDocument: f.reference_document,
+    }),
+  }));
 }
 
 function lireLotsAchats(base, options = {}) {
@@ -168,7 +221,9 @@ function finaliserLigne(ligne) {
 }
 
 function lister(base, options = {}) {
-  const lots = lireLotsAchats(base, options).filter((lot) => lot.quantiteStockNette > 0);
+  const selection = { achatId: identifiantFacture(options.achatId ?? options.factureId) };
+  const facturesDisponibles = lireFacturesDisponibles(base, options);
+  const lots = lireLotsAchats(base).filter((lot) => lot.quantiteStockNette > 0);
   const lotsParArticle = new Map();
   for (const lot of lots) {
     if (!lotsParArticle.has(lot.articleId)) lotsParArticle.set(lot.articleId, []);
@@ -210,6 +265,7 @@ function lister(base, options = {}) {
   const lignesVendues = [...lignes.values()]
     .filter((ligne) => ligne.quantiteStockVendue > 0)
     .map(finaliserLigne)
+    .filter((ligne) => ligneDansSelection(ligne, options))
     .sort((a, b) => String(b.dateAchat).localeCompare(String(a.dateAchat)) || b.achatId - a.achatId);
 
   const facturesMap = new Map();
@@ -253,7 +309,7 @@ function lister(base, options = {}) {
   }, { factures: 0, lignes: 0, quantiteStockVendue: 0, coutAchat: 0, chiffreAffaires: 0, benefice: 0 });
   resume.margePourcent = margePourcent(resume.benefice, resume.chiffreAffaires);
 
-  return { resume, factures };
+  return { resume, factures, facturesDisponibles, selection };
 }
 
 module.exports = { lister };

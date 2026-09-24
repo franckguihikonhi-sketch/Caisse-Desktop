@@ -3,31 +3,70 @@
 const Benefices = {
   depuis: '',
   jusqua: '',
+  achatId: '',
 
   async activer() {
+    this.rendreActions([]);
+    await this.charger();
+  },
+
+  rendreActions(facturesDisponibles = []) {
     const actions = $('#actions-vue');
     vider(actions);
+
     const depuis = creer('input', {
       attributs: { type: 'date', value: this.depuis },
-      sur: { change: (e) => { this.depuis = e.target.value; this.charger(); } },
+      sur: { change: (e) => {
+        this.depuis = e.target.value;
+        this.achatId = '';
+        this.charger();
+      } },
     });
     const jusqua = creer('input', {
       attributs: { type: 'date', value: this.jusqua },
-      sur: { change: (e) => { this.jusqua = e.target.value; this.charger(); } },
+      sur: { change: (e) => {
+        this.jusqua = e.target.value;
+        this.achatId = '';
+        this.charger();
+      } },
     });
+
+    const facture = creer('select', {
+      attributs: { 'aria-label': "Choisir une facture d'achat" },
+      sur: { change: (e) => { this.achatId = e.target.value; this.charger(); } },
+    });
+    facture.append(creer('option', { attributs: { value: '' }, texte: "Toutes les factures d'achat" }));
+    for (const option of facturesDisponibles) {
+      facture.append(creer('option', {
+        attributs: { value: String(option.id) },
+        texte: option.libelle || [option.numero, option.fournisseurNom].filter(Boolean).join(' - '),
+      }));
+    }
+    facture.value = this.achatId || '';
+
     actions.append(
-      creer('label', { classe: 'etiquette-en-ligne', texte: 'Achats du' }, [depuis]),
+      creer('label', { classe: 'etiquette-en-ligne selection-facture-benefice', texte: 'Facture' }, [facture]),
+      creer('label', { classe: 'etiquette-en-ligne espace-gauche', texte: 'Achats du' }, [depuis]),
       creer('label', { classe: 'etiquette-en-ligne espace-gauche', texte: 'au' }, [jusqua]),
       creer('button', { classe: 'bouton discret espace-gauche', texte: 'Actualiser', sur: { click: () => this.charger() } })
     );
-    await this.charger();
   },
 
   async charger() {
     const donnees = await appeler(window.caisse.benefices.lister({
       depuis: this.depuis || null,
       jusqua: this.jusqua || null,
+      achatId: this.achatId ? Number(this.achatId) : null,
     }));
+
+    const disponibles = donnees.facturesDisponibles || [];
+    const existe = disponibles.some((facture) => String(facture.id) === String(this.achatId));
+    if (this.achatId && !existe) {
+      this.achatId = '';
+      return this.charger();
+    }
+
+    this.rendreActions(disponibles);
     this.afficher(donnees);
   },
 
@@ -43,9 +82,14 @@ const Benefices = {
     ]);
   },
 
-  afficher({ resume, factures }) {
+  afficher({ resume, factures, selection }) {
     const zone = $('#contenu-benefices');
     vider(zone);
+
+    const factureSelectionnee = Boolean(selection?.achatId || this.achatId);
+    const detailSelection = factureSelectionnee
+      ? 'La facture choisie dans le menu deroulant est affichee seule.'
+      : "Toutes les factures d'achat avec articles vendus sont affichees.";
 
     zone.append(creer('section', { classe: 'benefices-hero' }, [
       creer('div', {}, [
@@ -55,6 +99,7 @@ const Benefices = {
           classe: 'aide',
           texte: "Chaque ligne apparait uniquement si l'article achete a effectivement ete vendu. Le benefice est calcule a partir du cout d'achat de la facture et du chiffre d'affaires vendu.",
         }),
+        creer('p', { classe: 'aide benefices-selection-info', texte: detailSelection }),
       ]),
       creer('div', { classe: 'benefices-kpis' }, [
         this.carte('Chiffre vendu', formater(resume.chiffreAffaires), resume.lignes + ' article(s) vendu(s)', 'ca'),
@@ -66,7 +111,9 @@ const Benefices = {
     if (factures.length === 0) {
       zone.append(creer('div', { classe: 'panneau benefices-vide' }, [
         creer('h3', { texte: 'Aucun benefice a afficher' }),
-        creer('p', { classe: 'aide', texte: "Aucun article des factures d'achat selectionnees n'a encore ete vendu." }),
+        creer('p', { classe: 'aide', texte: factureSelectionnee
+          ? "La facture d'achat choisie ne contient aucun article vendu pour le moment."
+          : "Aucun article des factures d'achat selectionnees n'a encore ete vendu." }),
       ]));
       return;
     }
