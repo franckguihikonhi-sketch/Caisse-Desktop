@@ -80,8 +80,23 @@ test('chaque utilisateur peut changer son mot de passe', () => {
   const base = ouvrir(':memory:');
   const standard = utilisateurs.authentifier(base, 'CIV', 'CIV');
   utilisateurs.changerMotDePasse(base, standard.id, 'NOUVEAU');
+  utilisateurs.assurerAccesStandard(base);
   assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV'), null);
   assert.equal(utilisateurs.authentifier(base, 'CIV', 'NOUVEAU').id, standard.id);
+});
+
+test('l acces standard est ajoute aux anciennes bases avec comptes existants', () => {
+  const base = ouvrir(':memory:');
+  base.prepare('DELETE FROM utilisateurs WHERE identifiant = ?').run('civ');
+  const ancien = utilisateurs.creer(base, {
+    identifiant: 'ancien', nom: 'Ancien admin', role: 'administrateur', motDePasse: 'ancien123',
+  });
+
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV'), null);
+  const standard = utilisateurs.assurerAccesStandard(base);
+  assert.equal(standard.identifiant, 'civ');
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV').role, 'administrateur');
+  assert.equal(utilisateurs.authentifier(base, 'ancien', 'ancien123').id, ancien.id);
 });
 
 test('un compte desactive ne peut plus ouvrir la caisse', () => {

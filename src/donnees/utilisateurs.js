@@ -63,8 +63,17 @@ function authentifier(base, identifiant, motDePasse) {
   return { id: ligne.id, identifiant: ligne.identifiant, nom: ligne.nom, role: ligne.role };
 }
 
+function accesStandardExiste(base) {
+  return Boolean(base.prepare('SELECT 1 FROM utilisateurs WHERE identifiant = ?').get('civ'));
+}
+
 function assurerAccesStandard(base) {
-  if (!aucunCompte(base)) return null;
+  // Une ancienne base peut deja contenir des utilisateurs crees avant
+  // l'introduction de l'acces standard. Dans ce cas on ajoute CIV/CIV sans
+  // toucher aux comptes existants. Si le compte CIV existe deja, on ne remet
+  // jamais son mot de passe a CIV : cela respecte le changement fait par
+  // l'entreprise apres la premiere connexion.
+  if (accesStandardExiste(base)) return null;
   return creer(base, ACCES_STANDARD);
 }
 
@@ -92,6 +101,7 @@ module.exports = {
   ACCES_STANDARD,
   LONGUEUR_MIN_MOT_DE_PASSE,
   aucunCompte,
+  accesStandardExiste,
   assurerAccesStandard,
   creer,
   authentifier,
