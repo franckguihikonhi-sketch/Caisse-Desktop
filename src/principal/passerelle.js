@@ -111,6 +111,7 @@ contextBridge.exposeInMainWorld('caisse', {
   },
   base: {
     infos: appeler('base:infos'),
+    testerReseau: appeler('base:testerReseau'),
     choisirDossier: appeler('base:choisirDossier'),
     retablirLocale: appeler('base:retablirLocale'),
     sauvegardes: appeler('base:sauvegardes'),

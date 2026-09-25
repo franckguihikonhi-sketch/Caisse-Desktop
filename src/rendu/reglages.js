@@ -35,6 +35,7 @@ const Reglages = {
 
     $('#bouton-sauvegarder-base').hidden = !peutBase;
     $('#bouton-restaurer-base').hidden = !peutBase;
+    $('#bouton-tester-base-reseau').hidden = !peutBase;
     $('#bouton-choisir-base-reseau').hidden = !peutBase;
     $('#bouton-base-locale').hidden = !peutBase;
     $('#bouton-exporter-csv').hidden = !peutExport;
@@ -91,6 +92,19 @@ const Reglages = {
     const date = new Date(fichier.date);
     const dateLisible = Number.isNaN(date.getTime()) ? fichier.date : date.toLocaleString('fr-FR');
     return dateLisible + ' — ' + fichier.nom;
+  },
+
+  async testerBaseReseau() {
+    try {
+      const resultat = await appeler(window.caisse.base.testerReseau());
+      afficherMessage(
+        $('#message-base-reseau'),
+        'Test OK : ecriture/lecture du dossier en ' + resultat.latenceMs + ' ms, integrite SQLite ' + resultat.integrite + ', journal ' + resultat.journal + '.',
+        'succes'
+      );
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
   },
 
   async choisirBaseReseau() {

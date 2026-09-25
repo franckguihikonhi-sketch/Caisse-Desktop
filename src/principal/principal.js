@@ -170,6 +170,21 @@ function canauxBaseDeDonnees() {
   const P = utilisateurs.PERMISSIONS;
   repondreIpc('base:infos', () => configurationBase.decrireBase(baseActive));
 
+  repondreIpc('base:testerReseau', async () => {
+    const testDossier = configurationBase.testerDossierPartage(baseActive.dossier);
+    const integrite = bd.pragma('quick_check', { simple: true });
+    const journal = bd.pragma('journal_mode', { simple: true });
+    const synchronous = bd.pragma('synchronous', { simple: true });
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'test_reseau',
+      entite: 'base',
+      resume: 'Test acces base : ' + baseActive.dossier,
+      details: { testDossier, integrite, journal, synchronous },
+    });
+    return { ...testDossier, integrite, journal, synchronous, reseau: baseActive.mode === 'reseau' };
+  }, { permission: P.BASE_GERER });
+
   repondreIpc('base:choisirDossier', async () => {
     const choix = await dialog.showOpenDialog(fenetre, {
       title: 'Choisir le dossier partage Ivoire-Gestion',
@@ -180,7 +195,8 @@ function canauxBaseDeDonnees() {
     if (choix.canceled || choix.filePaths.length === 0) return { annule: true };
 
     const dossier = choix.filePaths[0];
-    const cible = configurationBase.cheminBaseDansDossier(dossier);
+    const testPartage = configurationBase.testerDossierPartage(dossier);
+    const cible = testPartage.cheminBase;
     if (configurationBase.memeChemin(cible, baseActive.chemin)) {
       return { annule: false, dejaActive: true, ...configurationBase.decrireBase(baseActive) };
     }
@@ -198,7 +214,7 @@ function canauxBaseDeDonnees() {
       action: 'configuration',
       entite: 'base',
       resume: 'Activation base reseau local : ' + cible,
-      details: { dossier, copieCreee, dejaPresente },
+      details: { dossier, copieCreee, dejaPresente, testPartage },
     });
 
     return {

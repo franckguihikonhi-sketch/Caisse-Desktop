@@ -64,6 +64,8 @@ function ouvrir(chemin, options = {}) {
   const base = new BaseSqlite(chemin);
   base.pragma('busy_timeout = ' + (options.attenteVerrouMs ?? 15000));
   base.pragma(options.reseau ? 'journal_mode = DELETE' : 'journal_mode = WAL');
+  base.pragma(options.reseau ? 'synchronous = FULL' : 'synchronous = NORMAL');
+  base.pragma('locking_mode = NORMAL');
   base.pragma('foreign_keys = ON');
 
   const versionAvant = Number(base.pragma('user_version', { simple: true }) || 0);

@@ -66,12 +66,23 @@ test('les chemins UNC Windows sont reconnus comme reseau local', () => {
   assert.equal(configurationBase.estCheminReseauWindows('C:\\Boutique\\caisse.db'), false);
 });
 
-test('une base reseau n utilise pas le WAL', () => {
+test('un dossier partage est teste en lecture ecriture avant usage', () => {
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'caisse-test-partage-'));
+  const resultat = configurationBase.testerDossierPartage(dossier);
+
+  assert.equal(resultat.ok, true);
+  assert.equal(resultat.cheminBase, path.join(dossier, 'caisse.db'));
+  assert.equal(fs.readdirSync(dossier).filter((nom) => nom.includes('ivoire-gestion-test')).length, 0);
+  fs.rmSync(dossier, { recursive: true, force: true });
+});
+
+test('une base reseau n utilise pas le WAL et force une synchronisation sure', () => {
   const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'caisse-journal-reseau-'));
   const chemin = path.join(dossier, 'caisse.db');
   const base = ouvrir(chemin, { reseau: true });
 
   assert.equal(base.pragma('journal_mode', { simple: true }), 'delete');
+  assert.equal(base.pragma('synchronous', { simple: true }), 2);
 
   base.close();
   fs.rmSync(dossier, { recursive: true, force: true });

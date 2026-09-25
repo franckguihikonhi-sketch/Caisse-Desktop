@@ -152,6 +152,7 @@ for (const bouton of $$('.navigation button')) {
 
 $('#formulaire-boutique').addEventListener('submit', (e) => Reglages.enregistrerBoutique(e));
 $('#bouton-nouvel-utilisateur').addEventListener('click', () => Reglages.nouveauCompte());
+$('#bouton-tester-base-reseau').addEventListener('click', () => Reglages.testerBaseReseau());
 $('#bouton-choisir-base-reseau').addEventListener('click', () => Reglages.choisirBaseReseau());
 $('#bouton-base-locale').addEventListener('click', () => Reglages.retablirBaseLocale());
 $('#bouton-sauvegarder-base').addEventListener('click', () => Reglages.sauvegarderBase());

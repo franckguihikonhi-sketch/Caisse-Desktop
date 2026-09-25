@@ -103,6 +103,28 @@ function decrireBase(info) {
   };
 }
 
+function testerDossierPartage(dossier) {
+  const debut = Date.now();
+  const cible = path.resolve(String(dossier ?? '').trim());
+  if (!cible) throw new Error('Dossier partage invalide.');
+  fs.mkdirSync(cible, { recursive: true });
+  const temporaire = path.join(cible, '.ivoire-gestion-test-' + process.pid + '-' + Date.now() + '.tmp');
+  const contenu = 'test ecriture Ivoire-Gestion ' + new Date().toISOString();
+  try {
+    fs.writeFileSync(temporaire, contenu, { flag: 'wx' });
+    const relu = fs.readFileSync(temporaire, 'utf8');
+    if (relu !== contenu) throw new Error('Lecture de controle differente.');
+  } finally {
+    if (fs.existsSync(temporaire)) fs.unlinkSync(temporaire);
+  }
+  return {
+    ok: true,
+    dossier: cible,
+    cheminBase: cheminBaseDansDossier(cible),
+    latenceMs: Date.now() - debut,
+  };
+}
+
 function memeChemin(a, b) {
   return path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
 }
@@ -121,5 +143,6 @@ module.exports = {
   resoudreBase,
   decrireBase,
   estCheminReseauWindows,
+  testerDossierPartage,
   memeChemin,
 };

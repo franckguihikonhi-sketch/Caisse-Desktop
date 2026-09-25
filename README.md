@@ -164,9 +164,14 @@ Pour partager la meme base entre plusieurs postes :
 
 Si `caisse.db` n'existe pas encore dans le dossier partage, la base actuelle du
 poste est copiee automatiquement. Si le fichier existe deja, le poste se branche
-sur cette base existante. En mode reseau local, le journal SQLite passe en mode
-classique et un delai d'attente de verrou est applique pour que deux caisses qui
-ecrivent en meme temps patientent au lieu de corrompre les donnees.
+sur cette base existante. Avant de configurer le partage, Ivoire-Gestion teste
+l'ecriture/lecture dans le dossier choisi. Le bouton **Tester acces reseau**
+relance aussi ce controle et verifie l'integrite SQLite.
+
+En mode reseau local, le journal SQLite passe en mode classique, la
+synchronisation disque est forcee en mode sur, le verrouillage reste normal et un
+delai d'attente de verrou est applique pour que deux caisses qui ecrivent en meme
+temps patientent au lieu de corrompre les donnees.
 
 Ce mode n'utilise pas Internet. Il exige seulement que les postes voient le meme
 partage Windows local ; si le reseau local ou le poste qui partage le dossier est
