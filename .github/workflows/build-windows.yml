@@ -35,6 +35,9 @@ jobs:
       - name: Installation
         run: npm ci
 
+      - name: Installer le binaire Electron
+        run: npm run electron:install
+
       - name: Tests
         run: npm test -- --runInBand
 

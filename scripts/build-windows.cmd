@@ -25,6 +25,10 @@ echo Installation propre des dependances...
 call npm install
 if errorlevel 1 goto erreur
 
+echo Telechargement du binaire Electron...
+call npm run electron:install
+if errorlevel 1 goto erreur
+
 echo Verification des tests...
 call npm test -- --runInBand
 if errorlevel 1 goto erreur
@@ -34,7 +38,7 @@ call npm run dist:windows
 if errorlevel 1 goto erreur
 
 echo.
-echo Terminé. Les fichiers executables sont dans le dossier release.
+echo Termine. Les fichiers executables sont dans le dossier release.
 start "" "%CD%\release"
 pause
 exit /b 0

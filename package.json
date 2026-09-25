@@ -14,7 +14,8 @@
     "pack:windows": "electron-builder --win --dir",
     "build:windows": "electron-builder --win nsis portable",
     "dist:windows": "electron-builder --win nsis portable",
-    "dist:windows:dir": "electron-builder --win --dir"
+    "dist:windows:dir": "electron-builder --win --dir",
+    "electron:install": "node node_modules/electron/install.js"
   },
   "devDependencies": {
     "electron": "^44.0.0",

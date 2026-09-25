@@ -59,6 +59,7 @@ Depuis un poste Windows de developpement connecte a Internet, double-cliquez sur
 
 ```sh
 npm install
+npm run electron:install
 npm run dist:windows
 ```
 
