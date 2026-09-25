@@ -4471,3 +4471,46 @@ table strong {
     text-align: left;
   }
 }
+
+/* Audit / historique */
+.entete-section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.entete-section h3 { margin: 0 0 4px; }
+
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e7f8ee;
+  color: #0b7f4d;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ligne-formulaire {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(130px, .7fr) minmax(130px, .7fr) 110px;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.navigation button[data-vue="audit"]::after { content: '🧾'; }
+
+@media (max-width: 900px) {
+  .ligne-formulaire { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 620px) {
+  .entete-section { flex-direction: column; }
+  .ligne-formulaire { grid-template-columns: 1fr; }
+}

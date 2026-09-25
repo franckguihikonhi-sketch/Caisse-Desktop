@@ -46,6 +46,7 @@
       <button data-vue="vente" data-permission="vente:encaisser">Vente</button>
       <button data-vue="achats" data-permission="achats:lire">Achats</button>
       <button data-vue="benefices" data-permission="rapports:benefices">Benefices</button>
+      <button data-vue="audit" data-permission="audit:lire">Audit</button>
       <button data-vue="stock" data-permission="stock:lire">Stock</button>
       <button data-vue="articles" data-permission="articles:lire">Articles</button>
       <button data-vue="clients" data-permission="clients:lire">Clients & credits</button>
@@ -291,6 +292,29 @@
       </div>
     </div>
 
+    <!-- Audit -->
+    <div id="vue-audit" class="vue">
+      <div class="panneau">
+        <div class="entete-section">
+          <div>
+            <h3>Historique et audit</h3>
+            <p class="aide">Toutes les operations sensibles sont journalisees avec utilisateur, date, action et resume.</p>
+          </div>
+          <span class="pastille" id="audit-total">0 action</span>
+        </div>
+        <div class="ligne-formulaire">
+          <label>Recherche<input id="audit-recherche" type="search" placeholder="vente, article, utilisateur, motif..."></label>
+          <label>Action<select id="audit-action"><option value="">Toutes</option></select></label>
+          <label>Entite<select id="audit-entite"><option value="">Toutes</option></select></label>
+          <label>Limite<input id="audit-limite" type="number" min="20" max="1000" step="20" value="200"></label>
+        </div>
+        <table>
+          <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Entite</th><th>Resume</th></tr></thead>
+          <tbody id="corps-audit"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Reglages -->
     <div id="vue-reglages" class="vue">
       <div class="deux-colonnes">
@@ -357,6 +381,7 @@
 <script src="clients.js"></script>
 <script src="fournisseurs.js"></script>
 <script src="journal.js"></script>
+<script src="audit.js"></script>
 <script src="reglages.js"></script>
 <script src="app.js"></script>
 </body>

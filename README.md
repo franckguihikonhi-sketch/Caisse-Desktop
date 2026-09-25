@@ -23,6 +23,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Roles & permissions** | Creer des comptes Administrateur, Gerant, Caissier, Stock/Achats ou Comptable ; chaque ecran et chaque action critique sont verifies cote processus principal |
+| **Audit** | Consulter l'historique horodate des connexions, ventes, annulations, retours, achats, stock, reglements, exports, sauvegardes et changements de comptes |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
 
@@ -66,6 +67,15 @@ disponibles sont :
 | **Caissier** | Encaissement, ouverture/fermeture de caisse, journal, clients et reglements clients ; pas d'annulation critique ni d'achat |
 | **Stock / achats** | Articles, achats, fournisseurs, mouvements de stock et retours fournisseur ; pas d'encaissement client |
 | **Comptable** | Journal, creances, dettes, reglements, benefices et exports ; pas de vente ni de modification du stock |
+
+## Audit et historique
+
+L'onglet **Audit** est reserve aux profils autorises. Il trace les connexions,
+les refus de connexion, les ventes, retours et annulations, les achats, les
+mouvements de stock, les creations/modifications de tiers et articles, les
+reglements, les exports, les sauvegardes/restaurations et les changements de
+comptes. Chaque ligne garde la date, l'utilisateur, son role, l'action, l'entite
+concernee et un resume lisible.
 
 ## Creer un executable Windows installable
 

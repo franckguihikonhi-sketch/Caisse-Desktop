@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('caisse', {
   benefices: {
     lister: appeler('benefices:lister'),
   },
+  audit: {
+    lister: appeler('audit:lister'),
+  },
   caisseJournee: {
     etat: appeler('caisse:etat'),
     ouvrir: appeler('caisse:ouvrir'),

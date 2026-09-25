@@ -6,6 +6,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron')
 
 const { ouvrir, boutique } = require('../donnees/base');
 const utilisateurs = require('../donnees/utilisateurs');
+const audit = require('../donnees/audit');
 const ventes = require('../donnees/ventes');
 const { enregistrerCanaux } = require('./canaux');
 const impression = require('./impression');
@@ -192,6 +193,14 @@ function canauxBaseDeDonnees() {
       enregistreLe: new Date().toISOString(),
     });
 
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'configuration',
+      entite: 'base',
+      resume: 'Activation base reseau local : ' + cible,
+      details: { dossier, copieCreee, dejaPresente },
+    });
+
     return {
       annule: false,
       redemarrageNecessaire: true,
@@ -205,9 +214,16 @@ function canauxBaseDeDonnees() {
 
   repondreIpc('base:retablirLocale', async () => {
     configurationBase.supprimerConfiguration(configurationBase.cheminConfiguration(app));
+    const chemin = configurationBase.cheminBaseLocale(app);
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'configuration',
+      entite: 'base',
+      resume: 'Retour a la base locale : ' + chemin,
+    });
     return {
       redemarrageNecessaire: true,
-      chemin: configurationBase.cheminBaseLocale(app),
+      chemin,
       mode: 'local',
     };
   }, { permission: P.BASE_GERER });
@@ -234,6 +250,12 @@ function canauxBaseDeDonnees() {
     });
     if (choix.canceled || !choix.filePath) return { annule: true };
     const chemin = sauvegarderBaseVers(choix.filePath);
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'sauvegarde',
+      entite: 'base',
+      resume: 'Sauvegarde manuelle : ' + chemin,
+    });
     shell.showItemInFolder(chemin);
     return { annule: false, chemin, date: new Date().toISOString() };
   }, { permission: P.BASE_GERER });
@@ -241,6 +263,13 @@ function canauxBaseDeDonnees() {
   repondreIpc('exports:csv', async () => {
     const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'exports');
     const resultat = exportsRapports.exporterCsv(bd, dossier);
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'export',
+      entite: 'rapports',
+      resume: resultat.nombreFichiers + ' fichiers exportes : ' + resultat.dossier,
+      details: { fichiers: resultat.fichiers },
+    });
     shell.showItemInFolder(resultat.dossier);
     return resultat;
   }, { permission: P.RAPPORTS_EXPORTS });
@@ -258,6 +287,13 @@ function canauxBaseDeDonnees() {
       message: 'La base actuelle sera sauvegardee avant restauration, puis Ivoire-Gestion redemarrera.',
     });
     if (choix.canceled || choix.filePaths.length === 0) return { annule: true };
+
+    audit.enregistrer(bd, {
+      utilisateur: session.utilisateur,
+      action: 'restauration',
+      entite: 'base',
+      resume: 'Restauration demandee depuis : ' + choix.filePaths[0],
+    });
 
     const resultat = sauvegardes.restaurerDepuis({
       source: choix.filePaths[0],

@@ -31,6 +31,7 @@ const PERMISSIONS = Object.freeze({
   ACHATS_GERER: 'achats:gerer',
   RAPPORTS_BENEFICES: 'rapports:benefices',
   RAPPORTS_EXPORTS: 'rapports:exports',
+  AUDIT_LIRE: 'audit:lire',
   UTILISATEURS_GERER: 'utilisateurs:gerer',
   PARAMETRES_GERER: 'parametres:gerer',
   BASE_GERER: 'base:gerer',
@@ -71,6 +72,7 @@ const DEFINITIONS_ROLES = Object.freeze({
       PERMISSIONS.ACHATS_GERER,
       PERMISSIONS.RAPPORTS_BENEFICES,
       PERMISSIONS.RAPPORTS_EXPORTS,
+      PERMISSIONS.AUDIT_LIRE,
     ],
   },
   caissier: {
@@ -123,6 +125,7 @@ const DEFINITIONS_ROLES = Object.freeze({
       PERMISSIONS.FOURNISSEURS_REGLER,
       PERMISSIONS.RAPPORTS_BENEFICES,
       PERMISSIONS.RAPPORTS_EXPORTS,
+      PERMISSIONS.AUDIT_LIRE,
     ],
   },
 });

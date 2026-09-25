@@ -488,6 +488,31 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 12,
+    intitule: 'Journal audit general',
+    appliquer(base) {
+      base.exec(`
+        CREATE TABLE IF NOT EXISTS journal_audit (
+          id               INTEGER PRIMARY KEY,
+          date_action      TEXT    NOT NULL,
+          utilisateur_id   INTEGER REFERENCES utilisateurs (id),
+          utilisateur_nom  TEXT,
+          utilisateur_role TEXT,
+          action           TEXT    NOT NULL,
+          entite           TEXT    NOT NULL,
+          entite_id        INTEGER,
+          resume           TEXT,
+          details_json     TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_journal_audit_date ON journal_audit (date_action DESC);
+        CREATE INDEX IF NOT EXISTS idx_journal_audit_action ON journal_audit (action, date_action DESC);
+        CREATE INDEX IF NOT EXISTS idx_journal_audit_entite ON journal_audit (entite, entite_id);
+        CREATE INDEX IF NOT EXISTS idx_journal_audit_utilisateur ON journal_audit (utilisateur_id, date_action DESC);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

@@ -12,6 +12,7 @@ const VUES = {
   clients: { titre: 'Clients et credits', module: () => Clients },
   fournisseurs: { titre: 'Fournisseurs', module: () => Fournisseurs },
   journal: { titre: 'Caisse et journal', module: () => Journal },
+  audit: { titre: 'Historique et audit', module: () => Audit },
   reglages: { titre: 'Reglages', module: () => Reglages },
 };
 
