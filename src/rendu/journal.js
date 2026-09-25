@@ -361,6 +361,28 @@ const Journal = {
               },
             },
           }),
+          creer('button', {
+            classe: 'bouton discret', texte: 'Ticket PDF',
+            sur: {
+              click: async (e) => {
+                e.target.disabled = true;
+                try { await appeler(window.caisse.ticket.pdf({ id })); }
+                catch (erreur) { e.target.textContent = erreur.message; }
+                finally { e.target.disabled = false; }
+              },
+            },
+          }),
+          creer('button', {
+            classe: 'bouton discret', texte: 'Facture A4',
+            sur: {
+              click: async (e) => {
+                e.target.disabled = true;
+                try { await appeler(window.caisse.ticket.facturePdf({ id })); }
+                catch (erreur) { e.target.textContent = erreur.message; }
+                finally { e.target.disabled = false; }
+              },
+            },
+          }),
           creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
         ]),
       ])

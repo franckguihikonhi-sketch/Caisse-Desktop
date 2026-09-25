@@ -104,17 +104,23 @@ contextBridge.exposeInMainWorld('caisse', {
     infos: appeler('base:infos'),
     choisirDossier: appeler('base:choisirDossier'),
     retablirLocale: appeler('base:retablirLocale'),
+    sauvegardes: appeler('base:sauvegardes'),
     sauvegarder: appeler('base:sauvegarder'),
+    restaurerSauvegarde: appeler('base:restaurerSauvegarde'),
     redemarrer: appeler('base:redemarrer'),
   },
   ticket: {
     imprimer: appeler('ticket:imprimer'),
     pdf: appeler('ticket:pdf'),
+    facturePdf: appeler('ticket:facturePdf'),
   },
   etiquettes: {
     formats: () => etiquettes.FORMATS,
     imprimer: appeler('etiquettes:imprimer'),
     pdf: appeler('etiquettes:pdf'),
+  },
+  exports: {
+    csv: appeler('exports:csv'),
   },
   calcul: {
     panier: (lignes, options) => panier.calculer(lignes, options),

@@ -30,6 +30,36 @@ const Reglages = {
         creer('strong', { texte: infos.chemin }),
       ])
     );
+
+    const sauvegardes = await appeler(window.caisse.base.sauvegardes());
+    this.afficherSauvegardes(sauvegardes);
+  },
+
+  afficherSauvegardes(donnees) {
+    const bloc = $('#infos-sauvegardes');
+    vider(bloc);
+    const derniereAuto = donnees.fichiersAutomatiques?.[0];
+    const derniereManuelle = donnees.fichiersManuels?.[0];
+    bloc.append(
+      creer('div', { classe: 'ligne-info-base' }, [
+        creer('span', { texte: 'Sauvegarde auto' }),
+        creer('strong', { texte: derniereAuto ? this.formatDateFichier(derniereAuto) : 'Aucune encore' }),
+      ]),
+      creer('div', { classe: 'ligne-info-base' }, [
+        creer('span', { texte: 'Sauvegarde manuelle' }),
+        creer('strong', { texte: derniereManuelle ? this.formatDateFichier(derniereManuelle) : 'Aucune encore' }),
+      ]),
+      creer('div', { classe: 'ligne-info-base' }, [
+        creer('span', { texte: 'Dossier auto' }),
+        creer('strong', { texte: donnees.dossierAutomatique }),
+      ])
+    );
+  },
+
+  formatDateFichier(fichier) {
+    const date = new Date(fichier.date);
+    const dateLisible = Number.isNaN(date.getTime()) ? fichier.date : date.toLocaleString('fr-FR');
+    return dateLisible + ' — ' + fichier.nom;
   },
 
   async choisirBaseReseau() {
@@ -87,6 +117,36 @@ const Reglages = {
       afficherMessage(
         $('#message-base-reseau'),
         'Sauvegarde creee : ' + resultat.chemin,
+        'succes'
+      );
+      await this.chargerBase();
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
+  },
+
+  async restaurerBase() {
+    const confirme = await confirmer(
+      'Restaurer une sauvegarde ?',
+      "La base actuelle sera d'abord sauvegardee par securite, puis remplacee par le fichier choisi. Ivoire-Gestion redemarrera automatiquement.",
+      'Choisir une sauvegarde'
+    );
+    if (!confirme) return;
+    try {
+      const resultat = await appeler(window.caisse.base.restaurerSauvegarde());
+      if (resultat.annule) return;
+      afficherMessage($('#message-base-reseau'), 'Sauvegarde restauree. Redemarrage en cours...', 'succes');
+    } catch (erreur) {
+      afficherMessage($('#message-base-reseau'), erreur.message, 'erreur');
+    }
+  },
+
+  async exporterCsv() {
+    try {
+      const resultat = await appeler(window.caisse.exports.csv());
+      afficherMessage(
+        $('#message-base-reseau'),
+        resultat.nombreFichiers + ' fichiers exportes dans : ' + resultat.dossier,
         'succes'
       );
     } catch (erreur) {

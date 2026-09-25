@@ -6,7 +6,7 @@ name: Verification
 
 on:
   push:
-    branches: [main, 'claude/**']
+    branches: [main, 'claude/**', 'arena/**']
   pull_request:
     branches: [main]
   workflow_dispatch:

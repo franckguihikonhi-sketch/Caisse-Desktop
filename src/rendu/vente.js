@@ -714,11 +714,22 @@ const Vente = {
           },
         }),
         creer('button', {
-          classe: 'bouton discret', texte: 'PDF',
+          classe: 'bouton discret', texte: 'Ticket PDF',
           sur: {
             click: async (e) => {
               e.target.disabled = true;
               try { await appeler(window.caisse.ticket.pdf({ id: vente.id })); }
+              catch (erreur) { e.target.textContent = erreur.message; }
+              finally { e.target.disabled = false; }
+            },
+          },
+        }),
+        creer('button', {
+          classe: 'bouton discret', texte: 'Facture A4',
+          sur: {
+            click: async (e) => {
+              e.target.disabled = true;
+              try { await appeler(window.caisse.ticket.facturePdf({ id: vente.id })); }
               catch (erreur) { e.target.textContent = erreur.message; }
               finally { e.target.disabled = false; }
             },

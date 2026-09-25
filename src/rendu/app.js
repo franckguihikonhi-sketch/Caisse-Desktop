@@ -131,6 +131,8 @@ $('#bouton-nouvel-utilisateur').addEventListener('click', () => Reglages.nouveau
 $('#bouton-choisir-base-reseau').addEventListener('click', () => Reglages.choisirBaseReseau());
 $('#bouton-base-locale').addEventListener('click', () => Reglages.retablirBaseLocale());
 $('#bouton-sauvegarder-base').addEventListener('click', () => Reglages.sauvegarderBase());
+$('#bouton-restaurer-base').addEventListener('click', () => Reglages.restaurerBase());
+$('#bouton-exporter-csv').addEventListener('click', () => Reglages.exporterCsv());
 $('#bouton-redemarrer-base').addEventListener('click', () => Reglages.redemarrerApplication());
 
 Vente.initialiser();

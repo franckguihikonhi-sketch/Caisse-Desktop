@@ -14,15 +14,16 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | Ecran | Ce qu'on y fait |
 | --- | --- |
 | **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, la marge commerciale, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
-| **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket |
+| **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket thermique et exporter une facture A4 PDF |
 | **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
 | **Benefices** | Choisir une facture d'achat dans un menu deroulant et mettre en evidence, facture par facture, le benefice obtenu sur chaque article uniquement lorsque cet article a ete vendu |
+| **Exports** | Depuis Reglages, exporter des fichiers Excel/CSV : articles/stock, ventes du jour, mouvements de stock, creances clients, dettes fournisseurs et benefices par facture |
 | **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil et les mouvements par article |
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
-| **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde de la base, choix de la base locale ou partagee en reseau local |
+| **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les
@@ -53,19 +54,22 @@ utilisateurs si necessaire. Les mots de passe ne sont jamais stockes en clair.
 
 ## Creer un executable Windows installable
 
-Depuis un poste de developpement connecte a Internet, creez l'installateur et la
-version portable Windows avec :
+Depuis un poste Windows de developpement connecte a Internet, double-cliquez sur
+`scripts\\build-windows.cmd`, ou creez l'installateur et la version portable avec :
 
 ```sh
 npm install
-npm run build:windows
+npm run dist:windows
 ```
 
-Les fichiers sortent dans le dossier `release/` sous le nom
-`Ivoire-Gestion-...`. Une fois installee sur Windows, l'application n'a pas
-besoin d'Internet pour vendre, acheter, imprimer ou travailler sur sa base.
-L'executable n'embarque aucune base commerciale : aucun article, client,
-fournisseur, vente, achat, stock ou dette n'est precharge.
+Les fichiers sortent dans le dossier `release/` sous les noms
+`Ivoire-Gestion-Setup-...exe` et `Ivoire-Gestion-Portable-...exe`, avec l'icone
+Ivoire-Gestion. Un workflow GitHub Actions **Build Windows** fabrique aussi ces
+executables automatiquement sur la branche Arena et les publie en artefacts.
+Une fois installee sur Windows, l'application n'a pas besoin d'Internet pour
+vendre, acheter, imprimer ou travailler sur sa base. L'executable n'embarque
+aucune base commerciale : aucun article, client, fournisseur, vente, achat,
+stock ou dette n'est precharge.
 
 Le dossier technique des donnees reste volontairement `caisse-desktop` afin de
 conserver les bases deja installees, meme si le nom visible de l'application est
@@ -88,10 +92,27 @@ dossier reseau dans les reglages.
 
 ## Sauvegarder les donnees
 
+Ivoire-Gestion cree automatiquement une sauvegarde de la base une fois par jour
+au demarrage et conserve les sauvegardes automatiques les plus recentes dans
+`Documents\\Ivoire-Gestion\\sauvegardes-automatiques`.
+
 Dans **Reglages > Base de donnees et reseau local**, le bouton **Sauvegarder la
-base** cree une copie complete du fichier `caisse.db` dans le dossier choisi
-(par defaut `Documents\\Ivoire-Gestion\\sauvegardes`). Faites une sauvegarde
-avant une mise a jour, un changement de poste ou le passage en base partagee.
+base** cree aussi une copie complete du fichier `caisse.db` dans le dossier choisi
+(par defaut `Documents\\Ivoire-Gestion\\sauvegardes`). Le bouton **Restaurer une
+sauvegarde** permet de choisir un fichier `.db` : l'application sauvegarde d'abord
+la base actuelle, remplace la base active, puis redemarre. Faites une sauvegarde
+manuelle avant une mise a jour, un changement de poste ou le passage en base
+partagee.
+
+## Exporter pour Excel et les archives PDF
+
+Dans **Reglages > Base de donnees et reseau local**, le bouton **Exporter
+Excel/CSV** cree un dossier horodate dans `Documents\\Ivoire-Gestion\\exports`.
+Les fichiers `.csv` s'ouvrent directement dans Excel sur Windows et couvrent les
+articles/stock, ventes du jour, mouvements de stock, creances clients, dettes
+fournisseurs et benefices par facture. Les ventes peuvent aussi sortir en
+**Ticket PDF** ou en **Facture A4 PDF** depuis la confirmation de vente ou le
+journal.
 
 ## Travailler en reseau local, sans Internet
 

@@ -1,0 +1,53 @@
+# Produit l'installateur Windows et la version portable d'Ivoire-Gestion.
+# A lancer depuis GitHub avec "Run workflow" quand une version doit etre remise
+# a une entreprise, ou automatiquement a chaque poussee sur la branche Arena.
+
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [arena/01a0c660-caisse-desktop]
+
+jobs:
+  build-windows:
+    name: Installateur Windows
+    runs-on: windows-latest
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: electron-windows-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-windows-
+
+      - name: Installation
+        run: npm ci
+
+      - name: Tests
+        run: npm test -- --runInBand
+
+      - name: Build installateur et portable
+        run: npm run dist:windows
+
+      - name: Publier les executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ivoire-Gestion-Windows
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest*.yml
+          if-no-files-found: error
+          retention-days: 30

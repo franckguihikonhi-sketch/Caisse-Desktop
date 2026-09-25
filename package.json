@@ -12,7 +12,9 @@
     "test": "node --no-warnings --test tests/*.test.js",
     "verifier": "electron scripts/verifier-demarrage.js",
     "pack:windows": "electron-builder --win --dir",
-    "build:windows": "electron-builder --win nsis portable"
+    "build:windows": "electron-builder --win nsis portable",
+    "dist:windows": "electron-builder --win nsis portable",
+    "dist:windows:dir": "electron-builder --win --dir"
   },
   "devDependencies": {
     "electron": "^44.0.0",
@@ -34,14 +36,15 @@
       "!**/*.db-wal",
       "!**/*.sqlite",
       "!**/*.sqlite3",
-      "!release/**"
+      "!release/**",
+      "assets/**/*"
     ],
     "win": {
       "target": [
         "nsis",
         "portable"
       ],
-      "artifactName": "Ivoire-Gestion-${version}-${arch}.${ext}"
+      "icon": "assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -49,7 +52,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Ivoire-Gestion"
+      "shortcutName": "Ivoire-Gestion",
+      "artifactName": "Ivoire-Gestion-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Ivoire-Gestion-Portable-${version}-${arch}.${ext}"
     }
-  }
+  },
+  "author": "Ivoire-Gestion"
 }

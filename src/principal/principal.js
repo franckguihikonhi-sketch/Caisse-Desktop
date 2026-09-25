@@ -9,6 +9,8 @@ const ventes = require('../donnees/ventes');
 const { enregistrerCanaux } = require('./canaux');
 const impression = require('./impression');
 const configurationBase = require('./configuration-base');
+const sauvegardes = require('./sauvegardes');
+const exportsRapports = require('./exports');
 
 // L'utilisateur connecte est tenu ici, dans le processus principal. Le rendu ne
 // fait que l'afficher : il ne peut ni le fabriquer ni s'attribuer un role.
@@ -18,6 +20,7 @@ const session = { utilisateur: null };
 let fenetre = null;
 let bd = null;
 let baseActive = null;
+let derniereSauvegardeAuto = null;
 
 function informationsBase() {
   baseActive = configurationBase.resoudreBase(app);
@@ -42,25 +45,29 @@ function copierBaseSiNecessaire(cible) {
   return true;
 }
 
-function estampilleSauvegarde() {
-  const maintenant = new Date();
-  const deux = (n) => String(n).padStart(2, '0');
-  return String(maintenant.getFullYear()) + deux(maintenant.getMonth() + 1) + deux(maintenant.getDate()) +
-    '-' + deux(maintenant.getHours()) + deux(maintenant.getMinutes()) + deux(maintenant.getSeconds());
-}
-
 function dossierSauvegardes() {
   return path.join(app.getPath('documents'), NOM_APPLICATION, 'sauvegardes');
+}
+
+function dossierSauvegardesAuto() {
+  return path.join(app.getPath('documents'), NOM_APPLICATION, 'sauvegardes-automatiques');
 }
 
 function sauvegarderBaseVers(cible) {
   if (!baseActive || !fs.existsSync(baseActive.chemin)) {
     throw new Error('Base active introuvable.');
   }
-  consoliderBaseAvantCopie();
-  fs.mkdirSync(path.dirname(cible), { recursive: true });
-  fs.copyFileSync(baseActive.chemin, cible);
-  return cible;
+  return sauvegardes.creerCopie(baseActive.chemin, cible, { consolider: consoliderBaseAvantCopie }).chemin;
+}
+
+function sauvegarderBaseAutomatiquement() {
+  if (!baseActive || !fs.existsSync(baseActive.chemin)) return null;
+  derniereSauvegardeAuto = sauvegardes.sauvegarderAutomatiquement({
+    source: baseActive.chemin,
+    dossier: dossierSauvegardesAuto(),
+    consolider: consoliderBaseAvantCopie,
+  });
+  return derniereSauvegardeAuto;
 }
 
 function afficherFenetreSiPrete() {
@@ -147,6 +154,15 @@ function canauxImpression() {
     shell.showItemInFolder(chemin);
     return chemin;
   });
+
+  repondre('ticket:facturePdf', async ({ id }) => {
+    const vente = ventes.lire(bd, id);
+    if (!vente) throw new Error('Vente introuvable.');
+    const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'factures-ventes');
+    const chemin = await impression.exporterFactureVentePdf(vente, boutique(bd), dossier);
+    shell.showItemInFolder(chemin);
+    return chemin;
+  });
 }
 
 function canauxBaseDeDonnees() {
@@ -195,13 +211,21 @@ function canauxBaseDeDonnees() {
     };
   }, { exigeAdmin: true });
 
+  repondreIpc('base:sauvegardes', () => ({
+    automatique: derniereSauvegardeAuto,
+    dossierAutomatique: dossierSauvegardesAuto(),
+    dossierManuel: dossierSauvegardes(),
+    fichiersAutomatiques: sauvegardes.lister(dossierSauvegardesAuto()),
+    fichiersManuels: sauvegardes.lister(dossierSauvegardes()),
+  }), { exigeAdmin: true });
+
   repondreIpc('base:sauvegarder', async () => {
     const dossier = dossierSauvegardes();
     fs.mkdirSync(dossier, { recursive: true });
     const choix = await dialog.showSaveDialog(fenetre, {
       title: 'Sauvegarder la base Ivoire-Gestion',
       buttonLabel: 'Sauvegarder',
-      defaultPath: path.join(dossier, 'ivoire-gestion-sauvegarde-' + estampilleSauvegarde() + '.db'),
+      defaultPath: path.join(dossier, 'ivoire-gestion-sauvegarde-' + sauvegardes.estampille() + '.db'),
       filters: [
         { name: 'Base SQLite', extensions: ['db'] },
         { name: 'Tous les fichiers', extensions: ['*'] },
@@ -211,6 +235,44 @@ function canauxBaseDeDonnees() {
     const chemin = sauvegarderBaseVers(choix.filePath);
     shell.showItemInFolder(chemin);
     return { annule: false, chemin, date: new Date().toISOString() };
+  }, { exigeAdmin: true });
+
+  repondreIpc('exports:csv', async () => {
+    const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'exports');
+    const resultat = exportsRapports.exporterCsv(bd, dossier);
+    shell.showItemInFolder(resultat.dossier);
+    return resultat;
+  }, { exigeAdmin: true });
+
+  repondreIpc('base:restaurerSauvegarde', async () => {
+    const choix = await dialog.showOpenDialog(fenetre, {
+      title: 'Restaurer une sauvegarde Ivoire-Gestion',
+      buttonLabel: 'Restaurer cette sauvegarde',
+      defaultPath: dossierSauvegardes(),
+      filters: [
+        { name: 'Bases SQLite', extensions: ['db', 'sqlite', 'sqlite3'] },
+        { name: 'Tous les fichiers', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+      message: 'La base actuelle sera sauvegardee avant restauration, puis Ivoire-Gestion redemarrera.',
+    });
+    if (choix.canceled || choix.filePaths.length === 0) return { annule: true };
+
+    const resultat = sauvegardes.restaurerDepuis({
+      source: choix.filePaths[0],
+      cible: baseActive.chemin,
+      dossierSecours: dossierSauvegardes(),
+      avantCopie: consoliderBaseAvantCopie,
+      fermerAvantRemplacement: () => {
+        if (bd) {
+          bd.close();
+          bd = null;
+        }
+      },
+    });
+    app.relaunch();
+    app.exit(0);
+    return { annule: false, redemarrageNecessaire: true, ...resultat };
   }, { exigeAdmin: true });
 
   repondreIpc('base:redemarrer', async () => {
@@ -227,6 +289,7 @@ app.whenReady().then(() => {
   try {
     const info = informationsBase();
     bd = ouvrir(info.chemin, { reseau: info.mode === 'reseau' });
+    sauvegarderBaseAutomatiquement();
   } catch (erreur) {
     dialog.showErrorBox(
       'Base de donnees inaccessible',
