@@ -13,7 +13,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 
 | Ecran | Ce qu'on y fait |
 | --- | --- |
-| **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires du jour, la marge commerciale, les encaissements, les creances clients, les dettes fournisseurs et les alertes de stock |
+| **Tableau de bord** | Suivre l'etat de la caisse, le chiffre d'affaires et la marge du jour/mois, les encaissements, les creances clients, les dettes fournisseurs, la valeur du stock et les alertes de stock |
 | **Vente** | Scanner ou chercher un article, remplir le panier, remise par ligne ou globale, encaisser en especes / mobile money / carte, vendre a credit a un client, rendre la monnaie, imprimer le ticket thermique et exporter une facture A4 PDF |
 | **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
 | **Benefices** | Choisir une facture d'achat dans un menu deroulant et mettre en evidence, facture par facture, le benefice obtenu sur chaque article uniquement lorsque cet article a ete vendu |
@@ -26,6 +26,11 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Audit** | Consulter l'historique horodate des connexions, ventes, annulations, retours, achats, stock, reglements, exports, sauvegardes et changements de comptes |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
+
+Le tableau de bord est pense pour le proprietaire : il separe les ventes du jour
+et du mois, montre le benefice reel calcule sur les prix d'achat, la valeur du
+stock au cout d'achat et au prix de vente, la marge potentielle encore en rayon,
+les credits clients, les dettes fournisseurs et le net a encaisser/a payer.
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les

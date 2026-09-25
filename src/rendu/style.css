@@ -2789,6 +2789,12 @@ small { color: var(--ui-muted); }
   background: linear-gradient(135deg, #bc3542, #db5660);
   color: #ffffff;
 }
+.carte-mois,
+.carte-stock-valeur,
+.carte-net {
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+  color: #ffffff;
+}
 .carte-dettes,
 .carte-stock {
   background: linear-gradient(135deg, #385449, #233b33);
@@ -2799,6 +2805,9 @@ small { color: var(--ui-muted); }
 .carte-encaisse strong,
 .carte-achats strong,
 .carte-tableau.warning strong,
+.carte-mois strong,
+.carte-stock-valeur strong,
+.carte-net strong,
 .carte-dettes strong,
 .carte-stock strong,
 .carte-tableau.succes small,
@@ -2806,6 +2815,9 @@ small { color: var(--ui-muted); }
 .carte-encaisse small,
 .carte-achats small,
 .carte-tableau.warning small,
+.carte-mois small,
+.carte-stock-valeur small,
+.carte-net small,
 .carte-dettes small,
 .carte-stock small,
 .carte-tableau.succes .libelle-doux,
@@ -2813,6 +2825,9 @@ small { color: var(--ui-muted); }
 .carte-encaisse .libelle-doux,
 .carte-achats .libelle-doux,
 .carte-tableau.warning .libelle-doux,
+.carte-mois .libelle-doux,
+.carte-stock-valeur .libelle-doux,
+.carte-net .libelle-doux,
 .carte-dettes .libelle-doux,
 .carte-stock .libelle-doux {
   color: #ffffff;
@@ -2822,6 +2837,9 @@ small { color: var(--ui-muted); }
 .carte-encaisse .icone-carte,
 .carte-achats .icone-carte,
 .carte-tableau.warning .icone-carte,
+.carte-mois .icone-carte,
+.carte-stock-valeur .icone-carte,
+.carte-net .icone-carte,
 .carte-dettes .icone-carte,
 .carte-stock .icone-carte {
   background: rgba(255,255,255,0.18);
