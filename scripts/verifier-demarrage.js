@@ -115,9 +115,11 @@ async function verifier() {
   }
 
   await executer(`
-    const ouverture = await window.caisse.caisseJournee.ouvrir({ fondOuverture: 0 });
-    if (!ouverture.ok) throw new Error(ouverture.erreur);
-    document.querySelector('.navigation button[data-vue=vente]').click();
+    (async () => {
+      const ouverture = await window.caisse.caisseJournee.ouvrir({ fondOuverture: 0 });
+      if (!ouverture.ok) throw new Error(ouverture.erreur);
+      document.querySelector('.navigation button[data-vue=vente]').click();
+    })();
   `);
   await patienter(700);
   noter('caisse ouverte et ecran vente affiche');
