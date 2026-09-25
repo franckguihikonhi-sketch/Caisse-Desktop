@@ -18,7 +18,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Achats** | Receptionner les achats de marchandise fournisseur, saisir pieces ou cartons, facture/bon, paiement comptant ou credit, mettre le stock a jour automatiquement, creer la dette fournisseur et gerer les retours chez fournisseur |
 | **Benefices** | Choisir une facture d'achat dans un menu deroulant et mettre en evidence, facture par facture, le benefice obtenu sur chaque article uniquement lorsque cet article a ete vendu |
 | **Exports** | Depuis Reglages, exporter des fichiers Excel/CSV : articles/stock, ventes du jour, mouvements de stock, creances clients, dettes fournisseurs et benefices par facture |
-| **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil et les mouvements par article |
+| **Stock** | Visualiser le stock restant de chaque article, en pieces et en cartons, voir les ruptures, les alertes de seuil, les mouvements par article et valider un inventaire physique correcteur |
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
@@ -76,6 +76,15 @@ mouvements de stock, les creations/modifications de tiers et articles, les
 reglements, les exports, les sauvegardes/restaurations et les changements de
 comptes. Chaque ligne garde la date, l'utilisateur, son role, l'action, l'entite
 concernee et un resume lisible.
+
+## Inventaire physique
+
+Depuis l'onglet **Stock**, les profils autorises peuvent lancer **Inventaire
+physique**. L'ecran affiche le stock theorique de chaque article ; l'utilisateur
+saisit le stock reel compte en pieces. A la validation, Ivoire-Gestion cree un
+document `INV-...`, enregistre chaque ligne comptee, applique automatiquement les
+ecarts par mouvements de stock de type ajustement et laisse une trace dans
+l'audit.
 
 ## Creer un executable Windows installable
 

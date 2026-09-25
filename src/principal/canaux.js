@@ -11,6 +11,7 @@ const fournisseurs = require('../donnees/fournisseurs');
 const achats = require('../donnees/achats');
 const caisse = require('../donnees/caisse');
 const stocks = require('../donnees/stocks');
+const inventaires = require('../donnees/inventaires');
 const tableauDeBord = require('../donnees/tableau-de-bord');
 const benefices = require('../donnees/benefices');
 const audit = require('../donnees/audit');
@@ -122,6 +123,10 @@ function enregistrerCanaux(bd, session) {
   repondre('stock:mouvement', (demande) => stocks.mouvement(bd, { ...demande, utilisateurId: session.utilisateur.id }), droit(P.STOCK_MOUVEMENT,
     (_a, r) => ({ action: 'mouvement', entite: 'stock', entiteId: r.id, resume: r.articleReference + ' ' + r.type + ' ' + r.quantiteLibelle, details: r })));
   repondre('stock:lister', (options) => stocks.lister(bd, options ?? {}), droit(P.STOCK_LIRE));
+  repondre('inventaires:preparer', () => inventaires.preparer(bd), droit(P.INVENTAIRE_GERER));
+  repondre('inventaires:lister', (options) => inventaires.lister(bd, options ?? {}), droit(P.INVENTAIRE_GERER));
+  repondre('inventaires:enregistrer', (donnees) => inventaires.enregistrer(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.INVENTAIRE_GERER,
+    (_a, r) => ({ action: 'inventaire', entite: 'inventaire', entiteId: r.id, resume: r.numero + ' - ' + r.totalLignes + ' ligne(s), ecarts ' + r.totalEcarts + ' piece(s)', details: { numero: r.numero, lignes: r.lignes.length } })));
 
   // --- Clients et creances ---------------------------------------------------
   repondre('clients:lister', (options) => clients.lister(bd, options ?? {}), droit(P.CLIENTS_LIRE));

@@ -513,6 +513,41 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 13,
+    intitule: 'Inventaire physique du stock',
+    appliquer(base) {
+      base.exec(`
+        CREATE TABLE IF NOT EXISTS inventaires (
+          id                INTEGER PRIMARY KEY,
+          numero            TEXT    NOT NULL UNIQUE,
+          date_inventaire   TEXT    NOT NULL,
+          utilisateur_id    INTEGER REFERENCES utilisateurs (id),
+          statut            TEXT    NOT NULL CHECK (statut IN ('applique')),
+          note              TEXT,
+          total_lignes      INTEGER NOT NULL DEFAULT 0,
+          total_ecarts      INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS lignes_inventaire (
+          id              INTEGER PRIMARY KEY,
+          inventaire_id   INTEGER NOT NULL REFERENCES inventaires (id) ON DELETE CASCADE,
+          article_id      INTEGER NOT NULL REFERENCES articles (id),
+          reference       TEXT    NOT NULL,
+          designation     TEXT    NOT NULL,
+          stock_theorique INTEGER NOT NULL CHECK (stock_theorique >= 0),
+          stock_compte    INTEGER NOT NULL CHECK (stock_compte >= 0),
+          ecart           INTEGER NOT NULL,
+          mouvement_id    INTEGER REFERENCES mouvements_stock (id),
+          UNIQUE (inventaire_id, article_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_inventaires_date ON inventaires (date_inventaire DESC);
+        CREATE INDEX IF NOT EXISTS idx_lignes_inventaire_inventaire ON lignes_inventaire (inventaire_id);
+        CREATE INDEX IF NOT EXISTS idx_lignes_inventaire_article ON lignes_inventaire (article_id);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

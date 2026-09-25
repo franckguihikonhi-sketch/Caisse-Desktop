@@ -11,6 +11,11 @@ const Stock = {
     actions.append(
       creer('button', { classe: 'bouton discret', texte: 'Actualiser', sur: { click: () => this.charger() } })
     );
+    if (App.peut('inventaire:gerer')) {
+      actions.append(creer('button', {
+        classe: 'bouton discret espace-gauche', texte: 'Inventaire physique', sur: { click: () => this.inventairePhysique() },
+      }));
+    }
     if (App.peut('articles:gerer')) {
       actions.append(creer('button', {
         classe: 'bouton espace-gauche', texte: 'Nouvel article', sur: { click: () => this.nouvelArticle() },
@@ -30,6 +35,93 @@ const Stock = {
     }
     const cree = await Articles.editer(null);
     if (cree) await this.charger();
+  },
+
+  async inventairePhysique() {
+    if (!App.peut('inventaire:gerer')) {
+      return annoncer('Votre role ne permet pas de valider un inventaire.', 'avertissement');
+    }
+    const articlesInventaire = await appeler(window.caisse.inventaires.preparer());
+    if (articlesInventaire.length === 0) {
+      return annoncer('Aucun article actif a inventorier.', 'avertissement');
+    }
+
+    const resultat = await ouvrirBoite((fermer) => {
+      const recherche = creer('input', { attributs: { type: 'search', placeholder: 'Filtrer les articles a compter', autocomplete: 'off' } });
+      const note = creer('input', { attributs: { type: 'text', placeholder: 'Note inventaire, rayon, equipe...' } });
+      const lignesZone = creer('div', { classe: 'liste-inventaire' });
+      const message = creer('p', { classe: 'message' });
+      const champs = new Map();
+
+      const dessiner = () => {
+        vider(lignesZone);
+        const texte = recherche.value.trim().toLowerCase();
+        const filtres = articlesInventaire.filter((a) => !texte ||
+          [a.reference, a.designation].join(' ').toLowerCase().includes(texte));
+        if (filtres.length === 0) {
+          lignesZone.append(creer('p', { classe: 'vide compacte', texte: 'Aucun article ne correspond au filtre.' }));
+          return;
+        }
+        for (const article of filtres) {
+          let champ = champs.get(article.articleId);
+          if (!champ) {
+            champ = creer('input', {
+              attributs: {
+                type: 'number', min: '0', step: '1', value: String(article.stockTheorique),
+                'data-article-id': String(article.articleId),
+              },
+            });
+            champs.set(article.articleId, champ);
+          }
+          lignesZone.append(creer('div', { classe: 'ligne-inventaire' }, [
+            creer('div', {}, [
+              creer('strong', { texte: article.designation }),
+              creer('span', { classe: 'aide', texte: article.reference + ' — theorique ' + article.stockTheoriqueLibelle }),
+            ]),
+            creer('label', { texte: 'Compte physique (pieces)' }, [champ]),
+          ]));
+        }
+      };
+
+      const valider = async () => {
+        const lignes = articlesInventaire.map((article) => ({
+          articleId: article.articleId,
+          stockCompte: Number(champs.get(article.articleId)?.value ?? article.stockTheorique),
+        }));
+        try {
+          fermer(await appeler(window.caisse.inventaires.enregistrer({ lignes, note: note.value })));
+        } catch (erreur) {
+          afficherMessage(message, erreur.message);
+        }
+      };
+
+      recherche.addEventListener('input', dessiner);
+      dessiner();
+      return creer('div', { classe: 'inventaire-boite' }, [
+        creer('h3', { texte: 'Inventaire physique' }),
+        creer('p', { classe: 'aide', texte: 'Saisissez le stock reel compte en pieces. Les ecarts appliqueront automatiquement des corrections journalisees.' }),
+        message,
+        recherche,
+        note,
+        lignesZone,
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Valider et corriger le stock', sur: { click: valider } }),
+        ]),
+      ]);
+    });
+
+    if (resultat) {
+      await this.charger();
+      await ouvrirBoite((fermer) => creer('div', {}, [
+        creer('h3', { texte: 'Inventaire applique' }),
+        creer('p', { texte: resultat.numero + ' — ' + resultat.totalLignes + ' article(s) comptes.' }),
+        creer('p', { classe: 'aide', texte: resultat.totalEcarts + ' piece(s) d ecart corrigees et tracees dans le stock.' }),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+        ]),
+      ]));
+    }
   },
 
   statut(article) {

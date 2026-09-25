@@ -55,6 +55,11 @@ contextBridge.exposeInMainWorld('caisse', {
     mouvement: appeler('stock:mouvement'),
     lister: appeler('stock:lister'),
   },
+  inventaires: {
+    preparer: appeler('inventaires:preparer'),
+    enregistrer: appeler('inventaires:enregistrer'),
+    lister: appeler('inventaires:lister'),
+  },
   clients: {
     lister: appeler('clients:lister'),
     creer: appeler('clients:creer'),

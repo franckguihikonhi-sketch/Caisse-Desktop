@@ -4514,3 +4514,35 @@ table strong {
   .entete-section { flex-direction: column; }
   .ligne-formulaire { grid-template-columns: 1fr; }
 }
+
+/* Inventaire physique */
+.inventaire-boite {
+  min-width: min(920px, 88vw);
+}
+
+.liste-inventaire {
+  display: grid;
+  gap: 8px;
+  max-height: 52vh;
+  margin: 12px 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ligne-inventaire {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 210px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e2ece6;
+  border-radius: 14px;
+  background: #fbfdfb;
+}
+
+.ligne-inventaire label { margin: 0; }
+
+@media (max-width: 720px) {
+  .inventaire-boite { min-width: 0; }
+  .ligne-inventaire { grid-template-columns: 1fr; }
+}
