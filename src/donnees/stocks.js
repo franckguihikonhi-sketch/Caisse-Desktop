@@ -1,6 +1,7 @@
 'use strict';
 
 const { horodater } = require('../metier/horodatage');
+const { exigerMotif } = require('../metier/motif-obligatoire');
 const conditionnement = require('../metier/conditionnement');
 
 function entier(nom, valeur, { strictementPositif = false, negatifAutorise = false } = {}) {
@@ -108,12 +109,13 @@ function fixerStock(base, { articleId, nouveauStock, motif, reference, utilisate
     const cible = entier('Le stock', nouveauStock);
     const ecart = cible - article.stock;
     if (ecart === 0) return null;
+    const raison = exigerMotif(motif, 'La correction de stock de ' + article.designation);
     return mouvement(base, {
       articleId,
       type: 'ajustement',
       unite: 'piece',
       quantite: ecart,
-      motif: motif || 'Correction de stock',
+      motif: raison,
       reference,
       utilisateurId,
     });

@@ -13,6 +13,7 @@ const impression = require('./impression');
 const configurationBase = require('./configuration-base');
 const sauvegardes = require('./sauvegardes');
 const exportsRapports = require('./exports');
+const { exigerMotif } = require('../metier/motif-obligatoire');
 
 // L'utilisateur connecte est tenu ici, dans le processus principal. Le rendu ne
 // fait que l'afficher : il ne peut ni le fabriquer ni s'attribuer un role.
@@ -290,7 +291,8 @@ function canauxBaseDeDonnees() {
     return resultat;
   }, { permission: P.RAPPORTS_EXPORTS });
 
-  repondreIpc('base:restaurerSauvegarde', async () => {
+  repondreIpc('base:restaurerSauvegarde', async ({ motif } = {}) => {
+    const raison = exigerMotif(motif, 'La restauration de sauvegarde');
     const choix = await dialog.showOpenDialog(fenetre, {
       title: 'Restaurer une sauvegarde Ivoire-Gestion',
       buttonLabel: 'Restaurer cette sauvegarde',
@@ -308,7 +310,8 @@ function canauxBaseDeDonnees() {
       utilisateur: session.utilisateur,
       action: 'restauration',
       entite: 'base',
-      resume: 'Restauration demandee depuis : ' + choix.filePaths[0],
+      resume: 'Restauration demandee depuis : ' + choix.filePaths[0] + ' - ' + raison,
+      details: { motif: raison, source: choix.filePaths[0] },
     });
 
     const resultat = sauvegardes.restaurerDepuis({

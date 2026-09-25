@@ -4,6 +4,7 @@ const { horodater, jourDe } = require('../metier/horodatage');
 const conditionnement = require('../metier/conditionnement');
 const panier = require('../metier/panier');
 const { formater } = require('../metier/monnaie');
+const { exigerMotif } = require('../metier/motif-obligatoire');
 const caisse = require('./caisse');
 const fournisseurs = require('./fournisseurs');
 const stocks = require('./stocks');
@@ -569,7 +570,7 @@ function annulerRetour(base, id, motif = '', utilisateurId = null) {
     const retour = lireRetour(base, id);
     if (!retour) throw new RangeError('Retour fournisseur introuvable.');
     if (retour.statut === 'annule') throw new RangeError('Ce retour fournisseur est deja annule.');
-    const raison = texteOuNull(motif) || 'Annulation retour fournisseur ' + retour.numero;
+    const raison = exigerMotif(motif, 'L annulation du retour fournisseur ' + retour.numero);
 
     for (const ligne of retour.lignes) {
       stocks.mouvement(base, {
@@ -621,7 +622,7 @@ function annuler(base, id, motif = '', utilisateurId = null) {
       );
     }
 
-    const raison = texteOuNull(motif) || 'Annulation achat ' + achat.numero;
+    const raison = exigerMotif(motif, 'L annulation de l achat ' + achat.numero);
     for (const ligne of achat.lignes) {
       stocks.mouvement(base, {
         articleId: ligne.articleId,

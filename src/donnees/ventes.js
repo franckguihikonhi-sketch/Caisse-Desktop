@@ -3,6 +3,7 @@
 const { calculer } = require('../metier/panier');
 const { horodater, jourDe } = require('../metier/horodatage');
 const { arrondirEspeces, rendreMonnaie, formater } = require('../metier/monnaie');
+const { exigerMotif } = require('../metier/motif-obligatoire');
 const conditionnement = require('../metier/conditionnement');
 const articles = require('./articles');
 const clients = require('./clients');
@@ -617,7 +618,7 @@ function annulerRetour(base, id, motif = '', utilisateurId = null) {
     const retour = lireRetour(base, id);
     if (!retour) throw new RangeError('Retour client introuvable.');
     if (retour.statut === 'annule') throw new RangeError('Ce retour client est deja annule.');
-    const raison = String(motif ?? '').trim() || 'Annulation retour client ' + retour.numero;
+    const raison = exigerMotif(motif, 'L annulation du retour client ' + retour.numero);
 
     for (const ligne of retour.lignes) {
       stocks.mouvement(base, {
@@ -764,6 +765,7 @@ function annuler(base, id, motif, utilisateurId = null) {
       throw new RangeError('Cette vente a deja un retour client. Annulez le retour avant d annuler toute la vente.');
     }
 
+    const raison = exigerMotif(motif, 'L annulation de la vente ' + vente.numero);
     for (const l of base.prepare('SELECT * FROM lignes_vente WHERE vente_id = ?').all(id)) {
       if (l.article_id !== null) {
         stocks.mouvement(base, {
@@ -771,7 +773,7 @@ function annuler(base, id, motif, utilisateurId = null) {
           type: 'retour',
           unite: l.unite_vente ?? 'piece',
           quantite: l.quantite,
-          motif: 'Annulation vente ' + vente.numero,
+          motif: 'Annulation vente ' + vente.numero + ' - ' + raison,
           venteId: id,
           utilisateurId,
         });
@@ -786,7 +788,7 @@ function annuler(base, id, motif, utilisateurId = null) {
 
     base
       .prepare('UPDATE ventes SET annulee = 1, annulee_le = ?, motif_annulation = ? WHERE id = ?')
-      .run(horodater(), String(motif ?? '').trim() || null, id);
+      .run(horodater(), raison, id);
     return lire(base, id);
   })();
 }

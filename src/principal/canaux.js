@@ -15,6 +15,7 @@ const inventaires = require('../donnees/inventaires');
 const tableauDeBord = require('../donnees/tableau-de-bord');
 const benefices = require('../donnees/benefices');
 const audit = require('../donnees/audit');
+const { exigerMotif } = require('../metier/motif-obligatoire');
 const { jour } = require('../metier/horodatage');
 
 const P = utilisateurs.PERMISSIONS;
@@ -120,8 +121,11 @@ function enregistrerCanaux(bd, session) {
     (a) => ({ action: 'retrait', entite: 'article', entiteId: a.id, resume: 'Article retire du catalogue' })));
   repondre('articles:attribuerCodeInterne', () => articles.attribuerCodeInterne(bd), droit(P.ARTICLES_GERER));
   repondre('articles:sousLeSeuil', () => articles.sousLeSeuil(bd), droit(P.STOCK_LIRE));
-  repondre('stock:mouvement', (demande) => stocks.mouvement(bd, { ...demande, utilisateurId: session.utilisateur.id }), droit(P.STOCK_MOUVEMENT,
-    (_a, r) => ({ action: 'mouvement', entite: 'stock', entiteId: r.id, resume: r.articleReference + ' ' + r.type + ' ' + r.quantiteLibelle, details: r })));
+  repondre('stock:mouvement', (demande) => {
+    const motif = exigerMotif(demande?.motif, 'Le mouvement de stock manuel');
+    return stocks.mouvement(bd, { ...demande, motif, utilisateurId: session.utilisateur.id });
+  }, droit(P.STOCK_MOUVEMENT,
+    (_a, r) => ({ action: 'mouvement', entite: 'stock', entiteId: r.id, resume: r.articleReference + ' ' + r.type + ' ' + r.quantiteLibelle + ' - ' + r.motif, details: r })));
   repondre('stock:lister', (options) => stocks.lister(bd, options ?? {}), droit(P.STOCK_LIRE));
   repondre('inventaires:preparer', () => inventaires.preparer(bd), droit(P.INVENTAIRE_GERER));
   repondre('inventaires:lister', (options) => inventaires.lister(bd, options ?? {}), droit(P.INVENTAIRE_GERER));

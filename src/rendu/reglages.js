@@ -177,8 +177,27 @@ const Reglages = {
       'Choisir une sauvegarde'
     );
     if (!confirme) return;
+    const motif = await ouvrirBoite((fermer) => {
+      const champ = creer('input', { attributs: { type: 'text', placeholder: 'raison de la restauration', required: 'required' } });
+      const erreur = creer('p', { classe: 'message erreur' });
+      return creer('form', { sur: { submit: (e) => {
+        e.preventDefault();
+        if (!champ.value.trim()) return afficherMessage(erreur, 'Le motif est obligatoire pour l historique.');
+        fermer(champ.value.trim());
+      } } }, [
+        creer('h3', { texte: 'Motif de restauration' }),
+        creer('p', { classe: 'aide', texte: 'Cette action critique sera inscrite dans le journal audit.' }),
+        erreur,
+        creer('label', { texte: 'Motif obligatoire' }, [champ]),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Abandonner', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton danger', texte: 'Continuer', attributs: { type: 'submit' } }),
+        ]),
+      ]);
+    });
+    if (!motif) return;
     try {
-      const resultat = await appeler(window.caisse.base.restaurerSauvegarde());
+      const resultat = await appeler(window.caisse.base.restaurerSauvegarde({ motif }));
       if (resultat.annule) return;
       afficherMessage($('#message-base-reseau'), 'Sauvegarde restauree. Redemarrage en cours...', 'succes');
     } catch (erreur) {

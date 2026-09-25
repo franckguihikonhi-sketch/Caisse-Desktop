@@ -24,7 +24,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
 | **Roles & permissions** | Creer des comptes Administrateur, Gerant, Caissier, Stock/Achats ou Comptable ; chaque ecran et chaque action critique sont verifies cote processus principal |
 | **Audit** | Consulter l'historique horodate des connexions, ventes, annulations, retours, achats, stock, reglements, exports, sauvegardes et changements de comptes |
-| **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
+| **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente avec motif obligatoire, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
 
 Le tableau de bord est pense pour le proprietaire : il separe les ventes du jour
@@ -81,6 +81,13 @@ mouvements de stock, les creations/modifications de tiers et articles, les
 reglements, les exports, les sauvegardes/restaurations et les changements de
 comptes. Chaque ligne garde la date, l'utilisateur, son role, l'action, l'entite
 concernee et un resume lisible.
+
+## Actions critiques securisees
+
+Les annulations de ventes, achats, retours clients/fournisseurs, les corrections
+directes de stock et les restaurations de sauvegarde exigent un motif non vide.
+Le motif est conserve dans la ligne metier concernee et/ou dans le journal audit,
+afin que le proprietaire puisse comprendre qui a fait quoi, quand et pourquoi.
 
 ## Inventaire physique
 

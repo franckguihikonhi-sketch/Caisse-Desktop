@@ -395,11 +395,17 @@ const Journal = {
 
   async annuler(vente) {
     const motif = await ouvrirBoite((fermer) => {
-      const champ = creer('input', { attributs: { type: 'text', placeholder: 'erreur de saisie, retour client...' } });
-      return creer('form', { sur: { submit: (e) => { e.preventDefault(); fermer(champ.value); } } }, [
+      const champ = creer('input', { attributs: { type: 'text', placeholder: 'erreur de saisie, retour client...', required: 'required' } });
+      const erreur = creer('p', { classe: 'message erreur' });
+      return creer('form', { sur: { submit: (e) => {
+        e.preventDefault();
+        if (!champ.value.trim()) return afficherMessage(erreur, 'Le motif est obligatoire pour l historique.');
+        fermer(champ.value.trim());
+      } } }, [
         creer('h3', { texte: 'Annuler la vente ' + vente.numero + ' ?' }),
         creer('p', { texte: 'Les articles retournent en stock. La vente reste au journal, barree.' }),
-        creer('label', { texte: 'Motif' }, [champ]),
+        erreur,
+        creer('label', { texte: 'Motif obligatoire' }, [champ]),
         creer('div', { classe: 'actions' }, [
           creer('button', {
             classe: 'bouton discret', texte: 'Renoncer',
