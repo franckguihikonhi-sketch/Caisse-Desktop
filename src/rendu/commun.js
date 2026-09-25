@@ -7,6 +7,13 @@ const App = {
   utilisateur: null,
   boutique: null,
   parametres: {},
+  roles: [],
+  peut(permission) {
+    return Boolean(this.utilisateur?.permissions?.includes(permission));
+  },
+  peutUn(permissions) {
+    return permissions.some((permission) => this.peut(permission));
+  },
 };
 
 const $ = (selecteur) => document.querySelector(selecteur);

@@ -477,6 +477,17 @@ const MIGRATIONS = [
       `);
     },
   },
+  {
+    version: 11,
+    intitule: 'Profils de permissions utilisateurs',
+    appliquer(base) {
+      base.exec(`
+        ALTER TABLE utilisateurs ADD COLUMN profil TEXT;
+        UPDATE utilisateurs SET profil = role WHERE profil IS NULL;
+        CREATE INDEX IF NOT EXISTS idx_utilisateurs_profil ON utilisateurs (profil);
+      `);
+    },
+  },
 ];
 
 /** Amene la base au dernier palier et rend le nombre d'etapes appliquees. */

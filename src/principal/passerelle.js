@@ -91,6 +91,7 @@ contextBridge.exposeInMainWorld('caisse', {
     annulerRetour: appeler('ventes:annulerRetour'),
   },
   utilisateurs: {
+    roles: appeler('utilisateurs:roles'),
     lister: appeler('utilisateurs:lister'),
     creer: appeler('utilisateurs:creer'),
     motDePasse: appeler('utilisateurs:motDePasse'),

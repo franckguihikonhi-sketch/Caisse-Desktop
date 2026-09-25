@@ -42,16 +42,16 @@
   <aside class="barre-laterale">
     <div class="marque">Ivoire-Gestion<small id="nom-boutique"></small></div>
     <nav class="navigation">
-      <button data-vue="tableauBord" class="actif">Tableau de bord</button>
-      <button data-vue="vente">Vente</button>
-      <button data-vue="achats" data-admin>Achats</button>
-      <button data-vue="benefices" data-admin>Benefices</button>
-      <button data-vue="stock">Stock</button>
-      <button data-vue="articles">Articles</button>
-      <button data-vue="clients">Clients & credits</button>
-      <button data-vue="fournisseurs" data-admin>Fournisseurs</button>
-      <button data-vue="journal">Caisse</button>
-      <button data-vue="reglages" data-admin>Reglages</button>
+      <button data-vue="tableauBord" data-permission="dashboard:lire" class="actif">Tableau de bord</button>
+      <button data-vue="vente" data-permission="vente:encaisser">Vente</button>
+      <button data-vue="achats" data-permission="achats:lire">Achats</button>
+      <button data-vue="benefices" data-permission="rapports:benefices">Benefices</button>
+      <button data-vue="stock" data-permission="stock:lire">Stock</button>
+      <button data-vue="articles" data-permission="articles:lire">Articles</button>
+      <button data-vue="clients" data-permission="clients:lire">Clients & credits</button>
+      <button data-vue="fournisseurs" data-permission="fournisseurs:lire">Fournisseurs</button>
+      <button data-vue="journal" data-permission="caisse:journal">Caisse</button>
+      <button data-vue="reglages" data-permission-any="parametres:gerer,utilisateurs:gerer,base:gerer,rapports:exports">Reglages</button>
     </nav>
     <div class="pied-laterale">
       <div class="nom" id="nom-utilisateur"></div>

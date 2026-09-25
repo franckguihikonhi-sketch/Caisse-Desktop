@@ -15,6 +15,8 @@ const tableauDeBord = require('../donnees/tableau-de-bord');
 const benefices = require('../donnees/benefices');
 const { jour } = require('../metier/horodatage');
 
+const P = utilisateurs.PERMISSIONS;
+
 /**
  * Le processus de rendu n'a pas acces a la base : il passe par ces canaux.
  * Chacun rend {ok: true, valeur} ou {ok: false, erreur}, de sorte qu'une erreur
@@ -23,15 +25,13 @@ const { jour } = require('../metier/horodatage');
  * se declarer administrateur.
  */
 function enregistrerCanaux(bd, session) {
-  const repondre = (nom, traitement, { exigeSession = true, exigeAdmin = false } = {}) => {
+  const repondre = (nom, traitement, { exigeSession = true, permission = null } = {}) => {
     ipcMain.handle(nom, async (_evenement, argument) => {
       try {
         if (exigeSession && !session.utilisateur) {
           throw new Error('Aucune session ouverte.');
         }
-        if (exigeAdmin && session.utilisateur.role !== 'administrateur') {
-          throw new Error("Cette action est reservee a l'administrateur.");
-        }
+        if (permission) utilisateurs.exigerPermission(session.utilisateur, permission);
         return { ok: true, valeur: await traitement(argument) };
       } catch (erreur) {
         return { ok: false, erreur: erreur.message };
@@ -40,13 +40,14 @@ function enregistrerCanaux(bd, session) {
   };
 
   const libre = { exigeSession: false };
-  const admin = { exigeAdmin: true };
+  const droit = (permission) => ({ permission });
 
   // --- Session ---------------------------------------------------------------
   repondre('session:etat', () => ({
     premiereOuverture: utilisateurs.aucunCompte(bd),
     utilisateur: session.utilisateur,
     boutique: base.boutique(bd),
+    roles: utilisateurs.rolesDisponibles(),
   }), libre);
 
   repondre('session:creerAdministrateur', (donnees) => {
@@ -71,31 +72,31 @@ function enregistrerCanaux(bd, session) {
   }, libre);
 
   // --- Tableau de bord et caisse --------------------------------------------
-  repondre('tableauDeBord:lire', (options) => tableauDeBord.lire(bd, options ?? {}));
-  repondre('benefices:lister', (options) => benefices.lister(bd, options ?? {}), admin);
-  repondre('caisse:etat', () => caisse.etat(bd));
-  repondre('caisse:ouvrir', (donnees) => caisse.ouvrir(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
-  repondre('caisse:fermer', (donnees) => caisse.fermer(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
-  repondre('caisse:sessions', (options) => caisse.lister(bd, options ?? {}), admin);
+  repondre('tableauDeBord:lire', (options) => tableauDeBord.lire(bd, options ?? {}), droit(P.DASHBOARD_LIRE));
+  repondre('benefices:lister', (options) => benefices.lister(bd, options ?? {}), droit(P.RAPPORTS_BENEFICES));
+  repondre('caisse:etat', () => caisse.etat(bd), droit(P.CAISSE_JOURNAL));
+  repondre('caisse:ouvrir', (donnees) => caisse.ouvrir(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.CAISSE_GERER));
+  repondre('caisse:fermer', (donnees) => caisse.fermer(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.CAISSE_GERER));
+  repondre('caisse:sessions', (options) => caisse.lister(bd, options ?? {}), droit(P.CAISSE_JOURNAL));
 
   // --- Articles --------------------------------------------------------------
-  repondre('articles:lister', (options) => articles.lister(bd, options ?? {}));
-  repondre('articles:chercher', ({ texte, options }) => articles.chercher(bd, texte, options));
-  repondre('articles:parCodeBarres', ({ code }) => articles.lireParCodeBarres(bd, code));
-  repondre('articles:creer', (article) => articles.creer(bd, article), admin);
-  repondre('articles:modifier', ({ id, article }) => articles.modifier(bd, id, article), admin);
-  repondre('articles:retirer', ({ id }) => articles.retirer(bd, id), admin);
-  repondre('articles:attribuerCodeInterne', () => articles.attribuerCodeInterne(bd), admin);
-  repondre('articles:sousLeSeuil', () => articles.sousLeSeuil(bd));
-  repondre('stock:mouvement', (demande) => stocks.mouvement(bd, { ...demande, utilisateurId: session.utilisateur.id }), admin);
-  repondre('stock:lister', (options) => stocks.lister(bd, options ?? {}));
+  repondre('articles:lister', (options) => articles.lister(bd, options ?? {}), droit(P.ARTICLES_LIRE));
+  repondre('articles:chercher', ({ texte, options }) => articles.chercher(bd, texte, options), droit(P.ARTICLES_LIRE));
+  repondre('articles:parCodeBarres', ({ code }) => articles.lireParCodeBarres(bd, code), droit(P.ARTICLES_LIRE));
+  repondre('articles:creer', (article) => articles.creer(bd, article), droit(P.ARTICLES_GERER));
+  repondre('articles:modifier', ({ id, article }) => articles.modifier(bd, id, article), droit(P.ARTICLES_GERER));
+  repondre('articles:retirer', ({ id }) => articles.retirer(bd, id), droit(P.ARTICLES_GERER));
+  repondre('articles:attribuerCodeInterne', () => articles.attribuerCodeInterne(bd), droit(P.ARTICLES_GERER));
+  repondre('articles:sousLeSeuil', () => articles.sousLeSeuil(bd), droit(P.STOCK_LIRE));
+  repondre('stock:mouvement', (demande) => stocks.mouvement(bd, { ...demande, utilisateurId: session.utilisateur.id }), droit(P.STOCK_MOUVEMENT));
+  repondre('stock:lister', (options) => stocks.lister(bd, options ?? {}), droit(P.STOCK_LIRE));
 
   // --- Clients et creances ---------------------------------------------------
-  repondre('clients:lister', (options) => clients.lister(bd, options ?? {}));
-  repondre('clients:creer', (donnees) => clients.creer(bd, donnees), admin);
-  repondre('clients:modifier', ({ id, client }) => clients.modifier(bd, id, client), admin);
-  repondre('clients:retirer', ({ id }) => clients.retirer(bd, id), admin);
-  repondre('clients:creances', (options) => clients.listerCreances(bd, options ?? {}));
+  repondre('clients:lister', (options) => clients.lister(bd, options ?? {}), droit(P.CLIENTS_LIRE));
+  repondre('clients:creer', (donnees) => clients.creer(bd, donnees), droit(P.CLIENTS_GERER));
+  repondre('clients:modifier', ({ id, client }) => clients.modifier(bd, id, client), droit(P.CLIENTS_GERER));
+  repondre('clients:retirer', ({ id }) => clients.retirer(bd, id), droit(P.CLIENTS_GERER));
+  repondre('clients:creances', (options) => clients.listerCreances(bd, options ?? {}), droit(P.CLIENTS_LIRE));
   repondre('clients:creance', ({ id }) => {
     const creance = clients.lireCreance(bd, id);
     if (!creance) throw new Error('Creance client introuvable.');
@@ -104,55 +105,54 @@ function enregistrerCanaux(bd, session) {
       vente: creance.venteId ? ventes.lire(bd, creance.venteId) : null,
       reglements: clients.listerReglements(bd, creance.id),
     };
-  });
-  repondre('clients:creanceAnterieure', (donnees) => clients.creerCreanceAnterieure(bd, donnees), admin);
+  }, droit(P.CLIENTS_LIRE));
+  repondre('clients:creanceAnterieure', (donnees) => clients.creerCreanceAnterieure(bd, donnees), droit(P.CLIENTS_GERER));
   repondre('clients:regler', (donnees) =>
-    clients.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }));
+    clients.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.CLIENTS_REGLER));
 
   // --- Fournisseurs et dettes ------------------------------------------------
-  repondre('fournisseurs:lister', (options) => fournisseurs.lister(bd, options ?? {}));
-  repondre('fournisseurs:creer', (donnees) => fournisseurs.creer(bd, donnees), admin);
-  repondre('fournisseurs:modifier', ({ id, fournisseur }) => fournisseurs.modifier(bd, id, fournisseur), admin);
-  repondre('fournisseurs:retirer', ({ id }) => fournisseurs.retirer(bd, id), admin);
-  repondre('fournisseurs:dettes', (options) => fournisseurs.listerDettes(bd, options ?? {}));
-  repondre('fournisseurs:detteAnterieure', (donnees) => fournisseurs.creerDetteAnterieure(bd, donnees), admin);
+  repondre('fournisseurs:lister', (options) => fournisseurs.lister(bd, options ?? {}), droit(P.FOURNISSEURS_LIRE));
+  repondre('fournisseurs:creer', (donnees) => fournisseurs.creer(bd, donnees), droit(P.FOURNISSEURS_GERER));
+  repondre('fournisseurs:modifier', ({ id, fournisseur }) => fournisseurs.modifier(bd, id, fournisseur), droit(P.FOURNISSEURS_GERER));
+  repondre('fournisseurs:retirer', ({ id }) => fournisseurs.retirer(bd, id), droit(P.FOURNISSEURS_GERER));
+  repondre('fournisseurs:dettes', (options) => fournisseurs.listerDettes(bd, options ?? {}), droit(P.FOURNISSEURS_LIRE));
+  repondre('fournisseurs:detteAnterieure', (donnees) => fournisseurs.creerDetteAnterieure(bd, donnees), droit(P.FOURNISSEURS_GERER));
   repondre('fournisseurs:regler', (donnees) =>
-    fournisseurs.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
+    fournisseurs.enregistrerReglement(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.FOURNISSEURS_REGLER));
 
   // --- Achats marchandises ---------------------------------------------------
   repondre('achats:enregistrer', (donnees) =>
-    achats.enregistrer(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
-  repondre('achats:lister', (options) => achats.lister(bd, options ?? {}), admin);
-  repondre('achats:lire', ({ id }) => achats.lire(bd, id), admin);
-  repondre('achats:annuler', ({ id, motif }) => achats.annuler(bd, id, motif, session.utilisateur.id), admin);
+    achats.enregistrer(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.ACHATS_GERER));
+  repondre('achats:lister', (options) => achats.lister(bd, options ?? {}), droit(P.ACHATS_LIRE));
+  repondre('achats:lire', ({ id }) => achats.lire(bd, id), droit(P.ACHATS_LIRE));
+  repondre('achats:annuler', ({ id, motif }) => achats.annuler(bd, id, motif, session.utilisateur.id), droit(P.ACHATS_GERER));
   repondre('achats:retourner', (donnees) =>
-    achats.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
-  repondre('achats:retours', (options) => achats.listerRetours(bd, options ?? {}), admin);
-  repondre('achats:annulerRetour', ({ id, motif }) => achats.annulerRetour(bd, id, motif, session.utilisateur.id), admin);
+    achats.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.ACHATS_GERER));
+  repondre('achats:retours', (options) => achats.listerRetours(bd, options ?? {}), droit(P.ACHATS_LIRE));
+  repondre('achats:annulerRetour', ({ id, motif }) => achats.annulerRetour(bd, id, motif, session.utilisateur.id), droit(P.ACHATS_GERER));
 
   // --- Ventes ----------------------------------------------------------------
   repondre('ventes:enregistrer', (commande) =>
     ventes.lire(bd, ventes.enregistrer(bd, {
       ...commande,
       utilisateurId: session.utilisateur.id,
-    }).id));
-  repondre('ventes:lire', ({ id }) => ventes.lire(bd, id));
-  repondre('ventes:journal', ({ jour: j } = {}) => ventes.journal(bd, j ?? jour()));
-  repondre('ventes:cloture', ({ jour: j } = {}) => ventes.cloture(bd, j ?? jour()));
-  repondre('ventes:annuler', ({ id, motif }) => ventes.annuler(bd, id, motif, session.utilisateur.id), admin);
+    }).id), droit(P.VENTE_ENCAISSER));
+  repondre('ventes:lire', ({ id }) => ventes.lire(bd, id), droit(P.VENTE_LIRE));
+  repondre('ventes:journal', ({ jour: j } = {}) => ventes.journal(bd, j ?? jour()), droit(P.CAISSE_JOURNAL));
+  repondre('ventes:cloture', ({ jour: j } = {}) => ventes.cloture(bd, j ?? jour()), droit(P.CAISSE_JOURNAL));
+  repondre('ventes:annuler', ({ id, motif }) => ventes.annuler(bd, id, motif, session.utilisateur.id), droit(P.VENTE_ANNULER));
   repondre('ventes:retourner', (donnees) =>
-    ventes.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), admin);
-  repondre('ventes:retours', (options) => ventes.listerRetours(bd, options ?? {}), admin);
-  repondre('ventes:annulerRetour', ({ id, motif }) => ventes.annulerRetour(bd, id, motif, session.utilisateur.id), admin);
+    ventes.retourner(bd, { ...donnees, utilisateurId: session.utilisateur.id }), droit(P.VENTE_RETOUR));
+  repondre('ventes:retours', (options) => ventes.listerRetours(bd, options ?? {}), droit(P.VENTE_RETOUR));
+  repondre('ventes:annulerRetour', ({ id, motif }) => ventes.annulerRetour(bd, id, motif, session.utilisateur.id), droit(P.VENTE_RETOUR));
 
   // --- Utilisateurs ----------------------------------------------------------
-  repondre('utilisateurs:lister', () => utilisateurs.lister(bd), admin);
-  repondre('utilisateurs:creer', (donnees) => utilisateurs.creer(bd, donnees), admin);
+  repondre('utilisateurs:roles', () => utilisateurs.rolesDisponibles(), droit(P.UTILISATEURS_GERER));
+  repondre('utilisateurs:lister', () => utilisateurs.lister(bd), droit(P.UTILISATEURS_GERER));
+  repondre('utilisateurs:creer', (donnees) => utilisateurs.creer(bd, donnees), droit(P.UTILISATEURS_GERER));
   repondre('utilisateurs:motDePasse', ({ id, motDePasse }) => {
-    // Chacun peut changer le sien ; changer celui d'autrui demande le role admin.
-    if (id !== session.utilisateur.id && session.utilisateur.role !== 'administrateur') {
-      throw new Error("Cette action est reservee a l'administrateur.");
-    }
+    // Chacun peut changer le sien ; changer celui d'autrui demande la permission comptes.
+    if (id !== session.utilisateur.id) utilisateurs.exigerPermission(session.utilisateur, P.UTILISATEURS_GERER);
     utilisateurs.changerMotDePasse(bd, id, motDePasse);
     return true;
   });
@@ -162,14 +162,14 @@ function enregistrerCanaux(bd, session) {
     }
     utilisateurs.activer(bd, id, actif);
     return true;
-  }, admin);
+  }, droit(P.UTILISATEURS_GERER));
 
   // --- Parametres ------------------------------------------------------------
   repondre('parametres:lire', () => base.lireParametres(bd));
   repondre('parametres:ecrire', (valeurs) => {
     base.ecrireParametres(bd, valeurs);
     return base.lireParametres(bd);
-  }, admin);
+  }, droit(P.PARAMETRES_GERER));
 }
 
 module.exports = { enregistrerCanaux };

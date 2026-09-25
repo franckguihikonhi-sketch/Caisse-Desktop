@@ -4,19 +4,41 @@
    Ecran reserve a l'administrateur. */
 
 const Reglages = {
+  roles: [],
+
   async activer() {
     vider($('#actions-vue'));
     App.parametres = await appeler(window.caisse.parametres.lire());
 
     const formulaire = $('#formulaire-boutique');
+    formulaire.hidden = !App.peut('parametres:gerer');
     for (const champ of formulaire.querySelectorAll('input[name]')) {
       champ.value = App.parametres[champ.name] ?? '';
     }
-    await this.chargerComptes();
+
+    const panneauComptes = $('#corps-utilisateurs').closest('.panneau');
+    panneauComptes.hidden = !App.peut('utilisateurs:gerer');
+    if (App.peut('utilisateurs:gerer')) {
+      this.roles = await appeler(window.caisse.utilisateurs.roles());
+      await this.chargerComptes();
+    }
+
     await this.chargerBase();
   },
 
   async chargerBase() {
+    const panneau = $('.panneau-base-reseau');
+    const peutBase = App.peut('base:gerer');
+    const peutExport = App.peut('rapports:exports');
+    panneau.hidden = !peutBase && !peutExport;
+    if (panneau.hidden) return;
+
+    $('#bouton-sauvegarder-base').hidden = !peutBase;
+    $('#bouton-restaurer-base').hidden = !peutBase;
+    $('#bouton-choisir-base-reseau').hidden = !peutBase;
+    $('#bouton-base-locale').hidden = !peutBase;
+    $('#bouton-exporter-csv').hidden = !peutExport;
+
     const infos = await appeler(window.caisse.base.infos());
     const bloc = $('#infos-base-donnees');
     vider(bloc);
@@ -31,8 +53,17 @@ const Reglages = {
       ])
     );
 
-    const sauvegardes = await appeler(window.caisse.base.sauvegardes());
-    this.afficherSauvegardes(sauvegardes);
+    if (peutBase) {
+      const sauvegardes = await appeler(window.caisse.base.sauvegardes());
+      this.afficherSauvegardes(sauvegardes);
+    } else {
+      const blocSauvegardes = $('#infos-sauvegardes');
+      vider(blocSauvegardes);
+      blocSauvegardes.append(creer('p', {
+        classe: 'aide',
+        texte: 'Votre role autorise les exports, pas la sauvegarde/restauration de la base.',
+      }));
+    }
   },
 
   afficherSauvegardes(donnees) {
@@ -203,7 +234,7 @@ const Reglages = {
       corps.append(creer('tr', { classe: compte.actif ? '' : 'annulee' }, [
         creer('td', { texte: compte.nom }),
         creer('td', { texte: compte.identifiant }),
-        creer('td', { texte: compte.role }),
+        creer('td', { texte: compte.roleLibelle || compte.role }),
         actions,
       ]));
     }
@@ -214,10 +245,9 @@ const Reglages = {
       const nom = creer('input', { attributs: { type: 'text', required: 'required' } });
       const identifiant = creer('input', { attributs: { type: 'text', required: 'required', autocomplete: 'off' } });
       const motDePasse = creer('input', { attributs: { type: 'password', required: 'required', minlength: '3' } });
-      const role = creer('select', {}, [
-        creer('option', { texte: 'caissier', attributs: { value: 'caissier' } }),
-        creer('option', { texte: 'administrateur', attributs: { value: 'administrateur' } }),
-      ]);
+      const role = creer('select', {}, this.roles.map((r) =>
+        creer('option', { texte: r.libelle, attributs: { value: r.code } })
+      ));
       const erreur = creer('p', { classe: 'message erreur' });
 
       return creer('form', {

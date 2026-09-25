@@ -5,6 +5,7 @@ const path = require('node:path');
 const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron');
 
 const { ouvrir, boutique } = require('../donnees/base');
+const utilisateurs = require('../donnees/utilisateurs');
 const ventes = require('../donnees/ventes');
 const { enregistrerCanaux } = require('./canaux');
 const impression = require('./impression');
@@ -111,13 +112,11 @@ function creerFenetre() {
   fenetre.on('closed', () => { fenetre = null; });
 }
 
-function repondreIpc(nom, traitement, { exigeSession = true, exigeAdmin = false } = {}) {
+function repondreIpc(nom, traitement, { exigeSession = true, permission = null } = {}) {
   ipcMain.handle(nom, async (_evenement, argument) => {
     try {
       if (exigeSession && !session.utilisateur) throw new Error('Aucune session ouverte.');
-      if (exigeAdmin && session.utilisateur.role !== 'administrateur') {
-        throw new Error("Cette action est reservee a l'administrateur.");
-      }
+      if (permission) utilisateurs.exigerPermission(session.utilisateur, permission);
       return { ok: true, valeur: await traitement(argument) };
     } catch (erreur) {
       return { ok: false, erreur: erreur.message };
@@ -126,16 +125,17 @@ function repondreIpc(nom, traitement, { exigeSession = true, exigeAdmin = false 
 }
 
 function canauxImpression() {
-  const repondre = (nom, traitement) => repondreIpc(nom, traitement);
+  const P = utilisateurs.PERMISSIONS;
+  const repondre = (nom, traitement, permission = null) => repondreIpc(nom, traitement, { permission });
 
   repondre('ticket:imprimer', async ({ id }) => {
     const vente = ventes.lire(bd, id);
     if (!vente) throw new Error('Vente introuvable.');
     return impression.imprimer(vente, boutique(bd));
-  });
+  }, P.VENTE_LIRE);
 
   repondre('etiquettes:imprimer', async (demande) =>
-    impression.imprimerEtiquettes({ ...demande, boutique: boutique(bd) }));
+    impression.imprimerEtiquettes({ ...demande, boutique: boutique(bd) }), P.ARTICLES_LIRE);
 
   repondre('etiquettes:pdf', async (demande) => {
     const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'etiquettes');
@@ -144,7 +144,7 @@ function canauxImpression() {
     );
     shell.showItemInFolder(resultat.chemin);
     return resultat;
-  });
+  }, P.ARTICLES_LIRE);
 
   repondre('ticket:pdf', async ({ id }) => {
     const vente = ventes.lire(bd, id);
@@ -153,7 +153,7 @@ function canauxImpression() {
     const chemin = await impression.exporterPdf(vente, boutique(bd), dossier);
     shell.showItemInFolder(chemin);
     return chemin;
-  });
+  }, P.VENTE_LIRE);
 
   repondre('ticket:facturePdf', async ({ id }) => {
     const vente = ventes.lire(bd, id);
@@ -162,10 +162,11 @@ function canauxImpression() {
     const chemin = await impression.exporterFactureVentePdf(vente, boutique(bd), dossier);
     shell.showItemInFolder(chemin);
     return chemin;
-  });
+  }, P.VENTE_LIRE);
 }
 
 function canauxBaseDeDonnees() {
+  const P = utilisateurs.PERMISSIONS;
   repondreIpc('base:infos', () => configurationBase.decrireBase(baseActive));
 
   repondreIpc('base:choisirDossier', async () => {
@@ -200,7 +201,7 @@ function canauxBaseDeDonnees() {
       dossier,
       mode: 'reseau',
     };
-  }, { exigeAdmin: true });
+  }, { permission: P.BASE_GERER });
 
   repondreIpc('base:retablirLocale', async () => {
     configurationBase.supprimerConfiguration(configurationBase.cheminConfiguration(app));
@@ -209,7 +210,7 @@ function canauxBaseDeDonnees() {
       chemin: configurationBase.cheminBaseLocale(app),
       mode: 'local',
     };
-  }, { exigeAdmin: true });
+  }, { permission: P.BASE_GERER });
 
   repondreIpc('base:sauvegardes', () => ({
     automatique: derniereSauvegardeAuto,
@@ -217,7 +218,7 @@ function canauxBaseDeDonnees() {
     dossierManuel: dossierSauvegardes(),
     fichiersAutomatiques: sauvegardes.lister(dossierSauvegardesAuto()),
     fichiersManuels: sauvegardes.lister(dossierSauvegardes()),
-  }), { exigeAdmin: true });
+  }), { permission: P.BASE_GERER });
 
   repondreIpc('base:sauvegarder', async () => {
     const dossier = dossierSauvegardes();
@@ -235,14 +236,14 @@ function canauxBaseDeDonnees() {
     const chemin = sauvegarderBaseVers(choix.filePath);
     shell.showItemInFolder(chemin);
     return { annule: false, chemin, date: new Date().toISOString() };
-  }, { exigeAdmin: true });
+  }, { permission: P.BASE_GERER });
 
   repondreIpc('exports:csv', async () => {
     const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'exports');
     const resultat = exportsRapports.exporterCsv(bd, dossier);
     shell.showItemInFolder(resultat.dossier);
     return resultat;
-  }, { exigeAdmin: true });
+  }, { permission: P.RAPPORTS_EXPORTS });
 
   repondreIpc('base:restaurerSauvegarde', async () => {
     const choix = await dialog.showOpenDialog(fenetre, {
@@ -273,13 +274,13 @@ function canauxBaseDeDonnees() {
     app.relaunch();
     app.exit(0);
     return { annule: false, redemarrageNecessaire: true, ...resultat };
-  }, { exigeAdmin: true });
+  }, { permission: P.BASE_GERER });
 
   repondreIpc('base:redemarrer', async () => {
     app.relaunch();
     app.exit(0);
     return true;
-  }, { exigeAdmin: true });
+  }, { permission: P.BASE_GERER });
 }
 
 app.whenReady().then(() => {

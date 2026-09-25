@@ -7,10 +7,12 @@ const Fournisseurs = {
   async activer() {
     const actions = $('#actions-vue');
     vider(actions);
-    actions.append(
-      creer('button', { classe: 'bouton', texte: 'Nouveau fournisseur', sur: { click: () => this.editer(null) } }),
-      creer('button', { classe: 'bouton discret espace-gauche', texte: 'Dette anterieure', sur: { click: () => this.detteAnterieure() } })
-    );
+    if (App.peut('fournisseurs:gerer')) {
+      actions.append(
+        creer('button', { classe: 'bouton', texte: 'Nouveau fournisseur', sur: { click: () => this.editer(null) } }),
+        creer('button', { classe: 'bouton discret espace-gauche', texte: 'Dette anterieure', sur: { click: () => this.detteAnterieure() } })
+      );
+    }
     await this.charger();
   },
 
@@ -32,11 +34,15 @@ const Fournisseurs = {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucun fournisseur.', attributs: { colspan: '5' } })]));
       return;
     }
+    const peutGerer = App.peut('fournisseurs:gerer');
     for (const fournisseur of this.liste) {
-      const actions = creer('td', { classe: 'nombre' }, [
-        creer('button', { classe: 'bouton discret', texte: 'Dette', sur: { click: () => this.detteAnterieure(fournisseur) } }),
-        creer('button', { classe: 'bouton discret espace-gauche', texte: 'Modifier', sur: { click: () => this.editer(fournisseur) } }),
-      ]);
+      const actions = creer('td', { classe: 'nombre' });
+      if (peutGerer) {
+        actions.append(
+          creer('button', { classe: 'bouton discret', texte: 'Dette', sur: { click: () => this.detteAnterieure(fournisseur) } }),
+          creer('button', { classe: 'bouton discret espace-gauche', texte: 'Modifier', sur: { click: () => this.editer(fournisseur) } })
+        );
+      }
       corps.append(creer('tr', {}, [
         creer('td', { texte: fournisseur.code }),
         creer('td', { texte: fournisseur.nom }),
@@ -54,10 +60,12 @@ const Fournisseurs = {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: 'Aucune dette fournisseur ouverte.', attributs: { colspan: '5' } })]));
       return;
     }
+    const peutRegler = App.peut('fournisseurs:regler');
     for (const d of this.dettes) {
-      const actions = creer('td', { classe: 'nombre' }, [
-        creer('button', { classe: 'bouton discret', texte: 'Payer', sur: { click: () => this.regler(d) } }),
-      ]);
+      const actions = creer('td', { classe: 'nombre' });
+      if (peutRegler) {
+        actions.append(creer('button', { classe: 'bouton discret', texte: 'Payer', sur: { click: () => this.regler(d) } }));
+      }
       corps.append(creer('tr', { classe: d.statut === 'partielle' ? 'partiel' : '' }, [
         creer('td', { texte: d.numero }),
         creer('td', { texte: d.fournisseurNom }),
@@ -69,6 +77,10 @@ const Fournisseurs = {
   },
 
   async editer(fournisseur) {
+    if (!App.peut('fournisseurs:gerer')) {
+      annoncer('Votre role ne permet pas de modifier les fournisseurs.', 'avertissement');
+      return null;
+    }
     const sauve = await ouvrirBoite((fermer) => {
       const champ = (nom, etiquette, attributs = {}) => {
         const entree = creer('input', { attributs: { name: nom, ...attributs } });
@@ -123,18 +135,23 @@ const Fournisseurs = {
           creer('span', { texte: f.code + ' - a payer ' + formater(f.solde) }),
         ]));
       }
+      const actions = [creer('button', { classe: 'bouton discret', texte: 'Annuler', sur: { click: () => fermer(null) } })];
+      if (App.peut('fournisseurs:gerer')) {
+        actions.push(creer('button', { classe: 'bouton', texte: 'Nouveau', sur: { click: async () => fermer(await this.editer(null)) } }));
+      }
       return creer('div', {}, [
         creer('h3', { texte: 'Choisir le fournisseur' }),
         liste,
-        creer('div', { classe: 'actions' }, [
-          creer('button', { classe: 'bouton discret', texte: 'Annuler', sur: { click: () => fermer(null) } }),
-          creer('button', { classe: 'bouton', texte: 'Nouveau', sur: { click: async () => fermer(await this.editer(null)) } }),
-        ]),
+        creer('div', { classe: 'actions' }, actions),
       ]);
     });
   },
 
   async detteAnterieure(fournisseur = null) {
+    if (!App.peut('fournisseurs:gerer')) {
+      annoncer('Votre role ne permet pas de creer une dette fournisseur.', 'avertissement');
+      return null;
+    }
     if (!fournisseur) fournisseur = await this.choisir();
     if (!fournisseur) return null;
     const dette = await ouvrirBoite((fermer) => {
@@ -176,6 +193,10 @@ const Fournisseurs = {
   },
 
   async regler(dette) {
+    if (!App.peut('fournisseurs:regler')) {
+      annoncer('Votre role ne permet pas de regler une dette fournisseur.', 'avertissement');
+      return;
+    }
     const paye = await ouvrirBoite((fermer) => {
       const montant = creer('input', { attributs: { type: 'number', min: '1', max: String(dette.solde), step: '1', value: String(dette.solde), required: 'required' } });
       const mode = creer('select', {}, [

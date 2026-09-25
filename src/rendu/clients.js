@@ -10,7 +10,7 @@ const Clients = {
   async activer() {
     const actions = $('#actions-vue');
     vider(actions);
-    if (App.utilisateur.role === 'administrateur') {
+    if (App.peut('clients:gerer')) {
       actions.append(
         creer('button', { classe: 'bouton', texte: 'Nouveau client', sur: { click: () => this.editer(null) } }),
         creer('button', { classe: 'bouton discret espace-gauche', texte: 'Creance anterieure', sur: { click: () => this.creanceAnterieure() } })
@@ -140,12 +140,14 @@ const Clients = {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: this.liste.length === 0 ? 'Aucun client.' : 'Aucun client ne correspond a la recherche.', attributs: { colspan: '5' } })]));
       return;
     }
-    const admin = App.utilisateur.role === 'administrateur';
+    const peutGerer = App.peut('clients:gerer');
     for (const client of clients) {
       const actions = creer('td', { classe: 'actions-ligne' });
-      actions.append(creer('button', { classe: 'bouton discret bouton-mini bouton-credit', texte: 'Credit', sur: { click: () => this.creanceAnterieure(client) } }));
-      if (admin) {
-        actions.append(creer('button', { classe: 'bouton discret bouton-mini', texte: 'Modifier', sur: { click: () => this.editer(client) } }));
+      if (peutGerer) {
+        actions.append(
+          creer('button', { classe: 'bouton discret bouton-mini bouton-credit', texte: 'Credit', sur: { click: () => this.creanceAnterieure(client) } }),
+          creer('button', { classe: 'bouton discret bouton-mini', texte: 'Modifier', sur: { click: () => this.editer(client) } })
+        );
       }
       const statut = client.solde > 0 ? 'debiteur' : 'a-jour';
       corps.append(creer('tr', { classe: 'client-row ' + statut }, [
@@ -176,11 +178,14 @@ const Clients = {
       corps.append(creer('tr', {}, [creer('td', { classe: 'vide', texte: this.creances.length === 0 ? 'Aucune creance ouverte.' : 'Aucune facture ne correspond aux filtres.', attributs: { colspan: '5' } })]));
       return;
     }
+    const peutRegler = App.peut('clients:regler');
     for (const c of creances) {
       const actions = creer('td', { classe: 'actions-ligne' }, [
         creer('button', { classe: 'bouton discret bouton-mini bouton-detail', texte: 'Details', sur: { click: () => this.detailsCreance(c) } }),
-        creer('button', { classe: 'bouton discret bouton-mini bouton-regler', texte: 'Regler', sur: { click: () => this.regler(c) } }),
       ]);
+      if (peutRegler) {
+        actions.append(creer('button', { classe: 'bouton discret bouton-mini bouton-regler', texte: 'Regler', sur: { click: () => this.regler(c) } }));
+      }
       const libelle = c.libelle + (c.anterieure ? ' (anterieure)' : '');
       corps.append(creer('tr', {
         classe: 'creance-row ' + (c.statut === 'partielle' ? 'partiel' : 'ouverte'),
@@ -199,6 +204,10 @@ const Clients = {
   },
 
   async editer(client) {
+    if (!App.peut('clients:gerer')) {
+      annoncer('Votre role ne permet pas de modifier les clients.', 'avertissement');
+      return null;
+    }
     const resultat = await ouvrirBoite((fermer) => {
       const champ = (nom, etiquette, attributs = {}) => {
         const entree = creer('input', { attributs: { name: nom, ...attributs } });
@@ -247,7 +256,7 @@ const Clients = {
 
   async choisir() {
     const clients = await appeler(window.caisse.clients.lister());
-    if (clients.length === 0 && App.utilisateur.role === 'administrateur') {
+    if (clients.length === 0 && App.peut('clients:gerer')) {
       const nouveau = await this.editer(null);
       return nouveau;
     }
@@ -268,7 +277,7 @@ const Clients = {
       };
       recherche.addEventListener('input', dessiner);
       const actions = [creer('button', { classe: 'bouton discret', texte: 'Annuler', sur: { click: () => fermer(null) } })];
-      if (App.utilisateur.role === 'administrateur') {
+      if (App.peut('clients:gerer')) {
         actions.push(creer('button', {
           classe: 'bouton', texte: 'Nouveau',
           sur: { click: async () => fermer(await this.editer(null)) },
@@ -286,6 +295,10 @@ const Clients = {
   },
 
   async creanceAnterieure(client = null) {
+    if (!App.peut('clients:gerer')) {
+      annoncer('Votre role ne permet pas de creer une creance client.', 'avertissement');
+      return null;
+    }
     if (!client) client = await this.choisir();
     if (!client) return null;
     const cree = await ouvrirBoite((fermer) => {
@@ -429,6 +442,10 @@ const Clients = {
   },
 
   async regler(creance) {
+    if (!App.peut('clients:regler')) {
+      annoncer('Votre role ne permet pas de regler une creance client.', 'avertissement');
+      return;
+    }
     const regle = await ouvrirBoite((fermer) => {
       const montant = creer('input', { attributs: { type: 'number', min: '1', max: String(creance.solde), step: '1', value: String(creance.solde), required: 'required' } });
       const mode = creer('select', {}, [

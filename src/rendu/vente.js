@@ -269,8 +269,8 @@ const Vente = {
       return;
     }
 
-    // Code inconnu : le caissier ne peut rien en faire, l'administrateur si.
-    if (App.utilisateur.role !== 'administrateur') {
+    // Code inconnu : seuls les profils autorises a gerer les articles peuvent creer la fiche.
+    if (!App.peut('articles:gerer')) {
       return annoncer('Code-barres inconnu : ' + code, 'erreur');
     }
 

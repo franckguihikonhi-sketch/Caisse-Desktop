@@ -158,15 +158,19 @@ const Journal = {
           sur: { click: () => this.voirTicket(vente.id) },
         }),
       ]);
-      if (App.utilisateur.role === 'administrateur' && !vente.annulee) {
-        actions.append(creer('button', {
-          classe: 'bouton discret espace-gauche', texte: 'Retour',
-          sur: { click: () => this.retourner(vente) },
-        }));
-        actions.append(creer('button', {
-          classe: 'bouton discret espace-gauche', texte: 'Annuler',
-          sur: { click: () => this.annuler(vente) },
-        }));
+      if (!vente.annulee) {
+        if (App.peut('vente:retour')) {
+          actions.append(creer('button', {
+            classe: 'bouton discret espace-gauche', texte: 'Retour',
+            sur: { click: () => this.retourner(vente) },
+          }));
+        }
+        if (App.peut('vente:annuler')) {
+          actions.append(creer('button', {
+            classe: 'bouton discret espace-gauche', texte: 'Annuler',
+            sur: { click: () => this.annuler(vente) },
+          }));
+        }
       }
 
       corps.append(creer('tr', { classe: vente.annulee ? 'annulee' : '' }, [

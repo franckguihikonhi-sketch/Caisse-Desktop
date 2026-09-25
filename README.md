@@ -22,6 +22,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Articles** | Tenir le catalogue : reference, codes-barres piece/carton, designation, prix d'achat, prix de vente piece et carton, taux de TVA, stock en pieces, seuil d'alerte ; enregistrer des entrees/sorties/corrections de stock tracees ; imprimer les etiquettes |
 | **Clients & credits** | Tenir le fichier client, fixer un plafond de credit, enregistrer une creance anterieure, suivre les creances ouvertes et encaisser les reglements |
 | **Fournisseurs** | Tenir le fichier fournisseur, saisir les dettes anterieures, suivre les soldes a payer et enregistrer les reglements fournisseur |
+| **Roles & permissions** | Creer des comptes Administrateur, Gerant, Caissier, Stock/Achats ou Comptable ; chaque ecran et chaque action critique sont verifies cote processus principal |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
 
@@ -51,6 +52,20 @@ Mot de passe      : CIV
 Cet acces est un compte administrateur technique de depart. Chaque entreprise
 doit ensuite changer ce mot de passe dans l'application, puis creer ses propres
 utilisateurs si necessaire. Les mots de passe ne sont jamais stockes en clair.
+
+## Roles et permissions
+
+Ivoire-Gestion verifie les permissions dans le processus principal : masquer un
+bouton ne suffit jamais, l'action est aussi refusee cote application. Les profils
+disponibles sont :
+
+| Role | Usage |
+| --- | --- |
+| **Administrateur** | Acces total : utilisateurs, base, sauvegardes, reseau, reglages et toutes les operations |
+| **Gerant** | Ventes, annulations/retours, caisse, achats, stock, clients, fournisseurs, benefices et exports, sans gestion des comptes ni de la base systeme |
+| **Caissier** | Encaissement, ouverture/fermeture de caisse, journal, clients et reglements clients ; pas d'annulation critique ni d'achat |
+| **Stock / achats** | Articles, achats, fournisseurs, mouvements de stock et retours fournisseur ; pas d'encaissement client |
+| **Comptable** | Journal, creances, dettes, reglements, benefices et exports ; pas de vente ni de modification du stock |
 
 ## Creer un executable Windows installable
 

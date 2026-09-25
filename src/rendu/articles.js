@@ -1,8 +1,7 @@
 'use strict';
 
-/* Catalogue. Consultable par tous, modifiable par l'administrateur seul :
-   c'est le processus principal qui tranche, l'ecran ne fait que masquer
-   les boutons qui n'aboutiraient pas. */
+/* Catalogue. Consultable selon le role, modifiable seulement si la permission
+   articles:gerer est accordee. Le processus principal re-verifie toujours. */
 
 const Articles = {
   liste: [],
@@ -19,7 +18,7 @@ const Articles = {
     });
     actions.append(this.boutonEtiquettes);
 
-    if (App.utilisateur.role === 'administrateur') {
+    if (App.peut('articles:gerer')) {
       actions.append(creer('button', {
         classe: 'bouton espace-gauche', texte: 'Nouvel article',
         sur: { click: () => this.editer(null) },
@@ -61,7 +60,8 @@ const Articles = {
       return;
     }
 
-    const admin = App.utilisateur.role === 'administrateur';
+    const peutGerer = App.peut('articles:gerer');
+    const peutStock = App.peut('stock:mouvement');
 
     for (const article of this.liste) {
       const bas = article.seuilAlerte > 0 && article.stock <= article.seuilAlerte;
@@ -102,12 +102,14 @@ const Articles = {
       ];
 
       const actions = creer('td', { classe: 'nombre' });
-      if (admin) {
+      if (peutStock) {
+        actions.append(creer('button', {
+          classe: 'bouton discret', texte: 'Stock',
+          sur: { click: () => this.mouvementStock(article) },
+        }));
+      }
+      if (peutGerer) {
         actions.append(
-          creer('button', {
-            classe: 'bouton discret', texte: 'Stock',
-            sur: { click: () => this.mouvementStock(article) },
-          }),
           creer('button', {
             classe: 'bouton discret espace-gauche', texte: 'Modifier',
             sur: { click: () => this.editer(article) },

@@ -19,7 +19,26 @@ function montrerEcran(nom) {
   for (const ecran of $$('.ecran')) ecran.classList.toggle('actif', ecran.id === 'ecran-' + nom);
 }
 
+function vueAutorisee(bouton) {
+  const requis = (bouton.dataset.permission || '').split(',').map((p) => p.trim()).filter(Boolean);
+  const unParmi = (bouton.dataset.permissionAny || '').split(',').map((p) => p.trim()).filter(Boolean);
+  return (requis.length === 0 || requis.every((p) => App.peut(p))) &&
+    (unParmi.length === 0 || App.peutUn(unParmi));
+}
+
 async function ouvrirVue(nom) {
+  const boutonVue = $('.navigation button[data-vue="' + nom + '"]');
+  if (boutonVue && !vueAutorisee(boutonVue)) {
+    await ouvrirBoite((fermer) => creer('div', {}, [
+      creer('h3', { texte: 'Acces refuse' }),
+      creer('p', { texte: "Votre role ne donne pas acces a cet ecran." }),
+      creer('div', { classe: 'actions' }, [
+        creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+      ]),
+    ]));
+    return;
+  }
+
   for (const bouton of $$('.navigation button')) {
     bouton.classList.toggle('actif', bouton.dataset.vue === nom);
   }
@@ -52,22 +71,26 @@ async function entrerDansApplication(utilisateur) {
     numeroContribuable: App.parametres['boutique.numeroContribuable'],
   };
 
+  App.roles = App.roles.length ? App.roles : [];
+
   $('#nom-boutique').textContent = App.boutique.nom;
   $('#nom-utilisateur').textContent = utilisateur.nom;
-  $('#role-utilisateur').textContent = utilisateur.role;
+  $('#role-utilisateur').textContent = utilisateur.roleLibelle || utilisateur.role;
 
-  for (const bouton of $$('.navigation button[data-admin]')) {
-    bouton.hidden = utilisateur.role !== 'administrateur';
+  for (const bouton of $$('.navigation button')) {
+    bouton.hidden = !vueAutorisee(bouton);
   }
 
   montrerEcran('application');
   Vente.reinitialiser();
-  await ouvrirVue('tableauBord');
+  const premiere = $$('.navigation button:not([hidden])')[0]?.dataset.vue || 'tableauBord';
+  await ouvrirVue(premiere);
 }
 
 async function demarrer() {
   const etat = await appeler(window.caisse.session.etat());
   App.boutique = etat.boutique;
+  App.roles = etat.roles ?? [];
 
   if (etat.premiereOuverture) {
     montrerEcran('accueil');

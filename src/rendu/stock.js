@@ -11,7 +11,7 @@ const Stock = {
     actions.append(
       creer('button', { classe: 'bouton discret', texte: 'Actualiser', sur: { click: () => this.charger() } })
     );
-    if (App.utilisateur.role === 'administrateur') {
+    if (App.peut('articles:gerer')) {
       actions.append(creer('button', {
         classe: 'bouton espace-gauche', texte: 'Nouvel article', sur: { click: () => this.nouvelArticle() },
       }));
@@ -25,8 +25,8 @@ const Stock = {
   },
 
   async nouvelArticle() {
-    if (App.utilisateur.role !== 'administrateur') {
-      return annoncer('La creation d article est reservee a l administrateur.', 'avertissement');
+    if (!App.peut('articles:gerer')) {
+      return annoncer('Votre role ne permet pas de creer un article.', 'avertissement');
     }
     const cree = await Articles.editer(null);
     if (cree) await this.charger();
