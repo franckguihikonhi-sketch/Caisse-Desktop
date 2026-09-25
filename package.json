@@ -12,9 +12,9 @@
     "test": "node --no-warnings --test tests/*.test.js",
     "verifier": "electron scripts/verifier-demarrage.js",
     "pack:windows": "electron-builder --win --dir",
-    "build:windows": "electron-builder --win nsis portable",
-    "dist:windows": "electron-builder --win nsis portable",
-    "dist:windows:dir": "electron-builder --win --dir",
+    "build:windows": "electron-builder --win nsis portable --publish never",
+    "dist:windows": "electron-builder --win nsis portable --publish never",
+    "dist:windows:dir": "electron-builder --win --dir --publish never",
     "electron:install": "node node_modules/electron/install.js"
   },
   "devDependencies": {

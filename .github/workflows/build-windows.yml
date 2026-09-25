@@ -14,6 +14,8 @@ jobs:
     name: Installateur Windows
     runs-on: windows-latest
     timeout-minutes: 35
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +43,16 @@ jobs:
       - name: Tests
         run: npm test -- --runInBand
 
+      - name: Build executable Windows non installe
+        run: npm run dist:windows:dir
+
+      - name: Zipper le dossier executable
+        shell: pwsh
+        run: Compress-Archive -Path release/win-unpacked/* -DestinationPath release/Ivoire-Gestion-Windows-x64.zip -Force
+
       - name: Build installateur et portable
+        id: installateur
+        continue-on-error: true
         run: npm run dist:windows
 
       - name: Publier les executables
@@ -50,7 +61,13 @@ jobs:
           name: Ivoire-Gestion-Windows
           path: |
             release/*.exe
+            release/*.zip
             release/*.blockmap
             release/latest*.yml
+            release/win-unpacked/Ivoire-Gestion.exe
           if-no-files-found: error
           retention-days: 30
+
+      - name: Signaler si l'installateur complet echoue
+        if: steps.installateur.outcome == 'failure'
+        run: echo "::warning::Le dossier executable a ete produit, mais la generation NSIS/portable doit etre relancee sur un poste Windows si aucun .exe d'installation n'est dans l'artefact."
