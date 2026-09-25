@@ -14,6 +14,7 @@ const VUES = {
   journal: { titre: 'Caisse et journal', module: () => Journal },
   audit: { titre: 'Historique et audit', module: () => Audit },
   reglages: { titre: 'Reglages', module: () => Reglages },
+  aide: { titre: 'Guide utilisateur', module: () => Aide },
 };
 
 function montrerEcran(nom) {

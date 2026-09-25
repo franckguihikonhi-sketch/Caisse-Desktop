@@ -53,6 +53,7 @@
       <button data-vue="fournisseurs" data-permission="fournisseurs:lire">Fournisseurs</button>
       <button data-vue="journal" data-permission="caisse:journal">Caisse</button>
       <button data-vue="reglages" data-permission-any="parametres:gerer,utilisateurs:gerer,base:gerer,rapports:exports">Reglages</button>
+      <button data-vue="aide">Aide</button>
     </nav>
     <div class="pied-laterale">
       <div class="nom" id="nom-utilisateur"></div>
@@ -315,6 +316,11 @@
       </div>
     </div>
 
+    <!-- Aide -->
+    <div id="vue-aide" class="vue">
+      <div class="aide-page" id="contenu-aide"></div>
+    </div>
+
     <!-- Reglages -->
     <div id="vue-reglages" class="vue">
       <div class="deux-colonnes">
@@ -383,6 +389,8 @@
 <script src="fournisseurs.js"></script>
 <script src="journal.js"></script>
 <script src="audit.js"></script>
+<script src="../metier/guide-utilisateur.js"></script>
+<script src="aide.js"></script>
 <script src="reglages.js"></script>
 <script src="app.js"></script>
 </body>

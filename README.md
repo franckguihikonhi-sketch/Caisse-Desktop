@@ -26,6 +26,7 @@ Les montants sont en francs CFA, entiers : la monnaie n'a pas de subdivision.
 | **Audit** | Consulter l'historique horodate des connexions, ventes, annulations, retours, achats, stock, reglements, exports, sauvegardes et changements de comptes |
 | **Caisse** | Ouvrir la caisse avec un fond, bloquer les ventes si elle est fermee, voir le journal du jour, gerer les retours clients, annuler une vente avec motif obligatoire, fermer avec calcul theorique et ecart |
 | **Reglages** | Identite de la boutique, comptes utilisateurs, changement des mots de passe, sauvegarde automatique/manuelle, restauration de sauvegarde, choix de la base locale ou partagee en reseau local |
+| **Aide** | Guide utilisateur integre : premiers pas, vente, achats/stock, credits, benefices, audit, sauvegarde et reseau local |
 
 Le tableau de bord est pense pour le proprietaire : il separe les ventes du jour
 et du mois, montre le benefice reel calcule sur les prix d'achat, la valeur du
@@ -35,6 +36,11 @@ les credits clients, les dettes fournisseurs et le net a encaisser/a payer.
 L'interface suit une charte Ivoire-Gestion harmonisee orange-blanc-vert : barre
 laterale sombre, cartes nettes, formulaires lisibles, boutons arrondis,
 indicateurs colores, focus visible et tableaux homogènes sur tous les onglets.
+
+L'onglet **Aide** reste accessible a tous les utilisateurs connectes. Il contient
+un guide simple avec recherche, raccourcis par theme, procedures et points de
+vigilance. Il peut aussi etre imprime ou enregistre en PDF depuis le bouton
+**Imprimer / PDF**.
 
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les

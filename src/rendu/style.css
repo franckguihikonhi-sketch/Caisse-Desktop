@@ -4758,3 +4758,211 @@ dialog {
   #actions-vue { justify-content: flex-start; }
   .navigation button:hover { transform: none; }
 }
+
+/* Guide utilisateur integre ------------------------------------------------ */
+.navigation button[data-vue="aide"]::after { content: '❔'; }
+
+.aide-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 22px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at top left, rgba(245, 130, 32, 0.10), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(11, 127, 77, 0.10), transparent 35%),
+    var(--ui-fond, #f4f7f4);
+}
+
+.aide-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 22px;
+  border: 1px solid rgba(22, 74, 49, 0.10);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff, #f6fbf7);
+  box-shadow: 0 16px 34px rgba(23, 56, 41, 0.08);
+}
+
+.aide-hero h3 {
+  margin: 6px 0 8px;
+  color: #13251c;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.aide-hero p {
+  max-width: 780px;
+  margin: 0;
+  color: #51635b;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.aide-recherche label {
+  margin: 0;
+  color: #284138;
+  font-weight: 900;
+}
+
+.aide-raccourcis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.aide-raccourci {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid rgba(22, 74, 49, 0.10);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(23, 56, 41, 0.06);
+}
+
+.aide-raccourci > strong {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+}
+
+.aide-raccourci b,
+.aide-raccourci span {
+  display: block;
+}
+
+.aide-raccourci b {
+  color: #13251c;
+  font-size: 14px;
+}
+
+.aide-raccourci span {
+  margin-top: 3px;
+  color: #66756f;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.guide-grille {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.guide-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  padding: 18px;
+  border: 1px solid rgba(22, 74, 49, 0.10);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(23, 56, 41, 0.08);
+}
+
+.guide-carte-entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.guide-carte h3 {
+  margin: 0;
+  color: #13251c;
+  font-size: 20px;
+  letter-spacing: -0.035em;
+}
+
+.guide-resume {
+  margin: 0;
+  color: #50635a;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.guide-etapes,
+.guide-vigilance ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #21362d;
+  line-height: 1.5;
+}
+
+.guide-etapes li + li,
+.guide-vigilance li + li {
+  margin-top: 6px;
+}
+
+.guide-vigilance {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff8ee;
+  color: #5b3b14;
+}
+
+.guide-vigilance strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #9d5a0f;
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+@media (max-width: 1150px) {
+  .aide-raccourcis,
+  .guide-grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .aide-page { padding: 14px; }
+  .aide-hero,
+  .aide-raccourcis,
+  .guide-grille {
+    grid-template-columns: 1fr;
+  }
+  .aide-hero { padding: 18px; }
+}
+
+@media print {
+  .barre-laterale,
+  .entete-zone,
+  .aide-recherche,
+  .aide-raccourcis,
+  .guide-actions {
+    display: none !important;
+  }
+  .aide-page {
+    padding: 0;
+    background: #ffffff;
+  }
+  .guide-grille {
+    display: block;
+  }
+  .guide-carte {
+    break-inside: avoid;
+    margin-bottom: 12px;
+    box-shadow: none;
+  }
+}
