@@ -32,6 +32,10 @@ et du mois, montre le benefice reel calcule sur les prix d'achat, la valeur du
 stock au cout d'achat et au prix de vente, la marge potentielle encore en rayon,
 les credits clients, les dettes fournisseurs et le net a encaisser/a payer.
 
+L'interface suit une charte Ivoire-Gestion harmonisee orange-blanc-vert : barre
+laterale sombre, cartes nettes, formulaires lisibles, boutons arrondis,
+indicateurs colores, focus visible et tableaux homogènes sur tous les onglets.
+
 Deux roles. Le **caissier** vend, consulte le catalogue et le journal.
 L'**administrateur** fait tout cela, plus le catalogue, les annulations, les
 comptes et les reglages. Le partage est tenu par le processus principal :

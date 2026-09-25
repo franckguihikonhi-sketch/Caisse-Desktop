@@ -4564,3 +4564,197 @@ table strong {
   .inventaire-boite { min-width: 0; }
   .ligne-inventaire { grid-template-columns: 1fr; }
 }
+
+/* Finition visuelle globale : harmonisation professionnelle ---------------- */
+:focus-visible {
+  outline: 3px solid rgba(245, 130, 32, 0.45);
+  outline-offset: 2px;
+}
+
+.zone {
+  background:
+    radial-gradient(circle at top left, rgba(245, 130, 32, 0.09), transparent 31%),
+    radial-gradient(circle at bottom right, rgba(11, 127, 77, 0.10), transparent 34%),
+    var(--ui-fond, #f4f7f4);
+}
+
+.entete-zone {
+  border-bottom: 1px solid rgba(22, 74, 49, 0.10);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 22px rgba(23, 56, 41, 0.06);
+}
+
+.entete-zone h2 {
+  color: #13251c;
+  letter-spacing: -0.035em;
+}
+
+#actions-vue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.barre-laterale {
+  background:
+    linear-gradient(180deg, rgba(245, 130, 32, 0.16), transparent 120px),
+    linear-gradient(180deg, #0d2f23, #10271f 55%, #0b1f18);
+  box-shadow: 18px 0 38px rgba(6, 31, 21, 0.22);
+}
+
+.marque {
+  position: relative;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.marque::after {
+  content: '';
+  display: block;
+  width: 78px;
+  height: 5px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f58220 0 33%, #ffffff 33% 66%, #0b7f4d 66% 100%);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+.navigation button {
+  min-height: 44px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.navigation button:hover {
+  transform: translateX(2px);
+  background: rgba(255,255,255,0.11);
+}
+
+.navigation button.actif {
+  background: linear-gradient(135deg, #f58220, #0b7f4d);
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.24);
+}
+
+.pied-laterale {
+  border-top: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+
+.panneau,
+.boite,
+.carte-tableau,
+.tableau-zone > table,
+.stock-tableau,
+.achats-entete,
+.fournisseur-bloc-unique,
+.facture-benefice {
+  border: 1px solid rgba(22, 74, 49, 0.10);
+  box-shadow: 0 12px 30px rgba(23, 56, 41, 0.08);
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #dce8e0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #13251c;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #bcd6c6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #0b7f4d;
+  box-shadow: 0 0 0 4px rgba(11, 127, 77, 0.12);
+}
+
+.bouton {
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 18px rgba(11, 127, 77, 0.14);
+  transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+
+.bouton:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.05);
+  box-shadow: 0 12px 22px rgba(11, 127, 77, 0.18);
+}
+
+.bouton.danger {
+  box-shadow: 0 8px 18px rgba(201, 67, 76, 0.18);
+}
+
+.bouton.discret {
+  box-shadow: none;
+}
+
+table th {
+  background: #f0f6f2;
+  color: #284138;
+  font-weight: 900;
+}
+
+table tbody tr {
+  transition: background .12s ease;
+}
+
+table tbody tr:hover {
+  background: #f8fbf8;
+}
+
+.boite-modale,
+.modale,
+dialog {
+  border-radius: 22px;
+}
+
+.message.succes {
+  border-left: 5px solid #0b7f4d;
+  background: #e9f8ef;
+  color: #0b4f32;
+}
+
+.message.erreur {
+  border-left: 5px solid #c9434c;
+  background: #fff0f1;
+  color: #8b2630;
+}
+
+.vide,
+.aide,
+.libelle-doux {
+  line-height: 1.45;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f58220, #0b7f4d) border-box;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(11, 127, 77, 0.07);
+}
+
+@media (max-width: 900px) {
+  #actions-vue { justify-content: flex-start; }
+  .navigation button:hover { transform: none; }
+}
