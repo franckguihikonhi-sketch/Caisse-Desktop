@@ -55,6 +55,10 @@ function verifierLigne(ligne, rang) {
   if (!Number.isFinite(taux) || taux < 0) {
     throw new RangeError(ou + ' : taux de TVA invalide.');
   }
+  const facteur = ligne.facteurStock ?? 1;
+  if (!Number.isInteger(facteur) || facteur <= 0) {
+    throw new RangeError(ou + ' : facteur de stock invalide.');
+  }
 }
 
 /**
@@ -101,6 +105,9 @@ function calculer(lignes, options = {}) {
       prixUnitaire: l.prixUnitaire,
       quantite: l.quantite,
       tauxTva: l.tauxTva ?? 0,
+      uniteVente: l.uniteVente ?? 'piece',
+      facteurStock: l.facteurStock ?? 1,
+      quantiteStock: l.quantite * (l.facteurStock ?? 1),
       remisePourcent: l.remisePourcent ?? 0,
       totalTtc: nets[i],
     })),

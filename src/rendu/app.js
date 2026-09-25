@@ -3,17 +3,44 @@
 /* Point d'entree du rendu : etat de session, aiguillage entre les ecrans. */
 
 const VUES = {
+  tableauBord: { titre: 'Tableau de bord', module: () => TableauBord },
   vente: { titre: 'Vente', module: () => Vente },
+  achats: { titre: 'Achats marchandises', module: () => Achats },
+  benefices: { titre: 'Benefices par facture d achat', module: () => Benefices },
+  stock: { titre: 'Stock restant', module: () => Stock },
   articles: { titre: 'Articles', module: () => Articles },
-  journal: { titre: 'Journal et cloture', module: () => Journal },
+  clients: { titre: 'Clients et credits', module: () => Clients },
+  fournisseurs: { titre: 'Fournisseurs', module: () => Fournisseurs },
+  journal: { titre: 'Caisse et journal', module: () => Journal },
+  audit: { titre: 'Historique et audit', module: () => Audit },
   reglages: { titre: 'Reglages', module: () => Reglages },
+  aide: { titre: 'Guide utilisateur', module: () => Aide },
 };
 
 function montrerEcran(nom) {
   for (const ecran of $$('.ecran')) ecran.classList.toggle('actif', ecran.id === 'ecran-' + nom);
 }
 
+function vueAutorisee(bouton) {
+  const requis = (bouton.dataset.permission || '').split(',').map((p) => p.trim()).filter(Boolean);
+  const unParmi = (bouton.dataset.permissionAny || '').split(',').map((p) => p.trim()).filter(Boolean);
+  return (requis.length === 0 || requis.every((p) => App.peut(p))) &&
+    (unParmi.length === 0 || App.peutUn(unParmi));
+}
+
 async function ouvrirVue(nom) {
+  const boutonVue = $('.navigation button[data-vue="' + nom + '"]');
+  if (boutonVue && !vueAutorisee(boutonVue)) {
+    await ouvrirBoite((fermer) => creer('div', {}, [
+      creer('h3', { texte: 'Acces refuse' }),
+      creer('p', { texte: "Votre role ne donne pas acces a cet ecran." }),
+      creer('div', { classe: 'actions' }, [
+        creer('button', { classe: 'bouton', texte: 'Fermer', sur: { click: () => fermer(null) } }),
+      ]),
+    ]));
+    return;
+  }
+
   for (const bouton of $$('.navigation button')) {
     bouton.classList.toggle('actif', bouton.dataset.vue === nom);
   }
@@ -46,28 +73,32 @@ async function entrerDansApplication(utilisateur) {
     numeroContribuable: App.parametres['boutique.numeroContribuable'],
   };
 
+  App.roles = App.roles.length ? App.roles : [];
+
   $('#nom-boutique').textContent = App.boutique.nom;
   $('#nom-utilisateur').textContent = utilisateur.nom;
-  $('#role-utilisateur').textContent = utilisateur.role;
+  $('#role-utilisateur').textContent = utilisateur.roleLibelle || utilisateur.role;
 
-  for (const bouton of $$('.navigation button[data-admin]')) {
-    bouton.hidden = utilisateur.role !== 'administrateur';
+  for (const bouton of $$('.navigation button')) {
+    bouton.hidden = !vueAutorisee(bouton);
   }
 
   montrerEcran('application');
   Vente.reinitialiser();
-  await ouvrirVue('vente');
+  const premiere = $$('.navigation button:not([hidden])')[0]?.dataset.vue || 'tableauBord';
+  await ouvrirVue(premiere);
 }
 
 async function demarrer() {
   const etat = await appeler(window.caisse.session.etat());
   App.boutique = etat.boutique;
+  App.roles = etat.roles ?? [];
 
   if (etat.premiereOuverture) {
     montrerEcran('accueil');
     return;
   }
-  $('#titre-connexion').textContent = etat.boutique.nom;
+  $('#titre-connexion').textContent = 'Ivoire-Gestion';
   montrerEcran('connexion');
 }
 
@@ -104,6 +135,10 @@ $('#formulaire-connexion').addEventListener('submit', async (evenement) => {
   }
 });
 
+$('#bouton-changer-mot-de-passe').addEventListener('click', () => {
+  if (App.utilisateur) Reglages.changerMotDePasse(App.utilisateur);
+});
+
 $('#bouton-deconnexion').addEventListener('click', async () => {
   await appeler(window.caisse.session.deconnexion());
   App.utilisateur = null;
@@ -118,6 +153,13 @@ for (const bouton of $$('.navigation button')) {
 
 $('#formulaire-boutique').addEventListener('submit', (e) => Reglages.enregistrerBoutique(e));
 $('#bouton-nouvel-utilisateur').addEventListener('click', () => Reglages.nouveauCompte());
+$('#bouton-tester-base-reseau').addEventListener('click', () => Reglages.testerBaseReseau());
+$('#bouton-choisir-base-reseau').addEventListener('click', () => Reglages.choisirBaseReseau());
+$('#bouton-base-locale').addEventListener('click', () => Reglages.retablirBaseLocale());
+$('#bouton-sauvegarder-base').addEventListener('click', () => Reglages.sauvegarderBase());
+$('#bouton-restaurer-base').addEventListener('click', () => Reglages.restaurerBase());
+$('#bouton-exporter-csv').addEventListener('click', () => Reglages.exporterCsv());
+$('#bouton-redemarrer-base').addEventListener('click', () => Reglages.redemarrerApplication());
 
 Vente.initialiser();
 demarrer();

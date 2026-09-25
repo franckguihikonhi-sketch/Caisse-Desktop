@@ -24,7 +24,6 @@ const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'caisse-verification-'));
 app.setPath('userData', dossier);
 
 const { ouvrir } = require('../src/donnees/base');
-const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const { enregistrerCanaux } = require('../src/principal/canaux');
 const impression = require('../src/principal/impression');
@@ -50,9 +49,6 @@ async function capturer(fenetre, nom) {
 
 async function verifier() {
   const bd = ouvrir(path.join(dossier, 'caisse.db'));
-  utilisateurs.creer(bd, {
-    identifiant: 'demo', nom: 'Awa Kone', role: 'administrateur', motDePasse: 'demo1234',
-  });
   articles.creer(bd, { reference: 'sav-01', designation: 'Savon de Marseille', prixUnitaire: 325, stock: 120, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'riz-05', designation: 'Riz parfume 5 kg', prixUnitaire: 4500, stock: 18, seuilAlerte: 20 });
   articles.creer(bd, { reference: 'pain', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 60 });
@@ -106,8 +102,8 @@ async function verifier() {
   }
 
   await executer(`
-    document.querySelector('#formulaire-connexion [name=identifiant]').value = 'demo';
-    document.querySelector('#formulaire-connexion [name=motDePasse]').value = 'demo1234';
+    document.querySelector('#formulaire-connexion [name=identifiant]').value = 'CIV';
+    document.querySelector('#formulaire-connexion [name=motDePasse]').value = 'CIV';
     document.querySelector('#formulaire-connexion').requestSubmit();
   `);
   await patienter(600);
@@ -117,6 +113,16 @@ async function verifier() {
   } else {
     noter('connexion aboutie', await executer('document.querySelector("#nom-utilisateur").textContent'));
   }
+
+  await executer(`
+    (async () => {
+      const ouverture = await window.caisse.caisseJournee.ouvrir({ fondOuverture: 0 });
+      if (!ouverture.ok) throw new Error(ouverture.erreur);
+      document.querySelector('.navigation button[data-vue=vente]').click();
+    })();
+  `);
+  await patienter(700);
+  noter('caisse ouverte et ecran vente affiche');
 
   const nombreArticles = await executer('document.querySelectorAll("#resultats-articles .article").length');
   if (nombreArticles !== 4) {
@@ -333,6 +339,9 @@ app.whenReady().then(async () => {
 
   if (problemes.length > 0) {
     console.log('\nPROBLEMES :\n' + problemes.map((p) => '  - ' + p).join('\n') + '\n');
+    for (const probleme of problemes) {
+      console.log('::error::' + String(probleme).replace(/\r?\n/g, '%0A'));
+    }
     app.exit(1);
   } else {
     console.log('\nDemarrage verifie : la caisse se lance, encaisse, imprime et etiquette.\n');

@@ -7,6 +7,8 @@
 const Vente = {
   panier: [],
   mode: 'especes',
+  clientCredit: null,
+  caisseOuverte: false,
   articlesTrouves: [],
   totaux: null,
 
@@ -15,12 +17,13 @@ const Vente = {
     $('#champ-recherche').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && this.articlesTrouves.length > 0) {
         e.preventDefault();
-        this.ajouter(this.articlesTrouves[0]);
+        this.choisirQuantites(this.articlesTrouves[0]);
       }
     });
 
     $('#remise-globale').addEventListener('input', () => this.rafraichirTotaux());
     $('#montant-recu').addEventListener('input', () => this.rafraichirRendu());
+    $('#bouton-choisir-client').addEventListener('click', () => this.choisirClientCredit());
     $('#bouton-encaisser').addEventListener('click', () => this.encaisser());
 
     for (const bouton of $$('#modes-paiement button')) {
@@ -49,11 +52,83 @@ const Vente = {
   },
 
   async activer() {
-    $('#champ-recherche').focus();
+    const actions = $('#actions-vue');
+    vider(actions);
+    await this.actualiserCaisse();
+    actions.append(creer('button', {
+      classe: this.caisseOuverte ? 'bouton discret' : 'bouton',
+      texte: this.caisseOuverte ? 'Caisse ouverte' : 'Ouvrir la caisse',
+      sur: { click: () => this.ouvrirCaisseRapide() },
+    }));
+    if (this.caisseOuverte) $('#champ-recherche').focus();
     await this.rechercher('');
   },
 
+  async actualiserCaisse() {
+    try {
+      const etat = await appeler(window.caisse.caisseJournee.etat());
+      this.caisseOuverte = Boolean(etat.ouverte);
+      this.appliquerEtatCaisse();
+      this.rafraichirTotaux();
+      return etat;
+    } catch (_erreur) {
+      this.caisseOuverte = false;
+      this.appliquerEtatCaisse();
+      this.rafraichirTotaux();
+      return null;
+    }
+  },
+
+  appliquerEtatCaisse() {
+    const fermee = !this.caisseOuverte;
+    $('#vue-vente')?.classList.toggle('caisse-fermee', fermee);
+    const statut = $('#statut-caisse-vente');
+    if (statut) {
+      statut.textContent = fermee ? 'Caisse fermee' : 'Caisse ouverte';
+      statut.className = 'pos-statut ' + (fermee ? 'fermee' : 'ouverte');
+    }
+    const recherche = $('#champ-recherche');
+    if (recherche) recherche.disabled = fermee;
+    const remise = $('#remise-globale');
+    if (remise) remise.disabled = fermee;
+    const recu = $('#montant-recu');
+    if (recu) recu.disabled = fermee;
+    const client = $('#bouton-choisir-client');
+    if (client) client.disabled = fermee;
+    for (const bouton of $$('#modes-paiement button')) bouton.disabled = fermee;
+  },
+
+  mettreAJourAfficheur() {
+    const quantite = this.panier.reduce((somme, ligne) => somme + ligne.quantite, 0);
+    const compteur = $('#compteur-panier');
+    if (compteur) {
+      compteur.textContent = quantite + ' article' + (quantite > 1 ? 's' : '');
+      compteur.classList.toggle('actif', quantite > 0);
+    }
+    const afficheur = $('#afficheur-total-vente');
+    if (afficheur) afficheur.textContent = formater(this.totaux?.totalTtc ?? 0);
+  },
+
+  async ouvrirCaisseRapide() {
+    const etat = await this.actualiserCaisse();
+    if (etat?.ouverte) {
+      annoncer('Caisse ouverte depuis ' + heureDe(etat.session.ouverteLe) + '.', 'succes');
+      return;
+    }
+    const ouverte = await Journal.ouvrirCaisse();
+    if (ouverte) {
+      await this.actualiserCaisse();
+      await this.activer();
+      annoncer('Caisse ouverte. Vous pouvez encaisser.', 'succes');
+    }
+  },
+
   async rechercher(texte) {
+    if (!this.caisseOuverte) {
+      this.articlesTrouves = [];
+      this.afficherResultats();
+      return;
+    }
     try {
       this.articlesTrouves = await appeler(window.caisse.articles.chercher({ texte }));
     } catch (erreur) {
@@ -66,36 +141,107 @@ const Vente = {
     const zone = $('#resultats-articles');
     vider(zone);
 
+    if (!this.caisseOuverte) {
+      zone.append(creer('div', { classe: 'verrou-caisse' }, [
+        creer('strong', { texte: 'Caisse fermee' }),
+        creer('p', { texte: "Aucune vente ne peut etre preparee ni encaissee tant que la caisse journaliere n'est pas ouverte." }),
+        creer('button', { classe: 'bouton', texte: 'Ouvrir la caisse', sur: { click: () => this.ouvrirCaisseRapide() } }),
+      ]));
+      return;
+    }
+
     if (this.articlesTrouves.length === 0) {
       zone.append(creer('p', { classe: 'vide', texte: 'Aucun article ne correspond.' }));
       return;
     }
 
     for (const article of this.articlesTrouves) {
-      const dejaAuPanier = this.panier.find((l) => l.reference === article.reference);
-      const restant = article.stock - (dejaAuPanier?.quantite ?? 0);
+      const restant = this.restantStock(article);
       const epuise = restant <= 0;
+      const boutonChoisir = article.venteCarton && article.piecesParCarton > 1
+        ? creer('button', {
+          classe: 'mini-action',
+          texte: 'Choisir carton / piece',
+          attributs: { type: 'button', title: 'Vendre en cartons, en pieces, ou les deux' },
+          sur: { click: (e) => { e.stopPropagation(); this.choisirQuantites(article); } },
+        })
+        : null;
+      if (boutonChoisir && epuise) boutonChoisir.disabled = true;
 
       zone.append(creer('div', {
-        classe: 'article' + (epuise ? ' epuise' : ''),
-        sur: { click: () => (epuise ? null : this.ajouter(article)) },
+        classe: 'article' + (epuise ? ' epuise' : '') + (article.venteCarton ? ' conditionne' : ''),
+        sur: { click: () => (epuise ? null : this.choisirQuantites(article)) },
       }, [
-        creer('div', {}, [
+        creer('div', { classe: 'article-vignette', texte: this.initialesArticle(article) }),
+        creer('div', { classe: 'article-infos' }, [
           creer('div', { classe: 'designation', texte: article.designation }),
-          creer('div', {
-            classe: 'reference',
-            texte: article.codeBarres ? article.reference + '  -  ' + article.codeBarres : article.reference,
-          }),
+          creer('div', { classe: 'article-tags' }, [
+            creer('span', {
+              classe: 'conditionnement-vente',
+              texte: article.conditionnement ?? (article.venteCarton ? 'carton / piece' : 'piece'),
+            }),
+            article.venteCarton && piecesParCarton(article) > 1
+              ? creer('span', { classe: 'conditionnement-vente ratio', texte: '1 carton = ' + piecesParCarton(article) + ' pieces' })
+              : creer('span', { classe: 'conditionnement-vente ratio', texte: 'Vente a la piece' }),
+          ]),
         ]),
-        creer('div', {}, [
-          creer('div', { classe: 'prix montant', texte: formater(article.prixUnitaire) }),
+        creer('div', { classe: 'article-droite' }, [
+          creer('div', { classe: 'prix montant prix-principal' }, [
+            creer('span', { texte: 'Prix vente' }),
+            creer('strong', { texte: formater(article.prixUnitaire) }),
+            creer('em', { texte: '/ piece' }),
+          ]),
+          article.venteCarton ? creer('div', {
+            classe: 'prix-carton montant',
+            texte: formater(prixUnite(article, 'carton')) + ' / carton',
+          }) : creer('span'),
+          this.affichagePrixAchat(article),
           creer('div', {
             classe: 'stock' + (restant > 0 && restant <= article.seuilAlerte ? ' bas' : ''),
-            texte: epuise ? 'epuise' : restant + ' en stock',
+            texte: epuise ? 'epuise' : formaterStock(restant, article),
           }),
+          boutonChoisir ?? creer('span'),
         ]),
       ]));
     }
+  },
+
+  initialesArticle(article) {
+    const mots = String(article?.designation ?? '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (mots.length === 0) return 'IG';
+    if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+    return (mots[0][0] + mots[1][0]).toUpperCase();
+  },
+
+  affichagePrixAchat(article) {
+    const lignes = [];
+    if (article.prixAchatPiece !== null && article.prixAchatPiece !== undefined) {
+      lignes.push(creer('div', { classe: 'prix-achat montant', texte: 'Achat piece : ' + formater(article.prixAchatPiece) }));
+    }
+    if (piecesParCarton(article) > 1 && article.prixAchatCarton !== null && article.prixAchatCarton !== undefined) {
+      lignes.push(creer('div', { classe: 'prix-achat carton montant', texte: 'Achat carton : ' + formater(article.prixAchatCarton) }));
+    }
+    if (lignes.length === 0) {
+      return creer('div', { classe: 'prix-achat indisponible', texte: 'Achat : non renseigne' });
+    }
+    return creer('div', { classe: 'prix-achats' }, lignes);
+  },
+
+  clePanier(reference, unite) {
+    return reference + '|' + (unite ?? 'piece');
+  },
+
+  stockReserve(article) {
+    return this.panier
+      .filter((l) => l.reference === article.reference)
+      .reduce((s, l) => s + l.quantite * l.facteurStock, 0);
+  },
+
+  restantStock(article) {
+    return article.stock - this.stockReserve(article);
   },
 
   /**
@@ -104,6 +250,11 @@ const Vente = {
    */
   async surCodeLu(code) {
     $('#champ-recherche').value = '';
+    const etat = await this.actualiserCaisse();
+    if (!etat?.ouverte) {
+      this.afficherResultats();
+      return annoncer('Caisse fermee : ouvrez la caisse avant de scanner des articles.', 'erreur');
+    }
 
     let article = null;
     try {
@@ -113,13 +264,13 @@ const Vente = {
     }
 
     if (article) {
-      this.ajouter(article);
+      this.ajouter(article, article.uniteScannee ?? 'piece');
       await this.rechercher('');
       return;
     }
 
-    // Code inconnu : le caissier ne peut rien en faire, l'administrateur si.
-    if (App.utilisateur.role !== 'administrateur') {
+    // Code inconnu : seuls les profils autorises a gerer les articles peuvent creer la fiche.
+    if (!App.peut('articles:gerer')) {
       return annoncer('Code-barres inconnu : ' + code, 'erreur');
     }
 
@@ -137,49 +288,215 @@ const Vente = {
     }
   },
 
-  ajouter(article) {
-    const ligne = this.panier.find((l) => l.reference === article.reference);
+  async choisirQuantites(article) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : ouvrez la caisse avant de vendre.', 'erreur');
+    }
+    if (!article.venteCarton || article.piecesParCarton <= 1) {
+      return this.ajouter(article, article.ventePiece === false ? 'carton' : 'piece');
+    }
+
+    const restant = this.restantStock(article);
+    if (restant <= 0) return annoncer(article.designation + ' est en rupture de stock.', 'avertissement');
+
+    const choix = await ouvrirBoite((fermer) => {
+      const parCarton = piecesParCarton(article);
+      const ventePiece = article.ventePiece !== false;
+      const cartonsMax = Math.floor(restant / parCarton);
+      const piecesMax = ventePiece ? restant : 0;
+      const champCartons = creer('input', {
+        attributs: { type: 'number', min: '0', max: String(cartonsMax), step: '1', value: '0' },
+      });
+      const attributsPieces = { type: 'number', min: '0', max: String(piecesMax), step: '1', value: '0' };
+      if (!ventePiece) attributsPieces.disabled = 'disabled';
+      const champPieces = creer('input', { attributs: attributsPieces });
+      const message = creer('p', { classe: 'message erreur' });
+      const resume = creer('div', { classe: 'resume-conditionnement' });
+
+      const lire = () => ({
+        cartons: Math.max(0, Number(champCartons.value) || 0),
+        pieces: Math.max(0, Number(champPieces.value) || 0),
+      });
+      const redessiner = () => {
+        const v = lire();
+        const piecesStock = v.cartons * parCarton + v.pieces;
+        const montant = v.cartons * prixUnite(article, 'carton') + v.pieces * prixUnite(article, 'piece');
+        resume.textContent =
+          'Sortie prevue : ' + formaterStock(piecesStock, article) +
+          ' / total brut ' + formater(montant) +
+          ' / stock apres ' + formaterStock(restant - piecesStock, article);
+        resume.className = 'resume-conditionnement' + (piecesStock > restant ? ' mauvais' : '');
+      };
+      const valider = () => {
+        const v = lire();
+        if (!Number.isInteger(v.cartons) || !Number.isInteger(v.pieces)) {
+          return afficherMessage(message, 'Les quantites doivent etre des entiers.');
+        }
+        if (!ventePiece && v.pieces > 0) {
+          return afficherMessage(message, 'Cet article ne se vend pas a la piece.');
+        }
+        if (v.cartons === 0 && v.pieces === 0) {
+          return afficherMessage(message, 'Choisissez au moins une quantite.');
+        }
+        if (v.cartons * parCarton + v.pieces > restant) {
+          return afficherMessage(message, 'Stock insuffisant : il reste ' + formaterStock(restant, article) + '.');
+        }
+        fermer(v);
+      };
+      champCartons.addEventListener('input', redessiner);
+      champPieces.addEventListener('input', redessiner);
+      for (const champ of [champCartons, champPieces]) {
+        champ.addEventListener('keydown', (e) => { if (e.key === 'Enter') valider(); });
+      }
+
+      const boutonUnCarton = creer('button', {
+        classe: 'bouton discret', texte: '+1 carton', attributs: { type: 'button' },
+        sur: { click: () => { champCartons.value = String((Number(champCartons.value) || 0) + 1); redessiner(); } },
+      });
+      const boutonUnePiece = creer('button', {
+        classe: 'bouton discret', texte: '+1 piece', attributs: { type: 'button' },
+        sur: { click: () => { champPieces.value = String((Number(champPieces.value) || 0) + 1); redessiner(); } },
+      });
+      const boutonMaxCartons = creer('button', {
+        classe: 'bouton discret', texte: 'Max cartons', attributs: { type: 'button' },
+        sur: { click: () => { champCartons.value = String(cartonsMax); champPieces.value = '0'; redessiner(); } },
+      });
+      if (cartonsMax <= 0) boutonUnCarton.disabled = true;
+      if (!ventePiece) boutonUnePiece.disabled = true;
+      const boutonsRapides = creer('div', { classe: 'choix-rapides' }, [
+        boutonUnCarton,
+        boutonUnePiece,
+        boutonMaxCartons,
+      ]);
+
+      const boite = creer('div', { classe: 'boite-conditionnement' }, [
+        creer('h3', { texte: 'Vendre ' + article.designation }),
+        creer('p', {
+          classe: 'aide',
+          texte: 'Stock disponible : ' + formaterStock(restant, article) +
+            ' — 1 carton = ' + parCarton + ' pieces.',
+        }),
+        message,
+        creer('div', { classe: 'grille-conditionnement' }, [
+          creer('label', { texte: 'Cartons' }, [champCartons]),
+          creer('label', { texte: ventePiece ? 'Pieces' : 'Pieces (non vendues)' }, [champPieces]),
+        ]),
+        creer('div', { classe: 'prix-conditionnement' }, [
+          creer('span', { texte: 'Prix carton : ' + formater(prixUnite(article, 'carton')) }),
+          creer('span', { texte: 'Prix piece : ' + formater(prixUnite(article, 'piece')) }),
+        ]),
+        boutonsRapides,
+        resume,
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Ajouter au panier', attributs: { type: 'button' }, sur: { click: valider } }),
+        ]),
+      ]);
+      redessiner();
+      return boite;
+    });
+
+    if (!choix) return null;
+    return this.ajouterConditionnement(article, choix);
+  },
+
+  ajouterConditionnement(article, { cartons = 0, pieces = 0 }) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : vente refusee.', 'erreur');
+    }
+    const nbCartons = Number(cartons) || 0;
+    const nbPieces = Number(pieces) || 0;
+    if (!Number.isInteger(nbCartons) || !Number.isInteger(nbPieces) || nbCartons < 0 || nbPieces < 0) {
+      return annoncer('Quantites invalides.', 'erreur');
+    }
+    if (nbCartons > 0 && (!article.venteCarton || article.piecesParCarton <= 1)) {
+      return annoncer(article.designation + ' ne se vend pas en carton.', 'avertissement');
+    }
+    if (nbPieces > 0 && article.ventePiece === false) {
+      return annoncer(article.designation + ' ne se vend pas a la piece.', 'avertissement');
+    }
+    const sortie = nbCartons * facteurUnite(article, 'carton') + nbPieces;
+    if (sortie <= 0) return null;
+    if (sortie > this.restantStock(article)) {
+      return annoncer('Stock insuffisant : il reste ' + formaterStock(this.restantStock(article), article) + '.', 'avertissement');
+    }
+    if (nbCartons > 0) this.ajouter(article, 'carton', nbCartons, { silencieux: true });
+    if (nbPieces > 0) this.ajouter(article, 'piece', nbPieces, { silencieux: true });
+    annoncer(article.designation + ' : ' + nbCartons + ' carton(s) + ' + nbPieces + ' piece(s) ajoutes.');
+    this.afficherPanier();
+    this.afficherResultats();
+    return true;
+  },
+
+  ajouter(article, unite = 'piece', quantite = 1, options = {}) {
+    if (!this.caisseOuverte) {
+      return annoncer('Caisse fermee : vente refusee.', 'erreur');
+    }
+    const uniteVente = unite === 'carton' ? 'carton' : 'piece';
+    const facteurStock = facteurUnite(article, uniteVente);
+    if (uniteVente === 'carton' && (!article.venteCarton || article.piecesParCarton <= 1)) {
+      return annoncer(article.designation + ' ne se vend pas en carton.', 'avertissement');
+    }
+    if (uniteVente === 'piece' && article.ventePiece === false) {
+      return annoncer(article.designation + ' ne se vend pas a la piece.', 'avertissement');
+    }
+    const qte = Number(quantite) || 1;
+    if (!Number.isInteger(qte) || qte <= 0) return annoncer('Quantite invalide.', 'erreur');
+    if (this.restantStock(article) < facteurStock * qte) {
+      return annoncer(
+        article.designation + ' : stock insuffisant (' + formaterStock(this.restantStock(article), article) + ').',
+        'avertissement'
+      );
+    }
+
+    const cle = this.clePanier(article.reference, uniteVente);
+    const ligne = this.panier.find((l) => l.cle === cle);
     if (ligne) {
-      if (ligne.quantite >= article.stock) {
-        return annoncer(
-          article.designation + ' : tout le stock est deja au panier (' + article.stock + ').',
-          'avertissement'
-        );
-      }
-      ligne.quantite += 1;
-      annoncer(article.designation + ' x ' + ligne.quantite);
+      ligne.quantite += qte;
+      if (!options.silencieux) annoncer(article.designation + ' ' + ligne.quantite + ' ' + libelleUnite(uniteVente, ligne.quantite));
     } else {
-      if (article.stock <= 0) {
-        return annoncer(article.designation + ' est en rupture de stock.', 'avertissement');
-      }
       this.panier.push({
+        cle,
         reference: article.reference,
         designation: article.designation,
-        prixUnitaire: article.prixUnitaire,
+        prixUnitaire: prixUnite(article, uniteVente),
         tauxTva: article.tauxTva,
-        quantite: 1,
+        quantite: qte,
+        uniteVente,
+        facteurStock,
+        piecesParCarton: piecesParCarton(article),
         remisePourcent: 0,
         stock: article.stock,
       });
-      annoncer(article.designation + '  ' + formater(article.prixUnitaire));
+      if (!options.silencieux) {
+        annoncer(article.designation + '  ' + qte + ' ' + libelleUnite(uniteVente, qte) +
+          ' a ' + formater(prixUnite(article, uniteVente)) + ' / ' + libelleUnite(uniteVente));
+      }
     }
-    this.afficherPanier();
-    this.afficherResultats();
+    if (!options.silencieux) {
+      this.afficherPanier();
+      this.afficherResultats();
+    }
   },
 
-  changerQuantite(reference, ecart) {
-    const ligne = this.panier.find((l) => l.reference === reference);
+  changerQuantite(cle, ecart) {
+    const ligne = this.panier.find((l) => l.cle === cle);
     if (!ligne) return;
     const nouvelle = ligne.quantite + ecart;
-    if (nouvelle <= 0) return this.retirer(reference);
-    if (nouvelle > ligne.stock) return;
+    if (nouvelle <= 0) return this.retirer(cle);
+    const reserveAutres = this.panier
+      .filter((l) => l.reference === ligne.reference && l.cle !== cle)
+      .reduce((s, l) => s + l.quantite * l.facteurStock, 0);
+    if (reserveAutres + nouvelle * ligne.facteurStock > ligne.stock) {
+      return annoncer('Stock insuffisant pour ' + ligne.designation + '.', 'avertissement');
+    }
     ligne.quantite = nouvelle;
     this.afficherPanier();
     this.afficherResultats();
   },
 
-  retirer(reference) {
-    this.panier = this.panier.filter((l) => l.reference !== reference);
+  retirer(cle) {
+    this.panier = this.panier.filter((l) => l.cle !== cle);
     this.afficherPanier();
     this.afficherResultats();
   },
@@ -216,7 +533,10 @@ const Vente = {
     }
 
     for (const ligne of this.panier) {
-      const detail = ligne.quantite + ' x ' + formater(ligne.prixUnitaire) +
+      const unite = ligne.uniteVente === 'carton'
+        ? ' ' + libelleUnite('carton', ligne.quantite) + ' (' + ligne.facteurStock + ' pieces/carton)'
+        : ' ' + libelleUnite('piece', ligne.quantite);
+      const detail = ligne.quantite + unite + ' x ' + formater(ligne.prixUnitaire) +
         (ligne.remisePourcent > 0 ? '  -' + ligne.remisePourcent + ' %' : '');
 
       zone.append(creer('div', { classe: 'ligne-panier' }, [
@@ -229,9 +549,9 @@ const Vente = {
           }),
         ]),
         creer('div', { classe: 'quantite' }, [
-          creer('button', { texte: '-', sur: { click: () => this.changerQuantite(ligne.reference, -1) } }),
+          creer('button', { texte: '-', sur: { click: () => this.changerQuantite(ligne.cle, -1) } }),
           creer('span', { texte: String(ligne.quantite) }),
-          creer('button', { texte: '+', sur: { click: () => this.changerQuantite(ligne.reference, 1) } }),
+          creer('button', { texte: '+', sur: { click: () => this.changerQuantite(ligne.cle, 1) } }),
         ]),
         creer('div', {
           classe: 'total montant',
@@ -240,7 +560,7 @@ const Vente = {
         creer('button', {
           classe: 'retirer', texte: 'x',
           attributs: { title: 'Retirer du panier' },
-          sur: { click: () => this.retirer(ligne.reference) },
+          sur: { click: () => this.retirer(ligne.cle) },
         }),
       ]));
     }
@@ -260,9 +580,16 @@ const Vente = {
     $('#total-brut').textContent = formater(this.totaux?.totalBrut ?? 0);
     $('#total-tva').textContent = formater(this.totaux?.totalTva ?? 0);
     $('#total-ttc').textContent = formater(total);
-    $('#bouton-encaisser').disabled = this.panier.length === 0;
-    $('#bouton-encaisser').textContent =
-      this.panier.length === 0 ? 'Encaisser' : 'Encaisser ' + formater(total) + '  (F2)';
+    this.mettreAJourAfficheur();
+    const manqueClient = this.mode === 'credit' && !this.clientCredit;
+    $('#bouton-encaisser').disabled = this.panier.length === 0 || !this.caisseOuverte || manqueClient;
+    $('#bouton-encaisser').textContent = this.panier.length === 0
+      ? 'Encaisser'
+      : !this.caisseOuverte
+        ? 'Ouvrir la caisse avant encaissement'
+        : manqueClient
+          ? 'Choisir le client credit'
+          : 'Encaisser ' + formater(total) + '  (F2)';
     this.rafraichirRendu();
   },
 
@@ -272,7 +599,19 @@ const Vente = {
       bouton.classList.toggle('actif', bouton.dataset.mode === mode);
     }
     $('#zone-especes').hidden = mode !== 'especes';
+    $('#bloc-client-credit').hidden = mode !== 'credit';
     if (mode === 'especes') $('#montant-recu').focus();
+    if (mode === 'credit' && !this.clientCredit) this.choisirClientCredit();
+    this.rafraichirTotaux();
+  },
+
+  async choisirClientCredit() {
+    const client = await Clients.choisir();
+    if (client) {
+      this.clientCredit = client;
+      $('#client-credit-nom').textContent = client.nom + ' - solde ' + formater(client.solde);
+      this.rafraichirTotaux();
+    }
   },
 
   rafraichirRendu() {
@@ -289,15 +628,33 @@ const Vente = {
 
   async encaisser() {
     if (this.panier.length === 0) return;
+    const etat = await this.actualiserCaisse();
+    if (!etat?.ouverte) {
+      const ouvrir = await confirmer(
+        'Caisse fermee',
+        "Ouvrez la caisse avant d'enregistrer une vente.",
+        'Ouvrir maintenant'
+      );
+      if (ouvrir) await this.ouvrirCaisseRapide();
+      return;
+    }
+    if (this.mode === 'credit' && !this.clientCredit) {
+      await this.choisirClientCredit();
+      if (!this.clientCredit) return;
+    }
     const bouton = $('#bouton-encaisser');
     bouton.disabled = true;
 
     try {
       const vente = await appeler(window.caisse.ventes.enregistrer({
         lignes: this.panier.map((l) => ({
-          reference: l.reference, quantite: l.quantite, remisePourcent: l.remisePourcent,
+          reference: l.reference,
+          quantite: l.quantite,
+          uniteVente: l.uniteVente,
+          remisePourcent: l.remisePourcent,
         })),
         remiseGlobalePourcent: Number($('#remise-globale').value) || 0,
+        clientId: this.mode === 'credit' ? this.clientCredit.id : null,
         paiement: {
           mode: this.mode,
           montantRecu: this.mode === 'especes' ? Number($('#montant-recu').value) || undefined : undefined,
@@ -318,12 +675,20 @@ const Vente = {
         ])
       );
     } finally {
-      bouton.disabled = this.panier.length === 0;
+      this.rafraichirTotaux();
     }
   },
 
   reinitialiser() {
     this.panier = [];
+    this.clientCredit = null;
+    this.mode = 'especes';
+    for (const bouton of $$('#modes-paiement button')) {
+      bouton.classList.toggle('actif', bouton.dataset.mode === 'especes');
+    }
+    $('#bloc-client-credit').hidden = true;
+    $('#zone-especes').hidden = false;
+    $('#client-credit-nom').textContent = 'Aucun client choisi';
     $('#remise-globale').value = '0';
     $('#montant-recu').value = '';
     this.afficherPanier();
@@ -349,11 +714,22 @@ const Vente = {
           },
         }),
         creer('button', {
-          classe: 'bouton discret', texte: 'PDF',
+          classe: 'bouton discret', texte: 'Ticket PDF',
           sur: {
             click: async (e) => {
               e.target.disabled = true;
               try { await appeler(window.caisse.ticket.pdf({ id: vente.id })); }
+              catch (erreur) { e.target.textContent = erreur.message; }
+              finally { e.target.disabled = false; }
+            },
+          },
+        }),
+        creer('button', {
+          classe: 'bouton discret', texte: 'Facture A4',
+          sur: {
+            click: async (e) => {
+              e.target.disabled = true;
+              try { await appeler(window.caisse.ticket.facturePdf({ id: vente.id })); }
               catch (erreur) { e.target.textContent = erreur.message; }
               finally { e.target.disabled = false; }
             },

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:">
-  <title>Caisse</title>
+  <title>Ivoire-Gestion</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,8 +17,8 @@
     <p class="message erreur" id="erreur-administrateur"></p>
     <label>Nom complet<input type="text" name="nom" required autocomplete="off"></label>
     <label>Identifiant<input type="text" name="identifiant" required autocomplete="off"></label>
-    <label>Mot de passe (6 caracteres minimum)
-      <input type="password" name="motDePasse" required minlength="6" autocomplete="new-password">
+    <label>Mot de passe (3 caracteres minimum)
+      <input type="password" name="motDePasse" required minlength="3" autocomplete="new-password">
     </label>
     <label>Confirmation<input type="password" name="confirmation" required autocomplete="new-password"></label>
     <button type="submit" class="bouton pleine-largeur">Creer le compte</button>
@@ -28,8 +28,8 @@
 <!-- Connexion -->
 <section id="ecran-connexion" class="ecran">
   <form class="carte-accueil" id="formulaire-connexion">
-    <h1 id="titre-connexion">Caisse</h1>
-    <p class="sous-titre">Identifiez-vous pour ouvrir la caisse.</p>
+    <h1 id="titre-connexion">Ivoire-Gestion</h1>
+    <p class="sous-titre">Acces standard : CIV / CIV. Changez le mot de passe apres connexion.</p>
     <p class="message erreur" id="erreur-connexion"></p>
     <label>Identifiant<input type="text" name="identifiant" required autocomplete="username"></label>
     <label>Mot de passe<input type="password" name="motDePasse" required autocomplete="current-password"></label>
@@ -40,16 +40,25 @@
 <!-- Application -->
 <section id="ecran-application" class="ecran">
   <aside class="barre-laterale">
-    <div class="marque">Caisse<small id="nom-boutique"></small></div>
+    <div class="marque">Ivoire-Gestion<small id="nom-boutique"></small></div>
     <nav class="navigation">
-      <button data-vue="vente" class="actif">Vente</button>
-      <button data-vue="articles">Articles</button>
-      <button data-vue="journal">Journal</button>
-      <button data-vue="reglages" data-admin>Reglages</button>
+      <button data-vue="tableauBord" data-permission="dashboard:lire" class="actif">Tableau de bord</button>
+      <button data-vue="vente" data-permission="vente:encaisser">Vente</button>
+      <button data-vue="achats" data-permission="achats:lire">Achats</button>
+      <button data-vue="benefices" data-permission="rapports:benefices">Benefices</button>
+      <button data-vue="audit" data-permission="audit:lire">Audit</button>
+      <button data-vue="stock" data-permission="stock:lire">Stock</button>
+      <button data-vue="articles" data-permission="articles:lire">Articles</button>
+      <button data-vue="clients" data-permission="clients:lire">Clients & credits</button>
+      <button data-vue="fournisseurs" data-permission="fournisseurs:lire">Fournisseurs</button>
+      <button data-vue="journal" data-permission="caisse:journal">Caisse</button>
+      <button data-vue="reglages" data-permission-any="parametres:gerer,utilisateurs:gerer,base:gerer,rapports:exports">Reglages</button>
+      <button data-vue="aide">Aide</button>
     </nav>
     <div class="pied-laterale">
       <div class="nom" id="nom-utilisateur"></div>
       <div class="role" id="role-utilisateur"></div>
+      <button class="bouton discret" id="bouton-changer-mot-de-passe" type="button">Changer mot de passe</button>
       <button class="bouton discret" id="bouton-deconnexion">Fermer la session</button>
     </div>
   </aside>
@@ -60,17 +69,40 @@
       <div id="actions-vue"></div>
     </header>
 
+    <!-- Tableau de bord -->
+    <div id="vue-tableauBord" class="vue actif">
+      <div class="tableau-bord" id="contenu-tableau-bord"></div>
+    </div>
+
     <!-- Vente -->
-    <div id="vue-vente" class="vue actif">
+    <div id="vue-vente" class="vue">
       <div class="colonne-catalogue">
+        <div class="pos-entete-colonne pos-entete-catalogue">
+          <div>
+            <span class="libelle-doux">Poste de caisse</span>
+            <h3>Scanner / rechercher</h3>
+          </div>
+          <span class="pos-statut" id="statut-caisse-vente">Caisse</span>
+        </div>
         <div class="recherche">
-          <input type="search" id="champ-recherche" placeholder="Scannez un article, ou cherchez par nom, reference ou code-barres"
+          <input type="search" id="champ-recherche" placeholder="Scanner un code-barres ou taper une reference"
                  autocomplete="off" spellcheck="false">
         </div>
         <div class="resultats" id="resultats-articles"></div>
       </div>
 
       <div class="colonne-panier">
+        <div class="pos-entete-colonne pos-entete-panier">
+          <div>
+            <span class="libelle-doux">Ticket client</span>
+            <h3>Panier en cours</h3>
+          </div>
+          <div class="pos-afficheur-total">
+            <span>Total a payer</span>
+            <strong id="afficheur-total-vente">0 F</strong>
+          </div>
+          <span class="pos-badge" id="compteur-panier">0 article</span>
+        </div>
         <div class="annonce" id="annonce" role="status" aria-live="polite"></div>
         <div class="lignes-panier" id="lignes-panier"></div>
         <div class="totaux">
@@ -80,12 +112,21 @@
             <span><input type="number" id="remise-globale" class="champ-compact" min="0" max="100" step="1" value="0"> %</span>
           </div>
           <div class="ligne"><span>Dont TVA</span><span class="montant" id="total-tva">0 F</span></div>
-          <div class="ligne total"><span>Total</span><span class="montant" id="total-ttc">0 F</span></div>
+          <div class="ligne total"><span class="montant" id="total-ttc">0 F</span></div>
 
           <div class="modes" id="modes-paiement">
             <button data-mode="especes" class="actif">Especes</button>
             <button data-mode="mobile">Mobile money</button>
             <button data-mode="carte">Carte</button>
+            <button data-mode="credit">Credit client</button>
+          </div>
+
+          <div class="client-credit" id="bloc-client-credit" hidden>
+            <div>
+              <span class="libelle-doux">Client</span>
+              <strong id="client-credit-nom">Aucun client choisi</strong>
+            </div>
+            <button class="bouton discret" id="bouton-choisir-client" type="button">Choisir</button>
           </div>
 
           <div class="encaissement" id="zone-especes">
@@ -98,6 +139,42 @@
       </div>
     </div>
 
+    <!-- Achats -->
+    <div id="vue-achats" class="vue">
+      <div class="achats-page">
+        <div class="panneau achats-entete">
+          <div>
+            <span class="libelle-doux">Reception marchandise</span>
+            <h3>Achats fournisseurs lies au stock</h3>
+            <p class="aide">Chaque achat valide ajoute automatiquement les pieces ou cartons au stock et cree la dette fournisseur correspondante.</p>
+          </div>
+          <div class="resume-achats" id="resume-achats"></div>
+        </div>
+        <div class="panneau achats-historique">
+          <h3>Historique des achats</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Numero</th><th>Date</th><th>Fournisseur</th><th>Document</th><th>Reglement</th>
+                <th class="nombre">Total</th><th class="nombre">Retours</th><th class="nombre">Dette</th><th>Statut</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="corps-achats"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benefices -->
+    <div id="vue-benefices" class="vue">
+      <div class="benefices-page" id="contenu-benefices"></div>
+    </div>
+
+    <!-- Stock -->
+    <div id="vue-stock" class="vue">
+      <div class="stock-page" id="contenu-stock"></div>
+    </div>
+
     <!-- Articles -->
     <div id="vue-articles" class="vue">
       <div class="tableau-zone">
@@ -105,8 +182,8 @@
           <thead>
             <tr>
               <th class="choix"></th>
-              <th>Reference</th><th>Code-barres</th><th>Designation</th>
-              <th class="nombre">Prix</th><th class="nombre">TVA</th>
+              <th>Reference</th><th>Codes</th><th>Designation</th><th>Cond.</th>
+              <th class="nombre">Prix achat</th><th class="nombre">Prix piece</th><th class="nombre">Prix carton</th><th class="nombre">TVA</th>
               <th class="nombre">Stock</th><th class="nombre">Seuil</th><th></th>
             </tr>
           </thead>
@@ -115,15 +192,96 @@
       </div>
     </div>
 
-    <!-- Journal -->
+    <!-- Clients -->
+    <div id="vue-clients" class="vue">
+      <div class="clients-page">
+        <section class="clients-hero">
+          <div>
+            <span class="libelle-doux">Portefeuille client</span>
+            <h3>Clients et credits</h3>
+            <p class="aide">Suivez les debiteurs, les creances ouvertes et les reglements sans perdre la lisibilite des factures.</p>
+          </div>
+          <div class="clients-kpis" id="resume-clients"></div>
+        </section>
+
+        <div class="clients-grille gestion-tiers">
+          <div class="panneau clients-panneau clients-liste-panneau">
+            <div class="panneau-entete-tiers">
+              <div>
+                <span class="libelle-doux">Fichier client</span>
+                <h3>Clients</h3>
+              </div>
+              <span class="compteur-puce" id="compteur-clients">0 client</span>
+            </div>
+            <div class="outils-tiers">
+              <input type="search" id="recherche-clients" placeholder="Rechercher un client, code ou telephone" autocomplete="off">
+            </div>
+            <div class="table-scroll clients-table-scroll">
+              <table class="clients-table">
+                <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">Solde</th><th></th></tr></thead>
+                <tbody id="corps-clients"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panneau clients-panneau creances-panneau">
+            <div class="panneau-entete-tiers">
+              <div>
+                <span class="libelle-doux">Factures ouvertes</span>
+                <h3>Creances clients</h3>
+              </div>
+              <span class="compteur-puce alerte" id="compteur-creances-clients">0 creance</span>
+            </div>
+            <div class="outils-tiers outils-creances">
+              <input type="search" id="recherche-creances-clients" placeholder="Rechercher numero, client ou libelle" autocomplete="off">
+              <select id="filtre-creances-clients">
+                <option value="toutes">Toutes les factures</option>
+                <option value="ouverte">Ouvertes</option>
+                <option value="partielle">Reglement partiel</option>
+              </select>
+            </div>
+            <div class="table-scroll clients-table-scroll">
+              <table class="creances-table">
+                <thead><tr><th>Numero</th><th>Client</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+                <tbody id="corps-creances-clients"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fournisseurs -->
+    <div id="vue-fournisseurs" class="vue">
+      <div class="gestion-tiers fournisseur-bloc-unique">
+        <div class="panneau panneau-fournisseurs-unique">
+          <section class="section-fournisseurs">
+            <h3>Fournisseurs</h3>
+            <table>
+              <thead><tr><th>Code</th><th>Nom</th><th>Telephone</th><th class="nombre">A payer</th><th></th></tr></thead>
+              <tbody id="corps-fournisseurs"></tbody>
+            </table>
+          </section>
+          <section class="section-fournisseurs">
+            <h3>Dettes fournisseurs</h3>
+            <table>
+              <thead><tr><th>Numero</th><th>Fournisseur</th><th>Libelle</th><th class="nombre">Solde</th><th></th></tr></thead>
+              <tbody id="corps-dettes-fournisseurs"></tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caisse et journal -->
     <div id="vue-journal" class="vue">
       <div class="deux-colonnes">
         <div>
+          <div class="panneau" id="panneau-session-caisse"></div>
           <div class="panneau">
             <h3>Ventes de la journee</h3>
             <table>
               <thead>
-                <tr><th>Numero</th><th>Heure</th><th>Caissier</th><th class="nombre">Total</th><th></th></tr>
+                <tr><th>Numero</th><th>Heure</th><th>Caissier</th><th>Mode</th><th class="nombre">Total</th><th class="nombre">Retours</th><th></th></tr>
               </thead>
               <tbody id="corps-journal"></tbody>
             </table>
@@ -133,6 +291,34 @@
           <div class="panneau" id="panneau-cloture"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Audit -->
+    <div id="vue-audit" class="vue">
+      <div class="panneau">
+        <div class="entete-section">
+          <div>
+            <h3>Historique et audit</h3>
+            <p class="aide">Toutes les operations sensibles sont journalisees avec utilisateur, date, action et resume.</p>
+          </div>
+          <span class="pastille" id="audit-total">0 action</span>
+        </div>
+        <div class="ligne-formulaire">
+          <label>Recherche<input id="audit-recherche" type="search" placeholder="vente, article, utilisateur, motif..."></label>
+          <label>Action<select id="audit-action"><option value="">Toutes</option></select></label>
+          <label>Entite<select id="audit-entite"><option value="">Toutes</option></select></label>
+          <label>Limite<input id="audit-limite" type="number" min="20" max="1000" step="20" value="200"></label>
+        </div>
+        <table>
+          <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Entite</th><th>Resume</th></tr></thead>
+          <tbody id="corps-audit"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Aide -->
+    <div id="vue-aide" class="vue">
+      <div class="aide-page" id="contenu-aide"></div>
     </div>
 
     <!-- Reglages -->
@@ -151,6 +337,26 @@
             </label>
             <button type="submit" class="bouton">Enregistrer</button>
           </form>
+
+          <div class="panneau panneau-base-reseau">
+            <h3>Base de donnees et reseau local</h3>
+            <p class="aide">Par defaut, les donnees restent sur ce poste : chaque entreprise garde sa propre base locale. Utilisez un dossier partage seulement si plusieurs postes d'une meme entreprise doivent travailler sur le meme fichier <strong>caisse.db</strong>, sans connexion Internet.</p>
+            <div class="infos-base" id="infos-base-donnees"></div>
+            <p class="message succes" id="message-base-reseau"></p>
+            <div class="actions empilees-mobile actions-sauvegarde">
+              <button class="bouton" id="bouton-sauvegarder-base" type="button">Sauvegarder la base</button>
+              <button class="bouton discret" id="bouton-restaurer-base" type="button">Restaurer une sauvegarde</button>
+              <button class="bouton discret" id="bouton-exporter-csv" type="button">Exporter Excel/CSV</button>
+              <span class="aide aide-sauvegarde">Une sauvegarde automatique est creee chaque jour. Creez aussi une copie avant une mise a jour, un changement de poste ou une base partagee.</span>
+            </div>
+            <div class="infos-base liste-sauvegardes" id="infos-sauvegardes"></div>
+            <div class="actions empilees-mobile">
+              <button class="bouton discret" id="bouton-tester-base-reseau" type="button">Tester acces reseau</button>
+              <button class="bouton discret" id="bouton-choisir-base-reseau" type="button">Utiliser un dossier partage</button>
+              <button class="bouton discret" id="bouton-base-locale" type="button">Revenir a la base locale</button>
+              <button class="bouton danger" id="bouton-redemarrer-base" type="button" hidden>Redemarrer</button>
+            </div>
+          </div>
         </div>
         <div>
           <div class="panneau">
@@ -173,9 +379,18 @@
 
 <script src="commun.js"></script>
 <script src="douchette.js"></script>
+<script src="tableau-bord.js"></script>
 <script src="vente.js"></script>
+<script src="achats.js"></script>
+<script src="benefices.js"></script>
+<script src="stock.js"></script>
 <script src="articles.js"></script>
+<script src="clients.js"></script>
+<script src="fournisseurs.js"></script>
 <script src="journal.js"></script>
+<script src="audit.js"></script>
+<script src="../metier/guide-utilisateur.js"></script>
+<script src="aide.js"></script>
 <script src="reglages.js"></script>
 <script src="app.js"></script>
 </body>
