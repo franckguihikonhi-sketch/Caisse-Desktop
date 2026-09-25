@@ -337,6 +337,9 @@ app.whenReady().then(async () => {
 
   if (problemes.length > 0) {
     console.log('\nPROBLEMES :\n' + problemes.map((p) => '  - ' + p).join('\n') + '\n');
+    for (const probleme of problemes) {
+      console.log('::error::' + String(probleme).replace(/\r?\n/g, '%0A'));
+    }
     app.exit(1);
   } else {
     console.log('\nDemarrage verifie : la caisse se lance, encaisse, imprime et etiquette.\n');
