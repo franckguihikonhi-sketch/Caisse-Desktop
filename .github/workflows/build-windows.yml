@@ -14,6 +14,8 @@ jobs:
     name: Installateur Windows
     runs-on: windows-latest
     timeout-minutes: 35
+    permissions:
+      contents: write
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
@@ -67,6 +69,31 @@ jobs:
             release/win-unpacked/Ivoire-Gestion.exe
           if-no-files-found: error
           retention-days: 30
+
+      # Publie une page de telechargement simple : un lien direct vers le .exe,
+      # sans compte GitHub et sans archive de plusieurs centaines de Mo.
+      - name: Publier la version telechargeable
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $exe = Get-ChildItem release -Filter *.exe -File -ErrorAction SilentlyContinue
+          if (-not $exe) {
+            Write-Error "Aucun fichier .exe produit : rien a publier."
+            exit 1
+          }
+          $chemins = $exe | ForEach-Object { $_.FullName }
+          $exe | ForEach-Object { Write-Host ("A publier : " + $_.Name + "  " + [math]::Round($_.Length / 1MB) + " Mo") }
+          gh release delete derniere-version --yes --cleanup-tag 2>$null
+          gh release create derniere-version $chemins `
+            --title "Ivoire-Gestion - derniere version Windows" `
+            --notes "Installateur Windows 64 bits d'Ivoire-Gestion.
+
+          Telechargez le fichier Ivoire-Gestion-Setup puis lancez-le.
+          Identifiants de premiere connexion : CIV / CIV.
+
+          Construit depuis le commit ${{ github.sha }}." `
+            --latest
 
       - name: Signaler si l'installateur complet echoue
         if: steps.installateur.outcome == 'failure'
