@@ -7,6 +7,7 @@
  */
 
 const { formater } = require('./monnaie');
+const { libelleUnite } = require('./conditionnement');
 
 const LARGEUR = 32;
 
@@ -38,12 +39,6 @@ function dateLisible(iso) {
   );
 }
 
-const LIBELLES_PAIEMENT = {
-  especes: 'Especes',
-  mobile: 'Mobile money',
-  carte: 'Carte bancaire',
-};
-
 function construireTicket({ boutique, vente }) {
   const lignes = [];
   const pousser = (t) => lignes.push(t);
@@ -56,11 +51,15 @@ function construireTicket({ boutique, vente }) {
 
   pousser(justifier('Ticket', vente.numero));
   pousser(justifier(dateLisible(vente.date), vente.caissier));
+  if (vente.client) pousser(justifier('Client', vente.client.nom));
   pousser(separateur());
 
   for (const l of vente.panier.lignes) {
     pousser(l.designation.slice(0, LARGEUR));
-    const detail = l.quantite + ' x ' + formater(l.prixUnitaire);
+    const unite = l.uniteVente && l.uniteVente !== 'piece'
+      ? ' ' + libelleUnite(l.uniteVente, l.quantite)
+      : '';
+    const detail = l.quantite + unite + ' x ' + formater(l.prixUnitaire);
     pousser(justifier('  ' + detail, formater(l.totalTtc)));
     if (l.remisePourcent > 0) {
       pousser('  remise ' + l.remisePourcent + ' %');
@@ -73,25 +72,48 @@ function construireTicket({ boutique, vente }) {
     pousser(justifier('Remise', '-' + formater(vente.panier.remise)));
   }
   pousser(justifier('TOTAL', formater(vente.panier.totalTtc)));
+
+  const facturesCredit = vente.creditClient?.factures ?? [];
+  if (facturesCredit.length > 0) {
+    pousser(separateur());
+    pousser('Factures a credit');
+    for (const facture of facturesCredit) {
+      pousser(justifier(facture.numero, formater(facture.solde)));
+    }
+    const totalCredit = vente.creditClient?.totalSolde ?? facturesCredit.reduce((s, f) => s + f.solde, 0);
+    pousser(justifier('Dette totale', formater(totalCredit)));
+  }
   pousser('');
 
-  for (const v of vente.panier.ventilation) {
-    pousser(justifier('  HT ' + v.taux + ' %', formater(v.base)));
-    if (v.tva > 0) pousser(justifier('  TVA ' + v.taux + ' %', formater(v.tva)));
-  }
-
-  pousser(separateur());
-  pousser(justifier(LIBELLES_PAIEMENT[vente.paiement.mode] ?? vente.paiement.mode,
-    formater(vente.paiement.montantRecu ?? vente.panier.totalTtc)));
-  if (vente.paiement.mode === 'especes') {
-    pousser(justifier('Monnaie rendue', formater(vente.paiement.rendu ?? 0)));
-  }
-
-  pousser('');
   pousser(centrer('Merci de votre visite'));
   pousser(centrer('A bientot'));
 
   return lignes;
 }
 
-module.exports = { construireTicket, centrer, justifier, LARGEUR };
+/** Vente factice servant au bouton « Imprimer un ticket de test » des reglages. */
+function venteExemple() {
+  return {
+    numero: 'TEST-0001',
+    date: new Date().toISOString(),
+    caissier: 'Test',
+    client: null,
+    panier: {
+      lignes: [
+        {
+          designation: 'Article de test', reference: 'TEST-1', uniteVente: 'piece',
+          quantite: 2, prixUnitaire: 500, remisePourcent: 0, totalTtc: 1000,
+        },
+        {
+          designation: 'Deuxieme article', reference: 'TEST-2', uniteVente: 'piece',
+          quantite: 1, prixUnitaire: 1500, remisePourcent: 0, totalTtc: 1500,
+        },
+      ],
+      totalBrut: 2500, remise: 0, totalHt: 2119, totalTva: 381, totalTtc: 2500,
+    },
+    paiement: { mode: 'especes' },
+    montantNet: 2500,
+  };
+}
+
+module.exports = { construireTicket, venteExemple, centrer, justifier, LARGEUR };

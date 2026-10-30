@@ -7,9 +7,11 @@ const { ouvrir, boutique, ecrireParametres } = require('../src/donnees/base');
 const utilisateurs = require('../src/donnees/utilisateurs');
 const articles = require('../src/donnees/articles');
 const ventes = require('../src/donnees/ventes');
+const caisse = require('../src/donnees/caisse');
+const tableauDeBord = require('../src/donnees/tableau-de-bord');
 const { jour } = require('../src/metier/horodatage');
 
-function caisseNeuve() {
+function caisseNeuve({ ouvrirCaisse = true } = {}) {
   const base = ouvrir(':memory:');
   const caissier = utilisateurs.creer(base, {
     identifiant: 'awa', nom: 'Awa Kone', role: 'caissier', motDePasse: 'secret123',
@@ -17,33 +19,101 @@ function caisseNeuve() {
   articles.creer(base, { reference: 'sav-01', designation: 'Savon', prixUnitaire: 325, stock: 100 });
   articles.creer(base, { reference: 'riz-05', designation: 'Riz 5 kg', prixUnitaire: 4500, stock: 20 });
   articles.creer(base, { reference: 'pain', designation: 'Pain', prixUnitaire: 200, tauxTva: 0, stock: 50 });
+  if (ouvrirCaisse) caisse.ouvrir(base, { fondOuverture: 0, utilisateurId: caissier.id });
   return { base, caissier };
 }
 
-test('la premiere ouverture ne cree aucun compte', () => {
+test('la premiere ouverture propose l acces standard CIV', () => {
   const base = ouvrir(':memory:');
-  assert.equal(utilisateurs.aucunCompte(base), true);
+  assert.equal(utilisateurs.aucunCompte(base), false);
   assert.equal(boutique(base).nom, 'Ma boutique');
+  const standard = utilisateurs.authentifier(base, 'CIV', 'CIV');
+  assert.equal(standard.identifiant, 'civ');
+  assert.equal(standard.role, 'administrateur');
+});
+
+test('une installation neuve ne contient aucune donnee commerciale', () => {
+  const base = ouvrir(':memory:');
+  const tablesVides = [
+    'articles',
+    'ventes',
+    'lignes_vente',
+    'clients',
+    'fournisseurs',
+    'sessions_caisse',
+    'creances_clients',
+    'reglements_clients',
+    'dettes_fournisseurs',
+    'reglements_fournisseurs',
+    'mouvements_stock',
+    'achats',
+    'lignes_achat',
+    'retours_fournisseurs',
+    'lignes_retour_fournisseur',
+    'retours_clients',
+    'lignes_retour_client',
+  ];
+
+  for (const table of tablesVides) {
+    assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ' + table).get().n, 0, table);
+  }
 });
 
 test('un mot de passe ne se retrouve pas dans la base', () => {
   const { base } = caisseNeuve();
   const brut = JSON.stringify(base.prepare('SELECT * FROM utilisateurs').all());
   assert.ok(!brut.includes('secret123'));
+  assert.ok(!brut.includes('CIV'));
 });
 
 test('seul le bon mot de passe ouvre la caisse', () => {
   const { base } = caisseNeuve();
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV').role, 'administrateur');
+  assert.equal(utilisateurs.authentifier(base, 'civ', 'CIV').role, 'administrateur');
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret123').nom, 'Awa Kone');
   assert.equal(utilisateurs.authentifier(base, 'AWA', 'secret123').nom, 'Awa Kone');
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret124'), null);
   assert.equal(utilisateurs.authentifier(base, 'inconnu', 'secret123'), null);
 });
 
+test('chaque utilisateur peut changer son mot de passe', () => {
+  const base = ouvrir(':memory:');
+  const standard = utilisateurs.authentifier(base, 'CIV', 'CIV');
+  utilisateurs.changerMotDePasse(base, standard.id, 'NOUVEAU');
+  utilisateurs.assurerAccesStandard(base);
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV'), null);
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'NOUVEAU').id, standard.id);
+});
+
+test('l acces standard est ajoute aux anciennes bases avec comptes existants', () => {
+  const base = ouvrir(':memory:');
+  base.prepare('DELETE FROM utilisateurs WHERE identifiant = ?').run('civ');
+  const ancien = utilisateurs.creer(base, {
+    identifiant: 'ancien', nom: 'Ancien admin', role: 'administrateur', motDePasse: 'ancien123',
+  });
+
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV'), null);
+  const standard = utilisateurs.assurerAccesStandard(base);
+  assert.equal(standard.identifiant, 'civ');
+  assert.equal(utilisateurs.authentifier(base, 'CIV', 'CIV').role, 'administrateur');
+  assert.equal(utilisateurs.authentifier(base, 'ancien', 'ancien123').id, ancien.id);
+});
+
 test('un compte desactive ne peut plus ouvrir la caisse', () => {
   const { base, caissier } = caisseNeuve();
   utilisateurs.activer(base, caissier.id, false);
   assert.equal(utilisateurs.authentifier(base, 'awa', 'secret123'), null);
+});
+
+test('aucune vente ne passe quand la caisse journaliere est fermee', () => {
+  const { base, caissier } = caisseNeuve({ ouvrirCaisse: false });
+  assert.throws(() => ventes.enregistrer(base, {
+    lignes: [{ reference: 'PAIN', quantite: 1 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  }), /caisse n'est pas ouverte/);
+  assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
+  assert.equal(articles.lireParReference(base, 'PAIN').stock, 50);
 });
 
 test('les references sont uniques et normalisees', () => {
@@ -103,6 +173,30 @@ test('le prix vient de la base, pas du panier envoye', () => {
   assert.equal(vendue.panier.totalTtc, 200);
 });
 
+test('la marge commerciale est enregistree au moment de la vente', () => {
+  const { base, caissier } = caisseNeuve();
+  articles.creer(base, {
+    reference: 'MARGE',
+    designation: 'Article rentable',
+    prixUnitaire: 1000,
+    prixAchatPiece: 650,
+    stock: 10,
+  });
+
+  const vendue = ventes.enregistrer(base, {
+    lignes: [{ reference: 'MARGE', quantite: 2 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  });
+  const relue = ventes.lire(base, vendue.id);
+  assert.equal(relue.panier.lignes[0].prixAchatUnitaire, 650);
+  assert.equal(relue.panier.lignes[0].margeTotale, 700);
+
+  const tableau = tableauDeBord.lire(base, { date: jour() });
+  assert.equal(tableau.rentabilite.margeNette, 700);
+  assert.equal(tableau.rentabilite.tauxMarge, 35);
+});
+
 test('un stock insuffisant annule toute la vente', () => {
   const { base, caissier } = caisseNeuve();
   assert.throws(() => ventes.enregistrer(base, {
@@ -113,6 +207,26 @@ test('un stock insuffisant annule toute la vente', () => {
 
   assert.equal(articles.lireParReference(base, 'SAV-01').stock, 100);
   assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
+});
+
+test('un meme article cumule dans le panier ne peut pas depasser le stock', () => {
+  const { base, caissier } = caisseNeuve();
+  assert.throws(() => ventes.enregistrer(base, {
+    lignes: [{ reference: 'RIZ-05', quantite: 15 }, { reference: 'RIZ-05', quantite: 10 }],
+    paiement: { mode: 'carte' },
+    utilisateurId: caissier.id,
+  }), /Stock insuffisant/);
+
+  assert.equal(articles.lireParReference(base, 'RIZ-05').stock, 20);
+  assert.equal(base.prepare('SELECT COUNT(*) AS n FROM ventes').get().n, 0);
+});
+
+test('la base refuse directement tout stock negatif', () => {
+  const { base } = caisseNeuve();
+  assert.throws(() => {
+    base.prepare('UPDATE articles SET stock = -1 WHERE reference = ?').run('PAIN');
+  }, /Stock negatif interdit/);
+  assert.equal(articles.lireParReference(base, 'PAIN').stock, 50);
 });
 
 test('un article inconnu ou un paiement inconnu est refuse', () => {

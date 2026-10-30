@@ -1,8 +1,7 @@
 'use strict';
 
-/* Catalogue. Consultable par tous, modifiable par l'administrateur seul :
-   c'est le processus principal qui tranche, l'ecran ne fait que masquer
-   les boutons qui n'aboutiraient pas. */
+/* Catalogue. Consultable selon le role, modifiable seulement si la permission
+   articles:gerer est accordee. Le processus principal re-verifie toujours. */
 
 const Articles = {
   liste: [],
@@ -19,7 +18,7 @@ const Articles = {
     });
     actions.append(this.boutonEtiquettes);
 
-    if (App.utilisateur.role === 'administrateur') {
+    if (App.peut('articles:gerer')) {
       actions.append(creer('button', {
         classe: 'bouton espace-gauche', texte: 'Nouvel article',
         sur: { click: () => this.editer(null) },
@@ -56,12 +55,13 @@ const Articles = {
 
     if (this.liste.length === 0) {
       corps.append(creer('tr', {}, [
-        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '9' } }),
+        creer('td', { classe: 'vide', texte: 'Aucun article. Commencez par en creer un.', attributs: { colspan: '12' } }),
       ]));
       return;
     }
 
-    const admin = App.utilisateur.role === 'administrateur';
+    const peutGerer = App.peut('articles:gerer');
+    const peutStock = App.peut('stock:mouvement');
 
     for (const article of this.liste) {
       const bas = article.seuilAlerte > 0 && article.stock <= article.seuilAlerte;
@@ -87,19 +87,31 @@ const Articles = {
       const cellules = [
         creer('td', { classe: 'choix' }, [case_]),
         creer('td', { texte: article.reference }),
-        creer('td', { classe: 'code-barres', texte: article.codeBarres ?? '-' }),
+        creer('td', { classe: 'code-barres', texte: [
+          article.codeBarres ? 'P: ' + article.codeBarres : 'P: -',
+          article.codeBarresCarton ? 'C: ' + article.codeBarresCarton : null,
+        ].filter(Boolean).join(' / ') }),
         creer('td', { texte: article.designation }),
+        creer('td', { texte: article.conditionnement ?? ('1 carton = ' + piecesParCarton(article) + ' pieces') }),
+        this.cellulePrixAchat(article),
         creer('td', { classe: 'nombre montant', texte: formater(article.prixUnitaire) }),
+        creer('td', { classe: 'nombre montant', texte: article.venteCarton ? formater(prixUnite(article, 'carton')) : '-' }),
         creer('td', { classe: 'nombre', texte: article.tauxTva + ' %' }),
-        creer('td', { classe: 'nombre', texte: String(article.stock) }),
-        creer('td', { classe: 'nombre', texte: article.seuilAlerte > 0 ? String(article.seuilAlerte) : '-' }),
+        creer('td', { classe: 'nombre', texte: article.stockLibelle ?? formaterStock(article.stock, article) }),
+        creer('td', { classe: 'nombre', texte: article.seuilAlerte > 0 ? formaterStock(article.seuilAlerte, article) : '-' }),
       ];
 
       const actions = creer('td', { classe: 'nombre' });
-      if (admin) {
+      if (peutStock) {
+        actions.append(creer('button', {
+          classe: 'bouton discret', texte: 'Stock',
+          sur: { click: () => this.mouvementStock(article) },
+        }));
+      }
+      if (peutGerer) {
         actions.append(
           creer('button', {
-            classe: 'bouton discret', texte: 'Modifier',
+            classe: 'bouton discret espace-gauche', texte: 'Modifier',
             sur: { click: () => this.editer(article) },
           }),
           creer('button', {
@@ -113,6 +125,20 @@ const Articles = {
       corps.append(creer('tr', { classe: bas ? 'stock-bas' : '' }, cellules));
     }
     this.rafraichirBouton();
+  },
+
+  cellulePrixAchat(article) {
+    const lignes = [];
+    if (article.prixAchatPiece !== null && article.prixAchatPiece !== undefined) {
+      lignes.push(creer('div', { texte: 'P: ' + formater(article.prixAchatPiece) }));
+    }
+    if (piecesParCarton(article) > 1 && article.prixAchatCarton !== null && article.prixAchatCarton !== undefined) {
+      lignes.push(creer('div', { texte: 'C: ' + formater(article.prixAchatCarton) }));
+    }
+    if (lignes.length === 0) {
+      return creer('td', { classe: 'nombre prix-achat-article vide-prix', texte: '-' });
+    }
+    return creer('td', { classe: 'nombre montant prix-achat-article' }, lignes);
   },
 
   /**
@@ -183,18 +209,32 @@ const Articles = {
         },
       });
       const designation = champ('designation', 'Designation', { type: 'text', required: 'required', value: article?.designation ?? '' });
-      const prix = champ('prixUnitaire', 'Prix de vente TTC (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
+      const pieces = champ('piecesParCarton', 'Pieces par carton (1 si vente piece seule)', { type: 'number', min: '1', step: '1', required: 'required', value: article?.piecesParCarton ?? '1' });
+      const codeCarton = champ('codeBarresCarton', 'Code-barres carton (facultatif)', {
+        type: 'text', inputmode: 'numeric', autocomplete: 'off',
+        placeholder: 'code du carton complet',
+        value: article?.codeBarresCarton ?? valeursParDefaut.codeBarresCarton ?? '',
+      });
+      const prixAchatPiece = champ('prixAchatPiece', "Prix d'achat TTC piece (F)", { type: 'number', min: '0', step: '1', value: article?.prixAchatPiece ?? '', placeholder: 'prix fournisseur par piece' });
+      const prixAchatCarton = champ('prixAchatCarton', "Prix d'achat TTC carton (facultatif)", { type: 'number', min: '0', step: '1', value: article?.prixAchatCarton ?? '', placeholder: 'prix fournisseur du carton' });
+      const prix = champ('prixUnitaire', 'Prix de vente TTC piece (F)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.prixUnitaire ?? '' });
+      const prixCarton = champ('prixCarton', 'Prix de vente TTC carton (vide = piece x quantite)', { type: 'number', min: '0', step: '1', value: article?.prixCarton ?? '' });
       const taux = champ('tauxTva', 'Taux de TVA (%)', { type: 'number', min: '0', step: '0.5', required: 'required', value: article?.tauxTva ?? App.parametres['tva.taux_par_defaut'] ?? '18' });
-      const stock = champ('stock', 'Stock', { type: 'number', step: '1', required: 'required', value: article?.stock ?? '0' });
-      const seuil = champ('seuilAlerte', "Seuil d'alerte (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
+      const stock = champ('stock', 'Stock courant total en pieces (correction journalisee)', { type: 'number', min: '0', step: '1', required: 'required', value: article?.stock ?? '0' });
+      const seuil = champ('seuilAlerte', "Seuil d'alerte en pieces (0 = aucun)", { type: 'number', min: '0', step: '1', required: 'required', value: article?.seuilAlerte ?? '0' });
 
       const enregistrer = async () => {
         try {
           const saisie = {
             reference: reference.entree.value,
             codeBarres: code.entree.value,
+            codeBarresCarton: codeCarton.entree.value,
             designation: designation.entree.value,
+            piecesParCarton: Number(pieces.entree.value),
+            prixAchatPiece: prixAchatPiece.entree.value === '' ? null : Number(prixAchatPiece.entree.value),
+            prixAchatCarton: prixAchatCarton.entree.value === '' ? null : Number(prixAchatCarton.entree.value),
             prixUnitaire: Number(prix.entree.value),
+            prixCarton: prixCarton.entree.value === '' ? null : Number(prixCarton.entree.value),
             tauxTva: Number(taux.entree.value),
             stock: Number(stock.entree.value),
             seuilAlerte: Number(seuil.entree.value),
@@ -212,7 +252,8 @@ const Articles = {
         creer('h3', { texte: article ? 'Modifier ' + article.designation : 'Nouvel article' }),
         erreur,
         reference.bloc, code.bloc, attribuer, verdictCode, designation.bloc,
-        prix.bloc, taux.bloc, stock.bloc, seuil.bloc,
+        pieces.bloc, codeCarton.bloc, prixAchatPiece.bloc, prixAchatCarton.bloc,
+        prix.bloc, prixCarton.bloc, taux.bloc, stock.bloc, seuil.bloc,
         creer('div', { classe: 'actions' }, [
           creer('button', {
             classe: 'bouton discret', texte: 'Annuler',
@@ -226,6 +267,71 @@ const Articles = {
 
     if (donnees) await this.charger();
     return donnees;
+  },
+
+  async mouvementStock(article) {
+    const fournisseurs = await appeler(window.caisse.fournisseurs.lister()).catch(() => []);
+    const fait = await ouvrirBoite((fermer) => {
+      const type = creer('select', {}, [
+        creer('option', { texte: 'Entree en stock', attributs: { value: 'entree' } }),
+        creer('option', { texte: 'Sortie / casse / perte', attributs: { value: 'sortie' } }),
+        creer('option', { texte: 'Correction par ecart', attributs: { value: 'ajustement' } }),
+      ]);
+      const unite = creer('select', {}, [
+        creer('option', { texte: 'Pieces', attributs: { value: 'piece' } }),
+        ...(article.piecesParCarton > 1 ? [creer('option', {
+          texte: 'Cartons (' + article.piecesParCarton + ' pieces)', attributs: { value: 'carton' },
+        })] : []),
+      ]);
+      const quantite = creer('input', { attributs: { type: 'number', step: '1', min: '1', required: 'required' } });
+      const motif = creer('input', { attributs: { type: 'text', placeholder: 'livraison, casse, inventaire...', required: 'required' } });
+      const reference = creer('input', { attributs: { type: 'text', placeholder: 'bon, facture...' } });
+      const fournisseur = creer('select', {}, [
+        creer('option', { texte: 'Aucun fournisseur', attributs: { value: '' } }),
+        ...fournisseurs.map((f) => creer('option', { texte: f.nom, attributs: { value: String(f.id) } })),
+      ]);
+      const aide = creer('p', { classe: 'aide', texte: 'Stock actuel : ' + formaterStock(article.stock, article) + '. Pour une correction, saisissez un ecart positif ou negatif.' });
+      const erreur = creer('p', { classe: 'message erreur' });
+      const rafraichirAide = () => {
+        quantite.min = type.value === 'ajustement' ? '' : '1';
+        const uniteTexte = unite.value === 'carton' ? 'carton(s)' : 'piece(s)';
+        aide.textContent = type.value === 'ajustement'
+          ? 'Stock actuel : ' + formaterStock(article.stock, article) + '. Saisissez +5 ou -2 ' + uniteTexte + ' pour corriger l ecart.'
+          : 'Stock actuel : ' + formaterStock(article.stock, article) + '. La quantite saisie en ' + uniteTexte + ' sera ' + (type.value === 'entree' ? 'ajoutee.' : 'retiree.');
+      };
+      type.addEventListener('change', rafraichirAide);
+      unite.addEventListener('change', rafraichirAide);
+      rafraichirAide();
+      return creer('form', { sur: { submit: async (e) => {
+        e.preventDefault();
+        try {
+          fermer(await appeler(window.caisse.stock.mouvement({
+            articleId: article.id,
+            type: type.value,
+            unite: unite.value,
+            quantite: Number(quantite.value),
+            motif: motif.value,
+            reference: reference.value,
+            fournisseurId: fournisseur.value ? Number(fournisseur.value) : null,
+          })));
+        } catch (probleme) { afficherMessage(erreur, probleme.message); }
+      } } }, [
+        creer('h3', { texte: 'Mouvement de stock - ' + article.designation }),
+        aide,
+        erreur,
+        creer('label', { texte: 'Operation' }, [type]),
+        creer('label', { texte: 'Unite de saisie' }, [unite]),
+        creer('label', { texte: 'Quantite / ecart' }, [quantite]),
+        creer('label', { texte: 'Motif' }, [motif]),
+        creer('label', { texte: 'Reference document' }, [reference]),
+        creer('label', { texte: 'Fournisseur' }, [fournisseur]),
+        creer('div', { classe: 'actions' }, [
+          creer('button', { classe: 'bouton discret', texte: 'Annuler', attributs: { type: 'button' }, sur: { click: () => fermer(null) } }),
+          creer('button', { classe: 'bouton', texte: 'Enregistrer', attributs: { type: 'submit' } }),
+        ]),
+      ]);
+    });
+    if (fait) await this.charger();
   },
 
   /**

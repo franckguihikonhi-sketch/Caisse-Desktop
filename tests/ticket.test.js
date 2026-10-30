@@ -30,16 +30,47 @@ test('une designation trop longue est coupee, pas renvoyee a la ligne', () => {
   assert.ok(long.endsWith('1 000 F'));
 });
 
-test('le ticket porte le total, la remise et la ventilation de TVA', () => {
+test('le ticket porte le total et la remise sans bloc taxes ni paiement', () => {
   const texte = ticketExemple().join('\n');
   assert.match(texte, /TOTAL {2,}5 025 F/);
   assert.match(texte, /Remise {2,}-450 F/);
-  assert.match(texte, /TVA 18 %/);
-  assert.match(texte, /Monnaie rendue {2,}975 F/);
+  assert.doesNotMatch(texte, /HT 18 %/);
+  assert.doesNotMatch(texte, /TVA 18 %/);
+  assert.doesNotMatch(texte, /Especes/);
+  assert.doesNotMatch(texte, /Monnaie rendue/);
 });
 
-test('la monnaie rendue ne figure que sur un paiement en especes', () => {
+test('aucun mode de paiement ne s imprime sur le ticket', () => {
   const carte = ticketExemple({ mode: 'carte' }).join('\n');
   assert.doesNotMatch(carte, /Monnaie rendue/);
-  assert.match(carte, /Carte bancaire/);
+  assert.doesNotMatch(carte, /Carte bancaire/);
+});
+
+test('le ticket credit porte les factures ouvertes du debiteur', () => {
+  const panier = calculer([
+    { reference: 'EAU', designation: 'Eau minerale', prixUnitaire: 300, quantite: 2, tauxTva: 0 },
+  ]);
+  const texte = construireTicket({
+    boutique: BOUTIQUE,
+    vente: {
+      numero: 'V-20260922-0003',
+      date: '2026-09-22T10:00:00',
+      caissier: 'Awa',
+      client: { nom: 'Client Pro' },
+      panier,
+      paiement: { mode: 'credit' },
+      creditClient: {
+        factures: [
+          { numero: 'V-20260920-0001', solde: 1200 },
+          { numero: 'V-20260922-0003', solde: 600 },
+        ],
+        totalSolde: 1800,
+      },
+    },
+  }).join('\n');
+
+  assert.match(texte, /Factures a credit/);
+  assert.match(texte, /V-20260920-0001 {2,}1 200 F/);
+  assert.match(texte, /V-20260922-0003 {2,}600 F/);
+  assert.match(texte, /Dette totale {2,}1 800 F/);
 });

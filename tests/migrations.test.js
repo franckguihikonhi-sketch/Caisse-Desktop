@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const Database = require('better-sqlite3');
+const { BaseSqlite } = require('../src/donnees/sqlite');
 
 const { ouvrir } = require('../src/donnees/base');
 const { migrer, MIGRATIONS, DERNIERE_VERSION } = require('../src/donnees/migrations');
@@ -33,7 +33,7 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
   const chemin = path.join(dossier, 'caisse.db');
 
   // Une base restee a l'etape 1 : les tables d'origine, sans code-barres.
-  const ancienne = new Database(chemin);
+  const ancienne = new BaseSqlite(chemin);
   MIGRATIONS[0].appliquer(ancienne);
   ancienne.pragma('user_version = 1');
   ancienne
@@ -52,6 +52,11 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
 
   const colonnesApres = base.pragma('table_info(articles)').map((c) => c.name);
   assert.ok(colonnesApres.includes('code_barres'));
+  assert.ok(colonnesApres.includes('prix_achat_piece'));
+  assert.ok(colonnesApres.includes('prix_achat_carton'));
+  const colonnesVente = base.pragma('table_info(lignes_vente)').map((c) => c.name);
+  assert.ok(colonnesVente.includes('prix_achat_unitaire'));
+  assert.ok(colonnesVente.includes('marge_totale'));
 
   const savon = articles.lireParReference(base, 'SAV-01');
   assert.equal(savon.designation, 'Savon');
@@ -59,6 +64,20 @@ test('une caisse deja installee rattrape ce qui lui manque, sans perdre ses vent
   assert.equal(savon.codeBarres, null);
 
   base.close();
+
+  const dossierSauvegardes = path.join(dossier, 'sauvegardes-auto');
+  const sauvegardes = fs.readdirSync(dossierSauvegardes).filter((nom) => nom.endsWith('.db'));
+  assert.equal(sauvegardes.length, 1, 'une sauvegarde automatique doit preceder la migration');
+  const sauvegarde = new BaseSqlite(path.join(dossierSauvegardes, sauvegardes[0]));
+  assert.equal(sauvegarde.pragma('user_version', { simple: true }), 1);
+  assert.ok(!sauvegarde.pragma('table_info(articles)').map((c) => c.name).includes('code_barres'));
+  assert.equal(sauvegarde.prepare('SELECT stock FROM articles WHERE reference = ?').get('SAV-01').stock, 40);
+  sauvegarde.close();
+
+  const dejaAJour = ouvrir(chemin);
+  dejaAJour.close();
+  assert.equal(fs.readdirSync(dossierSauvegardes).filter((nom) => nom.endsWith('.db')).length, 1);
+
   fs.rmSync(dossier, { recursive: true, force: true });
 });
 
