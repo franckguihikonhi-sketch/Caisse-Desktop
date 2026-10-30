@@ -9,41 +9,34 @@ const { BrowserWindow } = require('electron');
 const { construireTicket } = require('../metier/ticket');
 const { construirePage, FORMATS } = require('../metier/etiquettes');
 const monnaie = require('../metier/monnaie');
-
-const ECHAPPEMENTS = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
-const echapper = (t) => String(t).replace(/[&<>]/g, (c) => ECHAPPEMENTS[c]);
-
-/**
- * Le ticket est du texte a chasse fixe : on le pose tel quel dans une page de
- * 58 mm de large, sans marge, ce qui donne le meme rendu a l'ecran, sur une
- * imprimante thermique et dans le PDF.
- */
-function pageTicket(lignes) {
-  return (
-    '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
-    '<title>Ticket</title><style>' +
-    '@page { size: 58mm auto; margin: 0; }' +
-    'body { margin: 0; padding: 3mm 2mm; }' +
-    'pre { margin: 0; font: 11px/1.35 "Courier New", monospace; white-space: pre; }' +
-    '</style></head><body><pre>' + echapper(lignes.join('\n')) + '</pre></body></html>'
-  );
-}
+const reglagesImpression = require('../metier/impression-reglages');
+const { pageTicket, pageImage, echapper } = require('../metier/page-impression');
 
 /**
  * Ouvre une fenetre invisible sur une page fabriquee ici. Le HTML passe par un
  * fichier temporaire plutot que par une URL data: — une planche de 65
  * codes-barres pese plusieurs centaines de kilo-octets, ce qu'une URL ne porte
- * pas de façon fiable.
+ * pas de facon fiable. On attend ensuite que la mise en page soit reellement
+ * terminee : imprimer une page pas encore peinte sort une feuille blanche.
  */
-async function fenetreSurPage(html) {
+async function fenetreSurPage(html, taille = {}) {
   const fichier = path.join(
     os.tmpdir(), 'caisse-impression-' + crypto.randomBytes(8).toString('hex') + '.html'
   );
   fs.writeFileSync(fichier, html, 'utf8');
 
-  const fenetre = new BrowserWindow({ show: false, webPreferences: { sandbox: true } });
+  const fenetre = new BrowserWindow({
+    show: false,
+    width: Math.max(120, Math.round(taille.largeur || 800)),
+    height: Math.max(200, Math.round(taille.hauteur || 600)),
+    useContentSize: true,
+    backgroundColor: '#ffffff',
+    paintWhenInitiallyHidden: true,
+    webPreferences: { sandbox: true, backgroundThrottling: false, offscreen: false },
+  });
   try {
     await fenetre.loadFile(fichier);
+    await attendreRendu(fenetre);
   } catch (erreur) {
     fenetre.destroy();
     fs.rmSync(fichier, { force: true });
@@ -58,6 +51,24 @@ async function fenetreSurPage(html) {
   };
 }
 
+/** Polices chargees, deux images rendues, puis une respiration : la page est alors peinte. */
+async function attendreRendu(fenetre) {
+  try {
+    await fenetre.webContents.executeJavaScript(
+      'new Promise(function (resoudre) {' +
+      '  var fini = function () {' +
+      '    requestAnimationFrame(function () { requestAnimationFrame(function () { resoudre(true); }); });' +
+      '  };' +
+      '  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fini, fini); } else { fini(); }' +
+      '})',
+      true
+    );
+  } catch (_erreur) {
+    // Une page sans polices web n'empeche pas d'imprimer.
+  }
+  await new Promise((r) => setTimeout(r, 180));
+}
+
 /** Envoie une page a l'imprimante. Une boite fermee par l'utilisateur n'est pas une erreur. */
 function envoyer(fenetre, options) {
   return new Promise((resoudre, rejeter) => {
@@ -68,25 +79,75 @@ function envoyer(fenetre, options) {
   });
 }
 
-async function imprimer(vente, boutique) {
-  const { fenetre, liberer } = await fenetreSurPage(pageTicket(construireTicket({ boutique, vente })));
+/**
+ * Certains pilotes Windows refusent un format sur mesure et rendent alors une
+ * page vide. On reessaie sans format plutot que de laisser le ticket blanc.
+ */
+async function envoyerAvecSecours(fenetre, options, pageSize) {
   try {
-    return await envoyer(fenetre, {
-      silent: false, printBackground: false, margins: { marginType: 'none' },
-    });
+    return await envoyer(fenetre, { ...options, pageSize });
+  } catch (_erreur) {
+    return envoyer(fenetre, options);
+  }
+}
+
+/** Rend le ticket en image nette, pour les pilotes qui n'impriment pas le texte. */
+async function ticketEnImage(lignes, reglages) {
+  const echelle = 3;
+  const grossi = { ...reglages, taillePolice: reglages.taillePolice * echelle, largeurMm: reglages.largeurMm * echelle };
+  const taille = reglagesImpression.tailleFenetre(lignes.length, reglages, echelle);
+  const { fenetre, liberer } = await fenetreSurPage(pageTicket(lignes, grossi), taille);
+  try {
+    const image = await fenetre.webContents.capturePage();
+    if (image.isEmpty()) throw new Error("Le ticket n'a pas pu etre rendu en image.");
+    return image.toDataURL();
   } finally {
     liberer();
   }
 }
 
-async function exporterPdf(vente, boutique, dossier) {
-  const { fenetre, liberer } = await fenetreSurPage(pageTicket(construireTicket({ boutique, vente })));
+async function imprimer(vente, boutique, parametres = {}) {
+  const reglages = reglagesImpression.normaliser(parametres);
+  const lignes = construireTicket({ boutique, vente });
+  const options = {
+    silent: reglages.silencieuse,
+    printBackground: true,
+    color: false,
+    margins: { marginType: 'none' },
+    copies: 1,
+  };
+
+  if (reglages.mode === 'image') {
+    const dataUrl = await ticketEnImage(lignes, reglages);
+    const taille = reglagesImpression.tailleFenetre(lignes.length, reglages);
+    const { fenetre, liberer } = await fenetreSurPage(pageImage(dataUrl, reglages), taille);
+    try {
+      return { ...(await envoyerAvecSecours(fenetre, options, reglagesImpression.formatImpression(lignes.length, reglages))), mode: 'image' };
+    } finally {
+      liberer();
+    }
+  }
+
+  const taille = reglagesImpression.tailleFenetre(lignes.length, reglages);
+  const { fenetre, liberer } = await fenetreSurPage(pageTicket(lignes, reglages), taille);
+  try {
+    return { ...(await envoyerAvecSecours(fenetre, options, reglagesImpression.formatImpression(lignes.length, reglages))), mode: 'texte' };
+  } finally {
+    liberer();
+  }
+}
+
+async function exporterPdf(vente, boutique, dossier, parametres = {}) {
+  const reglages = reglagesImpression.normaliser(parametres);
+  const lignes = construireTicket({ boutique, vente });
+  const taille = reglagesImpression.tailleFenetre(lignes.length, reglages);
+  const { fenetre, liberer } = await fenetreSurPage(pageTicket(lignes, reglages), taille);
   try {
     const pdf = await fenetre.webContents.printToPDF({
       // printToPDF mesure en pouces, la ou print() mesure en microns.
-      pageSize: { width: 58 / 25.4, height: 200 / 25.4 },
+      pageSize: reglagesImpression.formatPdf(lignes.length, reglages),
       margins: { top: 0, bottom: 0, left: 0, right: 0 },
-      printBackground: false,
+      printBackground: true,
     });
     fs.mkdirSync(dossier, { recursive: true });
     const chemin = path.join(dossier, vente.numero + '.pdf');
@@ -229,6 +290,7 @@ function compteRendu(planche) {
 
 module.exports = {
   imprimer,
+  pageImage,
   exporterPdf,
   exporterFactureVentePdf,
   imprimerEtiquettes,

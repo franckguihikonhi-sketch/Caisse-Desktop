@@ -338,6 +338,37 @@
             <button type="submit" class="bouton">Enregistrer</button>
           </form>
 
+          <form class="panneau" id="formulaire-impression">
+            <h3>Impression du ticket</h3>
+            <p class="aide">Si le ticket sort blanc, essayez le mode <strong>Image</strong> : le ticket est alors envoye a l'imprimante sous forme d'image, ce que tous les pilotes thermiques savent imprimer.</p>
+            <p class="message succes" id="message-impression"></p>
+            <label>Largeur du rouleau
+              <select name="impression.largeur_mm">
+                <option value="58">58 mm (petit rouleau)</option>
+                <option value="80">80 mm (grand rouleau)</option>
+              </select>
+            </label>
+            <label>Taille du texte
+              <input type="number" name="impression.taille_police" min="9" max="20" step="1">
+            </label>
+            <label>Mode d'envoi
+              <select name="impression.mode">
+                <option value="texte">Texte (normal)</option>
+                <option value="image">Image (secours si ticket blanc)</option>
+              </select>
+            </label>
+            <label>Impression sans boite de dialogue
+              <select name="impression.silencieuse">
+                <option value="non">Non, afficher la boite d'impression</option>
+                <option value="oui">Oui, imprimer directement</option>
+              </select>
+            </label>
+            <div class="actions empilees-mobile">
+              <button type="submit" class="bouton">Enregistrer</button>
+              <button type="button" class="bouton discret" id="bouton-tester-impression">Imprimer un ticket de test</button>
+            </div>
+          </form>
+
           <div class="panneau panneau-base-reseau">
             <h3>Base de donnees et reseau local</h3>
             <p class="aide">Par defaut, les donnees restent sur ce poste : chaque entreprise garde sa propre base locale. Utilisez un dossier partage seulement si plusieurs postes d'une meme entreprise doivent travailler sur le meme fichier <strong>caisse.db</strong>, sans connexion Internet.</p>

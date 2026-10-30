@@ -13,6 +13,11 @@ const PARAMETRES_PAR_DEFAUT = {
   'boutique.telephone': '',
   'boutique.numeroContribuable': '',
   'tva.taux_par_defaut': '18',
+  // Impression du ticket : largeur du rouleau, taille du texte, mode de rendu.
+  'impression.largeur_mm': '58',
+  'impression.taille_police': '12',
+  'impression.mode': 'texte',
+  'impression.silencieuse': 'non',
   // Numero d'ordre du prochain code-barres d'usage interne a attribuer.
   'codeBarres.prochain_interne': '1',
 };

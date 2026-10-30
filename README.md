@@ -362,6 +362,24 @@ est produit par la fonction qui alimente l'imprimante : les deux ne peuvent pas
 diverger. Pour une vente a credit, le pied du ticket ajoute automatiquement la
 liste des factures credit encore ouvertes du client et le total restant du.
 
+### Si le ticket sort blanc
+
+Un ticket blanc vient presque toujours du pilote Windows, pas du contenu.
+`Reglages > Impression du ticket` regle les quatre causes connues :
+
+| Reglage | A quoi il sert |
+| --- | --- |
+| Largeur du rouleau (58 / 80 mm) | La page est envoyee au pilote avec un format explicite, en microns. Sans format, beaucoup de pilotes thermiques rendent une feuille vide. |
+| Taille du texte (9 a 20 px) | Un texte trop grand deborde de la laize et peut sortir hors zone imprimable. |
+| Mode Texte / Image | En mode Image, le ticket est rendu puis envoye comme une image : les pilotes qui ignorent le texte vectoriel l'impriment quand meme. |
+| Impression directe | Imprime sans ouvrir la boite de dialogue Windows. |
+
+Le bouton **Imprimer un ticket de test** envoie un ticket fictif : on regle
+l'imprimante sans devoir encaisser une vraie vente. Avant l'envoi, la page est
+rendue dans une fenetre dimensionnee au ticket, polices chargees et deux images
+peintes ; si le pilote refuse le format sur mesure, l'envoi est rejoue sans
+format plutot que de sortir une feuille blanche.
+
 ```
           MA BOUTIQUE
 ================================

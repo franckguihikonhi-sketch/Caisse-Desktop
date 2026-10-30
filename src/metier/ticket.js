@@ -91,4 +91,29 @@ function construireTicket({ boutique, vente }) {
   return lignes;
 }
 
-module.exports = { construireTicket, centrer, justifier, LARGEUR };
+/** Vente factice servant au bouton « Imprimer un ticket de test » des reglages. */
+function venteExemple() {
+  return {
+    numero: 'TEST-0001',
+    date: new Date().toISOString(),
+    caissier: 'Test',
+    client: null,
+    panier: {
+      lignes: [
+        {
+          designation: 'Article de test', reference: 'TEST-1', uniteVente: 'piece',
+          quantite: 2, prixUnitaire: 500, remisePourcent: 0, totalTtc: 1000,
+        },
+        {
+          designation: 'Deuxieme article', reference: 'TEST-2', uniteVente: 'piece',
+          quantite: 1, prixUnitaire: 1500, remisePourcent: 0, totalTtc: 1500,
+        },
+      ],
+      totalBrut: 2500, remise: 0, totalHt: 2119, totalTva: 381, totalTtc: 2500,
+    },
+    paiement: { mode: 'especes' },
+    montantNet: 2500,
+  };
+}
+
+module.exports = { construireTicket, venteExemple, centrer, justifier, LARGEUR };

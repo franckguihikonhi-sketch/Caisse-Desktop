@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserWindow, ipcMain, shell, dialog, Menu } = require('electron');
 
-const { ouvrir, boutique } = require('../donnees/base');
+const { ouvrir, boutique, lireParametres } = require('../donnees/base');
 const utilisateurs = require('../donnees/utilisateurs');
 const audit = require('../donnees/audit');
 const ventes = require('../donnees/ventes');
@@ -14,6 +14,7 @@ const configurationBase = require('./configuration-base');
 const sauvegardes = require('./sauvegardes');
 const exportsRapports = require('./exports');
 const { exigerMotif } = require('../metier/motif-obligatoire');
+const ticketMetier = require('../metier/ticket');
 
 // L'utilisateur connecte est tenu ici, dans le processus principal. Le rendu ne
 // fait que l'afficher : il ne peut ni le fabriquer ni s'attribuer un role.
@@ -133,8 +134,13 @@ function canauxImpression() {
   repondre('ticket:imprimer', async ({ id }) => {
     const vente = ventes.lire(bd, id);
     if (!vente) throw new Error('Vente introuvable.');
-    return impression.imprimer(vente, boutique(bd));
+    return impression.imprimer(vente, boutique(bd), lireParametres(bd));
   }, P.VENTE_LIRE);
+
+  // Permet de regler l'imprimante sans devoir encaisser une vraie vente.
+  repondre('ticket:test', async () =>
+    impression.imprimer(ticketMetier.venteExemple(), boutique(bd), lireParametres(bd)),
+  P.PARAMETRES_GERER);
 
   repondre('etiquettes:imprimer', async (demande) =>
     impression.imprimerEtiquettes({ ...demande, boutique: boutique(bd) }), P.ARTICLES_LIRE);
@@ -152,7 +158,7 @@ function canauxImpression() {
     const vente = ventes.lire(bd, id);
     if (!vente) throw new Error('Vente introuvable.');
     const dossier = path.join(app.getPath('documents'), NOM_APPLICATION, 'tickets');
-    const chemin = await impression.exporterPdf(vente, boutique(bd), dossier);
+    const chemin = await impression.exporterPdf(vente, boutique(bd), dossier, lireParametres(bd));
     shell.showItemInFolder(chemin);
     return chemin;
   }, P.VENTE_LIRE);

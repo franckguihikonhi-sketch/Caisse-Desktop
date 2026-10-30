@@ -121,6 +121,7 @@ contextBridge.exposeInMainWorld('caisse', {
   },
   ticket: {
     imprimer: appeler('ticket:imprimer'),
+    test: appeler('ticket:test'),
     pdf: appeler('ticket:pdf'),
     facturePdf: appeler('ticket:facturePdf'),
   },

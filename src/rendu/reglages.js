@@ -16,6 +16,8 @@ const Reglages = {
       champ.value = App.parametres[champ.name] ?? '';
     }
 
+    this.chargerImpression();
+
     const panneauComptes = $('#corps-utilisateurs').closest('.panneau');
     panneauComptes.hidden = !App.peut('utilisateurs:gerer');
     if (App.peut('utilisateurs:gerer')) {
@@ -24,6 +26,50 @@ const Reglages = {
     }
 
     await this.chargerBase();
+  },
+
+  chargerImpression() {
+    const formulaire = $('#formulaire-impression');
+    formulaire.hidden = !App.peut('parametres:gerer');
+    if (formulaire.hidden) return;
+
+    const defauts = {
+      'impression.largeur_mm': '58',
+      'impression.taille_police': '12',
+      'impression.mode': 'texte',
+      'impression.silencieuse': 'non',
+    };
+    for (const champ of formulaire.querySelectorAll('[name]')) {
+      champ.value = App.parametres[champ.name] ?? defauts[champ.name] ?? '';
+    }
+  },
+
+  async enregistrerImpression(evenement) {
+    evenement.preventDefault();
+    const valeurs = {};
+    for (const champ of evenement.target.querySelectorAll('[name]')) valeurs[champ.name] = champ.value;
+    try {
+      App.parametres = await appeler(window.caisse.parametres.ecrire(valeurs));
+      afficherMessage($('#message-impression'), 'Reglages d impression enregistres.', 'succes');
+    } catch (erreur) {
+      afficherMessage($('#message-impression'), erreur.message, 'erreur');
+    }
+  },
+
+  async testerImpression() {
+    try {
+      afficherMessage($('#message-impression'), 'Envoi du ticket de test...', 'succes');
+      const resultat = await appeler(window.caisse.ticket.test());
+      afficherMessage(
+        $('#message-impression'),
+        resultat.imprime
+          ? 'Ticket de test envoye (mode ' + resultat.mode + '). Si la feuille sort blanche, choisissez le mode Image puis recommencez.'
+          : 'Impression annulee.',
+        'succes'
+      );
+    } catch (erreur) {
+      afficherMessage($('#message-impression'), erreur.message, 'erreur');
+    }
   },
 
   async chargerBase() {
